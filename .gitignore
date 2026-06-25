@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Expo / React Native generated output
+.expo/
+glutenia-mobile/.android-sdk/
+dist/
+dist-*/
+android/.gradle/
+android/app/build/
+ios/Pods/
+
+# Build artifacts
+*.apk
+*.aab
+*.rar
+*.zip
+glutenia-mobile/android/app/debug.keystore
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

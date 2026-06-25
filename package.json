@@ -1,0 +1,17 @@
+{
+  "name": "glutenia",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Render entrypoint for the Glutenia backend service.",
+  "scripts": {
+    "postinstall": "npm --prefix glutenia-backend ci",
+    "build": "npm --prefix glutenia-backend ci",
+    "start": "npm --prefix glutenia-backend start"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "expo": "^56.0.12"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "name": "glutenia-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "main": "expo/AppEntry.js",
+  "scripts": {
+    "start": "expo start --lan",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "assets": "node scripts/generate-brand-assets.js",
+    "prebuild:android": "expo prebuild --platform android --no-install && node scripts/ensure-android-cleartext.js",
+    "build:apk": "npm run assets && npm run prebuild:android && cd android && gradlew.bat assembleRelease && cd .. && node scripts/finalize-apk.js",
+    "check": "expo install --check",
+    "doctor": "npx expo-doctor"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "14.1.0",
+    "@react-native-async-storage/async-storage": "2.1.2",
+    "@react-navigation/bottom-tabs": "6.6.1",
+    "@react-navigation/native": "6.1.18",
+    "@react-navigation/native-stack": "6.11.0",
+    "expo": "53.0.27",
+    "expo-asset": "~11.1.7",
+    "expo-constants": "17.1.8",
+    "expo-font": "~13.3.2",
+    "expo-image-manipulator": "~13.1.7",
+    "expo-image-picker": "~16.1.4",
+    "expo-localization": "~16.1.6",
+    "expo-status-bar": "2.2.3",
+    "i18next": "^26.3.2",
+    "lucide-react-native": "^1.17.0",
+    "react": "19.0.0",
+    "react-i18next": "^17.0.8",
+    "react-native": "0.79.6",
+    "react-native-maps": "1.20.1",
+    "react-native-safe-area-context": "5.4.0",
+    "react-native-screens": "4.11.1",
+    "react-native-svg": "15.11.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "sharp": "^0.34.5"
+  }
+}
