@@ -42,7 +42,10 @@
       "expo-localization"
     ],
     "extra": {
-      "apiBaseUrl": "http://10.0.2.2:5000/api"
+      "apiBaseUrl": "http://10.0.2.2:5000/api",
+      "eas": {
+        "projectId": "fd258cdb-960b-415e-b93d-d1d01d1d3c08"
+      }
     }
   }
 }
