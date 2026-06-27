@@ -337,8 +337,20 @@ export default function AccountScreen({ navigation }) {
           </Text>
         </View>
 
-        {/* ── I. Settings ────────────────────────────────────────────────── */}
+        {/* ── I. Orders + Settings ───────────────────────────────────────── */}
         <View style={styles.settingsList}>
+          <Pressable style={styles.settingsRow} onPress={() => navigation.navigate("Orders")}>
+            <View style={styles.settingsLeft}>
+              <View style={[styles.iconWrap, { backgroundColor: Colors.primaryPale }]}>
+                <AppIcon name="receipt" size={20} color={Colors.primary} />
+              </View>
+              <Text style={styles.settingsLabel}>My Orders</Text>
+            </View>
+            <AppIcon name="chevron-right" size={20} color={Colors.textMuted} />
+          </Pressable>
+
+          <View style={styles.divider} />
+
           <Pressable style={styles.settingsRow}>
             <View style={styles.settingsLeft}>
               <View style={[styles.iconWrap, { backgroundColor: Colors.secondaryPale }]}>

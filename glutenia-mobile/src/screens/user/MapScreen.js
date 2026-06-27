@@ -1,0 +1,1532 @@
+import { useRef, useState, useCallback, useMemo } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  Linking,
+  Image,
+} from "react-native";
+import { WebView } from "react-native-webview";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import BottomSheet, {
+  BottomSheetScrollView,
+  BottomSheetBackdrop,
+} from "@gorhom/bottom-sheet";
+import { Colors, Radius, Spacing } from "../../theme/colors";
+import AppIcon from "../../components/AppIcon";
+import AppHeader from "../../components/AppHeader";
+import { useAuth } from "../../context/AuthContext";
+import { useCart } from "../../context/CartContext";
+
+// ─── Data ────────────────────────────────────────────────────────────────────
+
+const SPOTS = [
+  {
+    id: "1",
+    name: "Ben Yaghlene Shops",
+    type: "Supermarket",
+    address: "Av. Habib Bourguiba, Tunis",
+    emoji: "🛒",
+    rating: 4.8,
+    reviews: "2.6k",
+    distance: "1.2 km",
+    avgPrice: "15 TND",
+    coordinate: { latitude: 36.8008, longitude: 10.181 },
+    description:
+      "A premier grocery store with a dedicated gluten-free section. Over 200 certified GF products from local and international brands.",
+    tags: ["GF Bread", "Pasta", "Imported"],
+    color: Colors.primary,
+    accentEmoji: "🌿",
+  },
+  {
+    id: "2",
+    name: "Green Bowl Café",
+    type: "Restaurant",
+    address: "Rue de Marseille, Tunis",
+    emoji: "🍽️",
+    rating: 4.6,
+    reviews: "1.3k",
+    distance: "2.2 km",
+    avgPrice: "20 TND",
+    coordinate: { latitude: 36.8135, longitude: 10.1748 },
+    description:
+      "Fully gluten-free menu with organic salads, fresh smoothies, and a warm cozy atmosphere. A safe haven for celiacs.",
+    tags: ["GF Menu", "Salads", "Smoothies"],
+    color: Colors.secondary,
+    accentEmoji: "🥗",
+  },
+  {
+    id: "3",
+    name: "Nature & Saveur",
+    type: "Health Store",
+    address: "Les Berges du Lac, Tunis",
+    emoji: "🌿",
+    rating: 4.5,
+    reviews: "890",
+    distance: "3.5 km",
+    avgPrice: "25 TND",
+    coordinate: { latitude: 36.838, longitude: 10.229 },
+    description:
+      "Organic health store specializing in gluten-free cereals, natural supplements, and herbal remedies.",
+    tags: ["Organic", "GF Cereals", "Supplements"],
+    color: Colors.primary,
+    accentEmoji: "🌱",
+  },
+  {
+    id: "4",
+    name: "La Boulangerie Sans Gluten",
+    type: "Bakery",
+    address: "Rue Ibn Khaldoun, Tunis",
+    emoji: "🥐",
+    rating: 4.9,
+    reviews: "3.1k",
+    distance: "0.8 km",
+    avgPrice: "12 TND",
+    coordinate: { latitude: 36.7985, longitude: 10.172 },
+    description:
+      "100% gluten-free bakery baking fresh bread, croissants, and cakes daily. Locals' top pick in Tunis.",
+    tags: ["Fresh Bread", "Pastries", "Cakes"],
+    color: Colors.secondary,
+    accentEmoji: "🍞",
+  },
+  {
+    id: "5",
+    name: "Carrefour Bio La Marsa",
+    type: "Supermarket",
+    address: "La Marsa, Tunis",
+    emoji: "🛒",
+    rating: 4.3,
+    reviews: "756",
+    distance: "5.2 km",
+    avgPrice: "18 TND",
+    coordinate: { latitude: 36.878, longitude: 10.324 },
+    description:
+      "Large bio supermarket with an extensive imported gluten-free section and great variety of international GF brands.",
+    tags: ["GF Section", "Imported", "Bio"],
+    color: Colors.primary,
+    accentEmoji: "🥦",
+  },
+  {
+    id: "6",
+    name: "Sana Café Gammarth",
+    type: "Restaurant",
+    address: "Gammarth, Tunis",
+    emoji: "🍽️",
+    rating: 4.7,
+    reviews: "1.8k",
+    distance: "6.1 km",
+    avgPrice: "22 TND",
+    coordinate: { latitude: 36.9097, longitude: 10.315 },
+    description:
+      "Beachfront café with gluten-free and vegan options. Famous for GF pancakes and tropical smoothie bowls.",
+    tags: ["GF Options", "Vegan", "Beachfront"],
+    color: Colors.secondary,
+    accentEmoji: "☀️",
+  },
+  {
+    id: "7",
+    name: "Vita Bio Market",
+    type: "Health Store",
+    address: "Ariana Soghra, Ariana",
+    emoji: "🌿",
+    rating: 4.4,
+    reviews: "612",
+    distance: "4.0 km",
+    avgPrice: "22 TND",
+    coordinate: { latitude: 36.8618, longitude: 10.1942 },
+    description:
+      "Friendly health shop stocked with a wide range of gluten-free flours, snacks, and plant-based alternatives. Staff are celiac-aware.",
+    tags: ["GF Flour", "Snacks", "Vegan"],
+    color: Colors.primary,
+    accentEmoji: "🥬",
+  },
+  {
+    id: "8",
+    name: "Patisserie Douce Nature",
+    type: "Bakery",
+    address: "Ennasr 2, Ariana",
+    emoji: "🥐",
+    rating: 4.6,
+    reviews: "1.1k",
+    distance: "4.7 km",
+    avgPrice: "14 TND",
+    coordinate: { latitude: 36.8692, longitude: 10.2105 },
+    description:
+      "Artisan bakery offering exclusively gluten-free pastries, tarts, and celebration cakes. Pre-order available for custom creations.",
+    tags: ["GF Cakes", "Tarts", "Custom Orders"],
+    color: Colors.secondary,
+    accentEmoji: "🎂",
+  },
+  {
+    id: "9",
+    name: "Le Comptoir Sans Gluten",
+    type: "Restaurant",
+    address: "Rue de Hollande, Tunis",
+    emoji: "🍽️",
+    rating: 4.5,
+    reviews: "980",
+    distance: "1.9 km",
+    avgPrice: "24 TND",
+    coordinate: { latitude: 36.8072, longitude: 10.1769 },
+    description:
+      "Dedicated gluten-free bistro serving traditional Tunisian dishes reinvented with rice and corn-based recipes. Cosy terrace dining.",
+    tags: ["Tunisian Cuisine", "GF Menu", "Terrace"],
+    color: Colors.secondary,
+    accentEmoji: "🫕",
+  },
+  {
+    id: "10",
+    name: "Monoprix Centre Ville",
+    type: "Supermarket",
+    address: "Av. de France, Tunis",
+    emoji: "🛒",
+    rating: 4.1,
+    reviews: "1.4k",
+    distance: "0.5 km",
+    avgPrice: "16 TND",
+    coordinate: { latitude: 36.7995, longitude: 10.1838 },
+    description:
+      "Central supermarket with a dedicated bio & sans-gluten aisle. Good selection of imported French GF brands and local alternatives.",
+    tags: ["GF Aisle", "Bio", "French Brands"],
+    color: Colors.primary,
+    accentEmoji: "🏷️",
+  },
+];
+
+const FILTERS = ["All", "Supermarket", "Restaurant", "Health Store", "Bakery", "Pharmacy"];
+
+const HOURS = [
+  { day: "Mon – Fri", time: "08:00 – 20:00" },
+  { day: "Saturday",  time: "09:00 – 18:00" },
+  { day: "Sunday",    time: "10:00 – 16:00" },
+];
+
+// ─── Star rating helper ───────────────────────────────────────────────────────
+
+function StarRating({ rating }) {
+  const full = Math.floor(rating);
+  const half = rating - full >= 0.5;
+  return (
+    <Text style={styles.stars}>
+      {"★".repeat(full)}
+      {half ? "½" : ""}
+      {"☆".repeat(5 - full - (half ? 1 : 0))}
+    </Text>
+  );
+}
+
+// ─── Leaflet HTML builder ─────────────────────────────────────────────────────
+
+// ─── Visual Mapping Helpers ──────────────────────────────────────────────────
+
+const SPOT_IMAGES = {
+  "1": "https://images.unsplash.com/photo-1542838132-92c53300491e?w=500", // Supermarket
+  "2": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500", // Restaurant
+  "3": "https://images.unsplash.com/photo-1506084868230-bb9d95c24759?w=500", // Health Store
+  "4": "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500", // Bakery
+  "5": "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=500", // Bio Supermarket
+  "6": "https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=500", // Restaurant Gammarth
+  "7": "https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=500", // Health Store
+  "8": "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=500", // Bakery/Patisserie
+  "9": "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=500", // Bistro Restaurant
+  "10": "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=500", // Supermarket Centre Ville
+};
+
+const FILTER_ICONS = {
+  All: "grid",
+  Supermarket: "basket",
+  Restaurant: "utensils",
+  "Health Store": "leaf",
+  Bakery: "croissant",
+  Pharmacy: "activity"
+};
+
+const getFacilities = (type) => {
+  switch (type) {
+    case "Restaurant":
+      return ["100% GF Kitchen", "Dedicated Fryer", "Outdoor Terrace", "Celiac Certified Staff"];
+    case "Bakery":
+      return ["Dedicated GF Oven", "Baked Fresh Daily", "Custom Cake Ordering", "Vegan Friendly Options"];
+    case "Supermarket":
+      return ["Dedicated GF Aisle", "Imported GF Brands", "Organic Section", "Fresh Produce"];
+    case "Health Store":
+      return ["Natural Supplements", "Bulk Gluten-Free Flours", "Dietary Consultations", "Eco-Friendly Shop"];
+    default:
+      return ["Celiac Friendly", "Gluten-Free Certified", "Friendly Staff"];
+  }
+};
+
+// ─── Leaflet HTML builder ─────────────────────────────────────────────────────
+
+function buildLeafletHTML(spots) {
+  const data = spots.map((s) => ({
+    id: s.id,
+    lat: s.coordinate.latitude,
+    lng: s.coordinate.longitude,
+    emoji: s.emoji,
+    color: s.color,
+    type: s.type,
+  }));
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #e8efe9; }
+    #map { width: 100%; height: 100%; }
+    .leaflet-control-attribution { display: none !important; }
+    .leaflet-control-zoom { display: none !important; }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+  var SPOTS = ${JSON.stringify(data)};
+  var markers = {};
+  var selectedId = SPOTS.length > 0 ? SPOTS[0].id : null;
+
+  var map = L.map('map', { zoomControl: false, attributionControl: false })
+    .setView([36.82, 10.2], 12);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    subdomains: 'abcd', maxZoom: 19
+  }).addTo(map);
+
+  function getSvgIcon(type) {
+    var forkKnife = '<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2 M7 2v20 M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3v7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
+    var bread = '<path d="M7 19c-2.2 0-4-1.8-4-4v-1a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v1c0 2.2-1.8 4-4 4H7Z M7 10h10 M12 10v9 M16 10l-2 9 M8 10l2 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
+    var basket = '<path d="m15 9-6-6M9 9l6-6M2 12h20M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
+    var cross = '<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
+    var leaf = '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 9.8a7 7 0 0 1-9 8.2Z M9 22v-4h-4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
+    var shield = '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z M9 11l2 2 4-4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>';
+
+    switch(type) {
+      case "Restaurant": return forkKnife;
+      case "Bakery": return bread;
+      case "Supermarket": return basket;
+      case "Pharmacy": return cross;
+      case "Health Store": return leaf;
+      default: return shield;
+    }
+  }
+
+  function makeHtml(spot, isActive) {
+    var color = spot.color || "#8BC34A";
+    var iconPaths = getSvgIcon(spot.type);
+    var sz = isActive ? 52 : 38;
+    
+    var shadowFilter = isActive 
+      ? "filter: drop-shadow(0 0 6px rgba(139, 195, 74, 0.8)) drop-shadow(0 4px 8px rgba(0,0,0,0.35));"
+      : "filter: drop-shadow(0 2px 5px rgba(0,0,0,0.2));";
+    
+    var scale = isActive ? "transform: scale(1.15);" : "transform: scale(1.0);";
+    
+    return '<div style="width:' + sz + 'px;height:' + sz + 'px;display:flex;align-items:center;justify-content:center;' + scale + 'transition:all 0.2s ease;' + shadowFilter + '">' +
+      '<svg viewBox="0 0 24 30" style="width:100%;height:100%;color:#ffffff;">' +
+      '<path d="M12 0 C5.37 0 0 5.37 0 12 C0 21 12 30 12 30 C12 30 24 21 24 12 C24 5.37 18.63 0 12 0 Z" fill="' + color + '" stroke="#ffffff" stroke-width="1.5" />' +
+      '<svg viewBox="0 0 24 24" x="4.5" y="4.5" width="15" height="15" style="color:#ffffff;">' +
+      iconPaths +
+      '</svg>' +
+      '</svg>' +
+      '</div>';
+  }
+
+  function makeIcon(spot, isActive) {
+    var sz = isActive ? 60 : 44;
+    return L.divIcon({
+      className: '',
+      html: makeHtml(spot, isActive),
+      iconSize: [sz, sz],
+      iconAnchor: [sz / 2, sz]
+    });
+  }
+
+  function findSpot(id) {
+    for (var i = 0; i < SPOTS.length; i++) {
+      if (SPOTS[i].id === id) return SPOTS[i];
+    }
+    return null;
+  }
+
+  function selectMarker(id) {
+    if (selectedId && markers[selectedId]) {
+      var old = findSpot(selectedId);
+      if (old) markers[selectedId].setIcon(makeIcon(old, false));
+    }
+    selectedId = id;
+    var cur = findSpot(id);
+    if (cur && markers[id]) markers[id].setIcon(makeIcon(cur, true));
+  }
+
+  function addMarkers(spots) {
+    for (var i = 0; i < spots.length; i++) {
+      (function(s) {
+        var m = L.marker([s.lat, s.lng], {
+          icon: makeIcon(s, s.id === selectedId)
+        }).addTo(map);
+        m.on('click', function() {
+          selectMarker(s.id);
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(
+              JSON.stringify({ type: 'markerPress', spotId: s.id })
+            );
+          }
+        });
+        markers[s.id] = m;
+      })(spots[i]);
+    }
+  }
+
+  addMarkers(SPOTS);
+
+  window.handleFromRN = function(msg) {
+    if (msg.type === 'flyTo') {
+      selectMarker(msg.spotId);
+      map.flyTo([msg.lat, msg.lng], 14, { animate: true, duration: 0.4 });
+    } else if (msg.type === 'updateSpots') {
+      var keys = Object.keys(markers);
+      for (var k = 0; k < keys.length; k++) map.removeLayer(markers[keys[k]]);
+      markers = {};
+      SPOTS = msg.spots;
+      selectedId = SPOTS.length > 0 ? SPOTS[0].id : null;
+      addMarkers(SPOTS);
+      if (SPOTS.length > 0) {
+        map.flyTo([SPOTS[0].lat, SPOTS[0].lng], 13, { animate: true, duration: 0.4 });
+      }
+    }
+  };
+</script>
+</body>
+</html>`;
+}
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
+
+export default function MapScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+  const { count } = useCart();
+  const webViewRef = useRef(null);
+  const bottomSheetRef = useRef(null);
+
+  const [activeFilter, setActiveFilter] = useState("All");
+  const [selectedId, setSelectedId] = useState(SPOTS[0].id);
+  const [headerHeight, setHeaderHeight] = useState(88);
+  const [sheetIndex, setSheetIndex] = useState(-1);
+
+  const snapPoints = useMemo(() => ["55%", "90%"], []);
+  const leafletHTML = useMemo(() => buildLeafletHTML(SPOTS), []);
+
+  const filtered =
+    activeFilter === "All" ? SPOTS : SPOTS.filter((s) => s.type === activeFilter);
+
+  const selectedSpot =
+    filtered.find((s) => s.id === selectedId) ?? filtered[0] ?? null;
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  const sendToMap = useCallback((data) => {
+    webViewRef.current?.injectJavaScript(
+      `window.handleFromRN(${JSON.stringify(data)}); true;`
+    );
+  }, []);
+
+  const animateToSpot = useCallback(
+    (spot) => {
+      sendToMap({
+        type: "flyTo",
+        spotId: spot.id,
+        lat: spot.coordinate.latitude - 0.008,
+        lng: spot.coordinate.longitude,
+      });
+    },
+    [sendToMap]
+  );
+
+  const openSheet = useCallback(() => {
+    bottomSheetRef.current?.snapToIndex(0);
+    setSheetIndex(0);
+  }, []);
+
+  const handleWebViewMessage = useCallback(
+    (event) => {
+      try {
+        const msg = JSON.parse(event.nativeEvent.data);
+        if (msg.type === "markerPress") {
+          const spot = SPOTS.find((s) => s.id === msg.spotId);
+          if (spot) {
+            setSelectedId(spot.id);
+            setTimeout(() => bottomSheetRef.current?.snapToIndex(0), 120);
+          }
+        }
+      } catch (_) {}
+    },
+    []
+  );
+
+  const handleFilterChange = useCallback(
+    (f) => {
+      bottomSheetRef.current?.close();
+      setActiveFilter(f);
+      const next = f === "All" ? SPOTS : SPOTS.filter((s) => s.type === f);
+      const nextData = next.map((s) => ({
+        id: s.id,
+        lat: s.coordinate.latitude,
+        lng: s.coordinate.longitude,
+        emoji: s.emoji,
+        color: s.color,
+        type: s.type,
+      }));
+      sendToMap({ type: "updateSpots", spots: nextData });
+      if (next[0]) setSelectedId(next[0].id);
+    },
+    [sendToMap]
+  );
+
+  const handleContact = useCallback(() => {
+    if (!selectedSpot) return;
+    Alert.alert(
+      `Contact ${selectedSpot.name}`,
+      "Choose how to reach us:",
+      [
+        { text: "Call", onPress: () => Linking.openURL("tel:+21671000000") },
+        { text: "WhatsApp", onPress: () => {} },
+        { text: "Cancel", style: "cancel" },
+      ]
+    );
+  }, [selectedSpot]);
+
+  const handleDirections = useCallback(() => {
+    if (!selectedSpot) return;
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedSpot.coordinate.latitude},${selectedSpot.coordinate.longitude}`;
+    Linking.openURL(url).catch(() => {
+      Alert.alert("Error", "Could not open maps application");
+    });
+  }, [selectedSpot]);
+
+  const handleLocateMe = useCallback(() => {
+    sendToMap({
+      type: "flyTo",
+      spotId: SPOTS[0].id,
+      lat: SPOTS[0].coordinate.latitude - 0.008,
+      lng: SPOTS[0].coordinate.longitude,
+    });
+    setSelectedId(SPOTS[0].id);
+  }, [sendToMap]);
+
+  const renderBackdrop = useCallback(
+    (props) => (
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        opacity={0.4}
+      />
+    ),
+    []
+  );
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+
+  return (
+    <View style={styles.root}>
+
+      {/* ── Layer 1: Leaflet Map (WebView) ───────────────────────────────────── */}
+      <WebView
+        ref={webViewRef}
+        style={StyleSheet.absoluteFillObject}
+        source={{ html: leafletHTML }}
+        onMessage={handleWebViewMessage}
+        javaScriptEnabled
+        originWhitelist={["*"]}
+        scrollEnabled={false}
+        mixedContentMode="compatibility"
+      />
+
+      {/* ── Layer 2: AppHeader Redesign (Glassmorphism) ────────────────────────── */}
+      <View
+        style={styles.headerWrap}
+        onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
+      >
+        <View style={[styles.headerContainer, { paddingTop: insets.top + 12 }]}>
+          <View style={styles.headerGlass}>
+            <View style={styles.headerLeft}>
+              <View style={styles.avatarContainer}>
+                <Image
+                  source={{ uri: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" }}
+                  style={styles.headerAvatar}
+                />
+                <View style={styles.headerVerifiedBadge}>
+                  <AppIcon name="shield-check" size={10} color="#fff" strokeWidth={3} />
+                </View>
+              </View>
+              <View style={styles.greetingWrap}>
+                <Text style={styles.greetingText}>Welcome back,</Text>
+                <Text style={styles.headerNameText}>{user?.name ?? "Yassmine"}</Text>
+              </View>
+            </View>
+
+            <View style={styles.headerRight}>
+              <TouchableOpacity style={styles.headerActionBtn} activeOpacity={0.7}>
+                <AppIcon name="search" size={18} color="#2E2E2E" />
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.headerActionBtn} 
+                activeOpacity={0.7}
+                onPress={() => navigation.navigate("CartPage")}
+              >
+                <View style={{ position: "relative" }}>
+                  <AppIcon name="basket" size={18} color="#2E2E2E" />
+                  {count > 0 && (
+                    <View style={styles.headerCartBadge}>
+                      <Text style={styles.headerCartBadgeText}>{count}</Text>
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.headerActionBtn} activeOpacity={0.7}>
+                <AppIcon name="bell" size={18} color="#2E2E2E" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </View>
+
+      {/* ── Layer 3: Category Chips (Redesigned) ─────────────────────────────── */}
+      <View style={[styles.filterBar, { top: headerHeight + 12 }]}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterRow}
+          style={styles.filterScroll}
+        >
+          {FILTERS.map((f) => {
+            const isActive = activeFilter === f;
+            return (
+              <TouchableOpacity
+                key={f}
+                onPress={() => handleFilterChange(f)}
+                style={[
+                  styles.filterPill,
+                  isActive ? styles.filterPillActive : styles.filterPillInactive,
+                ]}
+                activeOpacity={0.8}
+              >
+                <AppIcon
+                  name={FILTER_ICONS[f] || "grid"}
+                  size={14}
+                  color={isActive ? "#FFFFFF" : "#6C757D"}
+                  strokeWidth={2.4}
+                />
+                <Text
+                  style={[
+                    styles.filterText,
+                    isActive ? styles.filterTextActive : styles.filterTextInactive,
+                  ]}
+                >
+                  {f}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        <TouchableOpacity style={styles.filterIconBtn} activeOpacity={0.8}>
+          <AppIcon name="list" size={15} color="#2E2E2E" />
+          <Text style={styles.filterIconLabel}>Filter</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* ── Layer 4: Bottom info card (single selected spot - Glassmorphic) ────── */}
+      {selectedSpot && sheetIndex === -1 && (
+        <TouchableOpacity
+          style={[styles.infoCard, { bottom: insets.bottom + 16 }]}
+          activeOpacity={0.92}
+          onPress={openSheet}
+        >
+          <View style={styles.cardContentRow}>
+            <Image
+              source={{ uri: SPOT_IMAGES[selectedSpot.id] || SPOT_IMAGES["1"] }}
+              style={styles.cardImage}
+            />
+            
+            <View style={styles.cardInfo}>
+              <View style={styles.cardTitleRow}>
+                <Text style={styles.cardName} numberOfLines={1}>
+                  {selectedSpot.name}
+                </Text>
+                <TouchableOpacity style={styles.favoriteBtn} activeOpacity={0.7}>
+                  <AppIcon name="heart" size={16} color="#C8102E" fill="#C8102E" strokeWidth={2.5} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.cardBadgeRow}>
+                <View style={styles.verifiedBadge}>
+                  <AppIcon name="shield-check" size={10} color="#8BC34A" strokeWidth={3} />
+                  <Text style={styles.verifiedBadgeText}>Verified GF</Text>
+                </View>
+                
+                <View style={[styles.cardCategoryBadge, { backgroundColor: selectedSpot.color + "15" }]}>
+                  <Text style={[styles.cardCategoryText, { color: selectedSpot.color }]}>
+                    {selectedSpot.type}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.cardMetaRow}>
+                <View style={styles.metaItem}>
+                  <AppIcon name="star" size={12} color="#F59E0B" fill="#F59E0B" />
+                  <Text style={styles.metaValText}>{selectedSpot.rating}</Text>
+                  <Text style={styles.metaCountText}>({selectedSpot.reviews})</Text>
+                </View>
+                <View style={styles.metaDivider} />
+                <View style={styles.metaItem}>
+                  <AppIcon name="location" size={12} color="#6C757D" />
+                  <Text style={styles.metaValText}>{selectedSpot.distance}</Text>
+                </View>
+                <View style={styles.metaDivider} />
+                <View style={styles.metaItem}>
+                  <Text style={styles.metaPriceText}>{selectedSpot.avgPrice}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.cardActionRow}>
+            <TouchableOpacity style={styles.cardCtaBtn} onPress={openSheet} activeOpacity={0.85}>
+              <Text style={styles.cardCtaText}>View Details</Text>
+              <AppIcon name="chevron-right" size={14} color="#FFFFFF" strokeWidth={3} />
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      )}
+
+      {/* ── Layer 4.5: Floating circular Locate Me button ───────────────────── */}
+      <TouchableOpacity
+        style={[
+          styles.locateMeBtn,
+          { bottom: selectedSpot && sheetIndex === -1 ? insets.bottom + 214 : insets.bottom + 24 }
+        ]}
+        activeOpacity={0.85}
+        onPress={handleLocateMe}
+      >
+        <AppIcon name="compass" size={20} color="#8BC34A" strokeWidth={2.5} />
+      </TouchableOpacity>
+
+      {/* ── Layer 5: Bottom Sheet (Premium Restaurant Details) ───────────────── */}
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={-1}
+        snapPoints={snapPoints}
+        enablePanDownToClose
+        animateOnMount={false}
+        backdropComponent={renderBackdrop}
+        backgroundStyle={styles.sheetBg}
+        handleIndicatorStyle={styles.sheetHandle}
+        onChange={setSheetIndex}
+      >
+        {selectedSpot && (
+          <>
+            <BottomSheetScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.sheetScrollContent}
+            >
+              {/* Section 1: Hero Image + Gradient Overlay */}
+              <View style={styles.sheetHero}>
+                <Image
+                  source={{ uri: SPOT_IMAGES[selectedSpot.id] || SPOT_IMAGES["1"] }}
+                  style={styles.heroImage}
+                />
+                <View style={styles.heroGradient}>
+                  <View style={styles.heroBadgeRow}>
+                    <View style={styles.gfCertBadge}>
+                      <AppIcon name="shield-check" size={12} color="#FFFFFF" strokeWidth={3} />
+                      <Text style={styles.gfCertText}>Certified Gluten-Free</Text>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.heroDetailsContainer}>
+                    <Text style={styles.heroCategory}>{selectedSpot.type.toUpperCase()}</Text>
+                    <Text style={styles.heroTitle}>{selectedSpot.name}</Text>
+                    
+                    <View style={styles.heroMetaRow}>
+                      <View style={styles.heroMetaItem}>
+                        <AppIcon name="star" size={12} color="#F59E0B" fill="#F59E0B" />
+                        <Text style={styles.heroMetaText}>
+                          {selectedSpot.rating} ({selectedSpot.reviews} reviews)
+                        </Text>
+                      </View>
+                      <Text style={styles.heroMetaBullet}>•</Text>
+                      <View style={styles.heroMetaItem}>
+                        <AppIcon name="location" size={12} color="#FFFFFF" />
+                        <Text style={styles.heroMetaText}>{selectedSpot.distance}</Text>
+                      </View>
+                      <Text style={styles.heroMetaBullet}>•</Text>
+                      <View style={styles.heroMetaItem}>
+                        <Text style={styles.heroMetaText}>{selectedSpot.avgPrice}</Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Section 2: About Card */}
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionHeader}>
+                  <AppIcon name="info" size={16} color="#8BC34A" strokeWidth={2.5} />
+                  <Text style={styles.sectionTitle}>About</Text>
+                </View>
+                <Text style={styles.descriptionText}>{selectedSpot.description}</Text>
+              </View>
+
+              {/* Section 3: Available GF Products */}
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionHeader}>
+                  <AppIcon name="leaf" size={16} color="#8BC34A" strokeWidth={2.5} />
+                  <Text style={styles.sectionTitle}>Available Gluten-Free Products</Text>
+                </View>
+                <View style={styles.tagCloud}>
+                  {selectedSpot.tags.map((tag) => (
+                    <View key={tag} style={styles.gfProductTag}>
+                      <AppIcon name="checkmark" size={10} color="#8BC34A" strokeWidth={3} />
+                      <Text style={styles.gfProductTagText}>{tag}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              {/* Section 4: Safety & Facilities */}
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionHeader}>
+                  <AppIcon name="shield-check" size={16} color="#8BC34A" strokeWidth={2.5} />
+                  <Text style={styles.sectionTitle}>Safety & Facilities</Text>
+                </View>
+                <View style={styles.facilityGrid}>
+                  {getFacilities(selectedSpot.type).map((fac) => (
+                    <View key={fac} style={styles.facilityItem}>
+                      <View style={styles.facilityDot} />
+                      <Text style={styles.facilityText}>{fac}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              {/* Section 5: Opening Hours */}
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionHeader}>
+                  <AppIcon name="clock" size={16} color="#8BC34A" strokeWidth={2.5} />
+                  <Text style={styles.sectionTitle}>Opening Hours</Text>
+                </View>
+                <View style={styles.hoursList}>
+                  {HOURS.map((h) => (
+                    <View key={h.day} style={styles.hoursItem}>
+                      <Text style={styles.hoursDayText}>{h.day}</Text>
+                      <Text style={styles.hoursTimeText}>{h.time}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              {/* Section 6: Customer Reviews */}
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionHeader}>
+                  <AppIcon name="person" size={16} color="#8BC34A" strokeWidth={2.5} />
+                  <Text style={styles.sectionTitle}>Customer Reviews</Text>
+                </View>
+                <View style={styles.reviewsContainer}>
+                  <View style={styles.reviewItem}>
+                    <View style={styles.reviewHeader}>
+                      <Text style={styles.reviewAuthor}>Sarah M.</Text>
+                      <View style={styles.reviewStars}>
+                        <AppIcon name="star" size={11} color="#F59E0B" fill="#F59E0B" />
+                        <Text style={styles.reviewRating}>5.0</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.reviewText}>
+                      "Absolute safe haven! The staff understood cross-contamination perfectly. Highly recommend!"
+                    </Text>
+                  </View>
+                  <View style={styles.reviewDivider} />
+                  <View style={styles.reviewItem}>
+                    <View style={styles.reviewHeader}>
+                      <Text style={styles.reviewAuthor}>Alex K.</Text>
+                      <View style={styles.reviewStars}>
+                        <AppIcon name="star" size={11} color="#F59E0B" fill="#F59E0B" />
+                        <Text style={styles.reviewRating}>4.8</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.reviewText}>
+                      "Amazing options. I had zero issues afterwards. Will definitely be a regular here."
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Section 7: Location */}
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionHeader}>
+                  <AppIcon name="map-pin" size={16} color="#8BC34A" strokeWidth={2.5} />
+                  <Text style={styles.sectionTitle}>Location</Text>
+                </View>
+                <Text style={styles.locationAddressText}>{selectedSpot.address}</Text>
+              </View>
+            </BottomSheetScrollView>
+
+            {/* Section 8: Sticky double CTA buttons */}
+            <View
+              style={[
+                styles.ctaBar,
+                { paddingBottom: insets.bottom + 16 },
+              ]}
+            >
+              <TouchableOpacity
+                style={styles.ctaCallBtn}
+                activeOpacity={0.8}
+                onPress={handleContact}
+              >
+                <AppIcon name="phone" size={16} color="#8BC34A" strokeWidth={2.5} />
+                <Text style={styles.ctaCallBtnText}>Call Us</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.ctaDirectionsBtn}
+                activeOpacity={0.8}
+                onPress={handleDirections}
+              >
+                <AppIcon name="navigation" size={16} color="#FFFFFF" strokeWidth={2.5} />
+                <Text style={styles.ctaDirectionsBtnText}>Directions</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+      </BottomSheet>
+    </View>
+  );
+}
+
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: "#F8F9FA",
+  },
+
+  headerWrap: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
+  headerContainer: {
+    paddingHorizontal: 16,
+  },
+  headerGlass: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "rgba(255, 255, 255, 0.92)",
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.6)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  avatarContainer: {
+    width: 44,
+    height: 44,
+    position: "relative",
+  },
+  headerAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  headerVerifiedBadge: {
+    position: "absolute",
+    bottom: -2,
+    right: -2,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: "#8BC34A",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  greetingWrap: {
+    justifyContent: "center",
+    flex: 1,
+  },
+  greetingText: {
+    fontSize: 11,
+    color: "#6C757D",
+    fontWeight: "600",
+  },
+  headerNameText: {
+    fontSize: 15,
+    color: "#2E2E2E",
+    fontWeight: "700",
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  headerActionBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(0, 0, 0, 0.03)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerCartBadge: {
+    position: "absolute",
+    top: -6,
+    right: -6,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#C8102E",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 3,
+  },
+  headerCartBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 9,
+    fontWeight: "800",
+  },
+
+  filterBar: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    gap: 10,
+    zIndex: 9,
+  },
+  filterScroll: { flex: 1 },
+  filterRow: {
+    gap: 8,
+    alignItems: "center",
+    paddingRight: 4,
+  },
+  filterPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    height: 40,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+  },
+  filterPillActive: {
+    backgroundColor: "#8BC34A",
+    borderColor: "#8BC34A",
+    shadowColor: "#8BC34A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  filterPillInactive: {
+    backgroundColor: "#FFFFFF",
+    borderColor: "rgba(0, 0, 0, 0.04)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  filterText: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  filterTextActive: {
+    color: "#FFFFFF",
+  },
+  filterTextInactive: {
+    color: "#6C757D",
+  },
+  filterIconBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.04)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  filterIconLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#2E2E2E",
+  },
+
+  infoCard: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.94)",
+    borderRadius: 24,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.6)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 8,
+    zIndex: 8,
+  },
+  cardContentRow: {
+    flexDirection: "row",
+    gap: 16,
+  },
+  cardImage: {
+    width: 88,
+    height: 88,
+    borderRadius: 16,
+    backgroundColor: "#F1F8E9",
+  },
+  cardInfo: {
+    flex: 1,
+    justifyContent: "space-between",
+  },
+  cardTitleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: 8,
+  },
+  cardName: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#2E2E2E",
+    flex: 1,
+  },
+  favoriteBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(200, 16, 46, 0.04)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardBadgeRow: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+    marginTop: 4,
+  },
+  verifiedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#F1F8E9",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderWidth: 1,
+    borderColor: "rgba(139, 195, 74, 0.2)",
+  },
+  verifiedBadgeText: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#8BC34A",
+  },
+  cardCategoryBadge: {
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  cardCategoryText: {
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  cardMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  metaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  metaValText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#2E2E2E",
+  },
+  metaCountText: {
+    fontSize: 11,
+    color: "#6C757D",
+  },
+  metaDivider: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#DEE2E6",
+    marginHorizontal: 8,
+  },
+  metaPriceText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: "#8BC34A",
+  },
+  cardActionRow: {
+    marginTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0, 0, 0, 0.04)",
+    paddingTop: 12,
+  },
+  cardCtaBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#8BC34A",
+    borderRadius: 16,
+    height: 44,
+    shadowColor: "#8BC34A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  cardCtaText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+
+  locateMeBtn: {
+    position: "absolute",
+    right: 16,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "rgba(241, 248, 233, 0.95)",
+    borderWidth: 1,
+    borderColor: "rgba(139, 195, 74, 0.3)",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#8BC34A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+    zIndex: 7,
+  },
+
+  sheetBg: {
+    backgroundColor: "#F8F9FA",
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+  },
+  sheetHandle: {
+    width: 48,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: "#DEE2E6",
+    alignSelf: "center",
+  },
+  sheetScrollContent: {
+    paddingBottom: 130,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+
+  sheetHero: {
+    height: 240,
+    borderRadius: 24,
+    overflow: "hidden",
+    marginBottom: 16,
+    position: "relative",
+  },
+  heroImage: {
+    width: "100%",
+    height: "100%",
+  },
+  heroGradient: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.42)",
+    justifyContent: "space-between",
+    padding: 16,
+  },
+  heroBadgeRow: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+  },
+  gfCertBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#8BC34A",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    shadowColor: "#8BC34A",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  gfCertText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  heroDetailsContainer: {
+    gap: 4,
+  },
+  heroCategory: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#A5D66A",
+    letterSpacing: 1.2,
+  },
+  heroTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#FFFFFF",
+  },
+  heroMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+  },
+  heroMetaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  heroMetaText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  heroMetaBullet: {
+    color: "rgba(255, 255, 255, 0.6)",
+    marginHorizontal: 8,
+    fontSize: 12,
+  },
+
+  sectionCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(0, 0, 0, 0.03)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#2E2E2E",
+  },
+  descriptionText: {
+    fontSize: 13,
+    color: "#6C757D",
+    lineHeight: 20,
+  },
+
+  hoursList: {
+    gap: 8,
+  },
+  hoursItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  hoursDayText: {
+    fontSize: 13,
+    color: "#6C757D",
+    fontWeight: "600",
+  },
+  hoursTimeText: {
+    fontSize: 13,
+    color: "#2E2E2E",
+    fontWeight: "700",
+  },
+
+  tagCloud: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  gfProductTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#F1F8E9",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: "rgba(139, 195, 74, 0.15)",
+  },
+  gfProductTagText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#8BC34A",
+  },
+
+  facilityGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  facilityItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    width: "47%",
+  },
+  facilityDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#8BC34A",
+  },
+  facilityText: {
+    fontSize: 12,
+    color: "#6C757D",
+    fontWeight: "600",
+  },
+
+  reviewsContainer: {
+    gap: 12,
+  },
+  reviewItem: {
+    gap: 6,
+  },
+  reviewHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  reviewAuthor: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#2E2E2E",
+  },
+  reviewStars: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  reviewRating: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#2E2E2E",
+  },
+  reviewText: {
+    fontSize: 13,
+    color: "#6C757D",
+    fontStyle: "italic",
+    lineHeight: 18,
+  },
+  reviewDivider: {
+    height: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.04)",
+  },
+
+  locationAddressText: {
+    fontSize: 13,
+    color: "#6C757D",
+    lineHeight: 18,
+  },
+
+  ctaBar: {
+    flexDirection: "row",
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(0, 0, 0, 0.05)",
+  },
+  ctaCallBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#F1F8E9",
+    borderWidth: 1.5,
+    borderColor: "#8BC34A",
+    borderRadius: 16,
+    height: 50,
+  },
+  ctaCallBtnText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#8BC34A",
+  },
+  ctaDirectionsBtn: {
+    flex: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#8BC34A",
+    borderRadius: 16,
+    height: 50,
+    shadowColor: "#8BC34A",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  ctaDirectionsBtnText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+});

@@ -74,6 +74,7 @@ const idValidator = [
 ];
 
 router.get("/", productController.getProducts);
+router.get("/barcode/:code", productController.getProductByBarcode);
 router.get("/:id", idValidator, validateRequest, productController.getProductById);
 router.post(
   "/",

@@ -1,243 +1,278 @@
-import { useState } from "react";
+import { CameraView, useCameraPermissions } from "expo-camera";
+import { useCallback, useRef, useState } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  Linking,
+  Pressable,
   ScrollView,
-  Dimensions,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
-import MapView, { Marker, Callout } from "react-native-maps";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import AppHeader from "../../components/AppHeader";
+import AppIcon from "../../components/AppIcon";
+import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
+import { useCart } from "../../context/CartContext";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
-const { width } = Dimensions.get("window");
+const FRAME_W = 260;
+const FRAME_H = 120;
+const TAB_BAR_HEIGHT = 66;
 
-// ─── Hardcoded gluten-free spots (Tunis) ──────────────────────────────────────
-// Replace coordinates/names with real ones when ready
-const SPOTS = [
-  {
-    id: "1",
-    name: "Bio Marché Tunis",
-    type: "Supermarket",
-    address: "Avenue Habib Bourguiba, Tunis",
-    emoji: "🛒",
-    lat: 36.8189,
-    lng: 10.1658,
-    tags: ["Gluten-Free Bread", "Pasta", "Snacks"],
-  },
-  {
-    id: "2",
-    name: "Green Bowl Café",
-    type: "Restaurant",
-    address: "Rue de Marseille, Tunis",
-    emoji: "🍽️",
-    lat: 36.8165,
-    lng: 10.1723,
-    tags: ["GF Menu", "Salads", "Smoothies"],
-  },
-  {
-    id: "3",
-    name: "Nature & Saveur",
-    type: "Health Store",
-    address: "Les Berges du Lac, Tunis",
-    emoji: "🌿",
-    lat: 36.8378,
-    lng: 10.2301,
-    tags: ["Organic", "GF Cereals", "Supplements"],
-  },
-  {
-    id: "4",
-    name: "La Boulangerie Sans Gluten",
-    type: "Bakery",
-    address: "Rue Ibn Khaldoun, Tunis",
-    emoji: "🥐",
-    lat: 36.8142,
-    lng: 10.1689,
-    tags: ["GF Bread", "Pastries", "Cakes"],
-  },
-  {
-    id: "5",
-    name: "Carrefour Bio",
-    type: "Supermarket",
-    address: "La Marsa, Tunis",
-    emoji: "🛒",
-    lat: 36.8779,
-    lng: 10.3247,
-    tags: ["GF Section", "Imported Products"],
-  },
-  {
-    id: "6",
-    name: "Sana Café",
-    type: "Restaurant",
-    address: "Gammarth, Tunis",
-    emoji: "☕",
-    lat: 36.9012,
-    lng: 10.2891,
-    tags: ["GF Options", "Vegan Friendly"],
-  },
-];
-
-const TYPE_COLORS = {
-  Supermarket: "#8BC34A",
-  Restaurant: "#FF7043",
-  "Health Store": "#26A69A",
-  Bakery: "#FFA726",
-};
-
-const INITIAL_REGION = {
-  latitude: 36.8489,
-  longitude: 10.2206,
-  latitudeDelta: 0.18,
-  longitudeDelta: 0.18,
-};
+const SCANNING = "scanning";
+const LOADING = "loading";
+const FOUND = "found";
+const NOT_FOUND = "not_found";
 
 export default function ScanScreen({ navigation }) {
-  const { user } = useAuth();
-  const [selected, setSelected] = useState(null);
-  const [activeFilter, setActiveFilter] = useState("All");
+  const { user, token } = useAuth();
+  const cart = useCart();
+  const [permission, requestPermission] = useCameraPermissions();
+  const [screenState, setScreenState] = useState(SCANNING);
+  const [product, setProduct] = useState(null);
+  const scanLock = useRef(false);
+  const insets = useSafeAreaInsets();
+  const isFocused = useIsFocused();
 
-  const filters = ["All", "Supermarket", "Restaurant", "Health Store", "Bakery"];
+  // Fix 3: reset scan lock whenever the screen loses focus so the
+  // camera is ready for a fresh scan when the user returns to this tab.
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        scanLock.current = false;
+      };
+    }, [])
+  );
 
-  const filtered =
-    activeFilter === "All"
-      ? SPOTS
-      : SPOTS.filter((s) => s.type === activeFilter);
+  // Fix 6: admin stack has no CartPage — avoid a navigation crash.
+  const handleCartPress =
+    user?.role === "admin"
+      ? undefined
+      : () => navigation.navigate("CartPage");
 
-  return (
-    <View style={styles.root}>
-      {/* ── AppHeader (safeTop manages status bar inset) ─────────────────── */}
-      <AppHeader
-        userName={user?.name ?? ""}
-        onCartPress={() => navigation.navigate("CartPage")}
-        safeTop
-      />
+  // Fix 5: compute bottom padding once so every state uses the same value.
+  const bottomPad = insets.bottom + TAB_BAR_HEIGHT + Spacing.lg;
 
-      {/* ── Map container ───────────────────────────────────────────────── */}
-      <View style={styles.mapContainer}>
-      {/* ── Map ─────────────────────────────────────────────────────────────── */}
-      <MapView
-        style={styles.map}
-        initialRegion={INITIAL_REGION}
-        showsUserLocation
-        showsMyLocationButton={false}
-      >
-        {filtered.map((spot) => (
-          <Marker
-            key={spot.id}
-            coordinate={{ latitude: spot.lat, longitude: spot.lng }}
-            onPress={() => setSelected(spot)}
-          >
-            {/* Custom emoji pin */}
-            <View
-              style={[
-                styles.pin,
-                {
-                  backgroundColor: TYPE_COLORS[spot.type] || Colors.primary,
-                  borderColor:
-                    selected?.id === spot.id ? Colors.textDark : "#fff",
-                  borderWidth: selected?.id === spot.id ? 3 : 2,
-                  transform: [{ scale: selected?.id === spot.id ? 1.2 : 1 }],
-                },
-              ]}
-            >
-              <Text style={styles.pinEmoji}>{spot.emoji}</Text>
-            </View>
-            {/* Callout bubble on tap */}
-            <Callout tooltip>
-              <View style={styles.callout}>
-                <Text style={styles.calloutTitle}>{spot.name}</Text>
-                <Text style={styles.calloutType}>{spot.type}</Text>
-                <Text style={styles.calloutAddress}>{spot.address}</Text>
-              </View>
-            </Callout>
-          </Marker>
-        ))}
-      </MapView>
+  const resetToScanning = () => {
+    setProduct(null);
+    setScreenState(SCANNING);
+    scanLock.current = false;
+  };
 
-      {/* ── Filter pill overlay ─────────────────────────────────────────────── */}
-      <View style={styles.headerOverlay}>
-        {/* Filter pills */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterRow}
-        >
-          {filters.map((f) => (
-            <TouchableOpacity
-              key={f}
-              onPress={() => {
-                setActiveFilter(f);
-                setSelected(null);
-              }}
-              style={[
-                styles.filterPill,
-                activeFilter === f && styles.filterPillActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.filterText,
-                  activeFilter === f && styles.filterTextActive,
-                ]}
-              >
-                {f}
+  const handleBarcodeScanned = async ({ data }) => {
+    if (scanLock.current) return;
+    scanLock.current = true;
+
+    // Fix 4: transition to LOADING immediately so the user sees a
+    // spinner instead of a frozen camera with no feedback.
+    setScreenState(LOADING);
+
+    try {
+      const found = await api.productByBarcode(data, token);
+      setProduct(found);
+      setScreenState(FOUND);
+    } catch (error) {
+      if (error.status === 404) {
+        setScreenState(NOT_FOUND);
+      } else {
+        // Non-404 error: show alert, then return to scanning on dismiss.
+        Alert.alert("Scan Error", error.message, [
+          {
+            text: "OK",
+            onPress: () => {
+              scanLock.current = false;
+              setScreenState(SCANNING);
+            },
+          },
+        ]);
+      }
+    }
+  };
+
+  // Permission status not yet resolved
+  if (!permission) {
+    return <View style={styles.root} />;
+  }
+
+  // Permission not granted
+  if (!permission.granted) {
+    return (
+      <View style={styles.root}>
+        <AppHeader
+          userName={user?.name ?? ""}
+          onCartPress={handleCartPress}
+          safeTop
+        />
+        <View style={[styles.center, { paddingBottom: bottomPad }]}>
+          <View style={styles.iconCircle}>
+            <AppIcon name="scan" size={48} color={Colors.primary} />
+          </View>
+          <Text style={styles.headingText}>Camera Access Needed</Text>
+          <Text style={styles.bodyText}>
+            Glutenia needs your camera to scan product barcodes and instantly
+            check if they're gluten-free.
+          </Text>
+          {permission.canAskAgain ? (
+            <Pressable style={styles.primaryBtn} onPress={requestPermission}>
+              <Text style={styles.primaryBtnText}>Grant Camera Access</Text>
+            </Pressable>
+          ) : (
+            <>
+              <Text style={styles.bodyText}>
+                Camera access was denied. Enable it in your device settings to
+                use the scanner.
               </Text>
-            </TouchableOpacity>
-          ))}
+              <Pressable
+                style={styles.primaryBtn}
+                onPress={() => Linking.openSettings()}
+              >
+                <Text style={styles.primaryBtnText}>Open Settings</Text>
+              </Pressable>
+            </>
+          )}
+        </View>
+      </View>
+    );
+  }
+
+  // State LOADING: API call in flight
+  if (screenState === LOADING) {
+    return (
+      <View style={styles.root}>
+        <AppHeader
+          userName={user?.name ?? ""}
+          onCartPress={handleCartPress}
+          safeTop
+        />
+        <View style={[styles.center, { paddingBottom: bottomPad }]}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.bodyText}>Checking product…</Text>
+        </View>
+      </View>
+    );
+  }
+
+  // State FOUND: product returned from API
+  if (screenState === FOUND && product) {
+    return (
+      <View style={styles.root}>
+        <AppHeader
+          userName={user?.name ?? ""}
+          onCartPress={handleCartPress}
+          safeTop
+        />
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: bottomPad },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.card}>
+            <View style={styles.glutenBadge}>
+              <AppIcon name="checkmark" size={15} color="#fff" />
+              <Text style={styles.glutenBadgeText}>Gluten-Free</Text>
+            </View>
+            <Text style={styles.productName}>{product.name}</Text>
+            <Text style={styles.productPrice}>
+              {product.price.toFixed(2)} TND
+            </Text>
+            {!!product.description && (
+              <Text style={styles.productDesc}>{product.description}</Text>
+            )}
+          </View>
+          <Pressable
+            style={styles.primaryBtn}
+            onPress={() => {
+              if (cart) {
+                cart.addItem(product, 1);
+                Alert.alert(
+                  "Added to Cart",
+                  `${product.name} has been added to your cart.`
+                );
+              }
+            }}
+            disabled={!cart}
+          >
+            <AppIcon name="basket" size={18} color="#fff" />
+            <Text style={styles.primaryBtnText}>Add to Cart</Text>
+          </Pressable>
+          <Pressable style={styles.secondaryBtn} onPress={resetToScanning}>
+            <AppIcon name="scan" size={18} color={Colors.primary} />
+            <Text style={styles.secondaryBtnText}>Scan Another</Text>
+          </Pressable>
         </ScrollView>
       </View>
+    );
+  }
 
-      {/* ── Bottom detail card (shows on marker tap) ────────────────────────── */}
-      {selected && (
-        <View style={styles.detailCard}>
-          <View style={styles.detailTop}>
-            <View
-              style={[
-                styles.detailEmojiBg,
-                { backgroundColor: TYPE_COLORS[selected.type] + "22" },
-              ]}
-            >
-              <Text style={styles.detailEmoji}>{selected.emoji}</Text>
-            </View>
-            <View style={styles.detailInfo}>
-              <Text style={styles.detailName}>{selected.name}</Text>
-              <View
-                style={[
-                  styles.typeBadge,
-                  { backgroundColor: TYPE_COLORS[selected.type] + "22" },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.typeBadgeText,
-                    { color: TYPE_COLORS[selected.type] },
-                  ]}
-                >
-                  {selected.type}
-                </Text>
-              </View>
-              <Text style={styles.detailAddress}>{selected.address}</Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => setSelected(null)}
-              style={styles.closeBtn}
-            >
-              <Text style={styles.closeBtnText}>✕</Text>
-            </TouchableOpacity>
+  // State NOT_FOUND
+  if (screenState === NOT_FOUND) {
+    return (
+      <View style={styles.root}>
+        <AppHeader
+          userName={user?.name ?? ""}
+          onCartPress={handleCartPress}
+          safeTop
+        />
+        <View style={[styles.center, { paddingBottom: bottomPad }]}>
+          <View style={[styles.iconCircle, styles.iconCircleGray]}>
+            <AppIcon name="close-circle" size={48} color={Colors.textMuted} />
           </View>
-
-          {/* Tags */}
-          <View style={styles.tagRow}>
-            {selected.tags.map((tag) => (
-              <View key={tag} style={styles.tag}>
-                <Text style={styles.tagText}>✓ {tag}</Text>
-              </View>
-            ))}
-          </View>
+          <Text style={styles.headingText}>Product Not Found</Text>
+          <Text style={styles.bodyText}>
+            This product is not in our gluten-free database yet.
+          </Text>
+          <Pressable style={styles.primaryBtn} onPress={resetToScanning}>
+            <AppIcon name="scan" size={18} color="#fff" />
+            <Text style={styles.primaryBtnText}>Try Again</Text>
+          </Pressable>
         </View>
+      </View>
+    );
+  }
+
+  // State SCANNING — full-screen camera with overlay frame
+  return (
+    <View style={styles.root}>
+      {/* Fix 1: only mount CameraView while this tab is actually visible. */}
+      {isFocused && (
+        <CameraView
+          style={StyleSheet.absoluteFill}
+          facing="back"
+          barcodeScannerSettings={{
+            barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e", "code128"],
+          }}
+          onBarcodeScanned={handleBarcodeScanned}
+        />
       )}
+
+      {/* Top mask */}
+      <View
+        style={[styles.maskTop, { paddingTop: insets.top + Spacing.md }]}
+      >
+        <Text style={styles.scanTitle}>Scan Product</Text>
+      </View>
+
+      {/* Middle row: dark sides + transparent guide frame */}
+      <View style={styles.maskRow}>
+        <View style={styles.maskSide} />
+        <View style={styles.frame} />
+        <View style={styles.maskSide} />
+      </View>
+
+      {/* Fix 2: bottom mask clears the floating tab bar so the hint is visible. */}
+      <View
+        style={[
+          styles.maskBottom,
+          { paddingBottom: insets.bottom + TAB_BAR_HEIGHT + Spacing.md },
+        ]}
+      >
+        <Text style={styles.scanHint}>Point at a product barcode</Text>
       </View>
     </View>
   );
@@ -248,164 +283,158 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  mapContainer: {
-    flex: 1,
-  },
-  map: {
-    flex: 1,
-  },
 
-  // ── Pin ────────────────────────────────────────────────────────────────────
-  pin: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  center: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  pinEmoji: {
-    fontSize: 20,
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.md,
   },
 
-  // ── Callout ────────────────────────────────────────────────────────────────
-  callout: {
-    backgroundColor: "#fff",
-    borderRadius: Radius.md,
-    padding: Spacing.sm,
-    minWidth: 160,
-    ...Shadow,
+  iconCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: Colors.primaryPale,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Spacing.sm,
   },
-  calloutTitle: {
-    fontWeight: "800",
-    fontSize: 13,
+  iconCircleGray: {
+    backgroundColor: Colors.divider,
+  },
+  headingText: {
+    fontSize: 22,
+    fontWeight: "900",
     color: Colors.textDark,
+    textAlign: "center",
   },
-  calloutType: {
-    fontSize: 11,
-    color: Colors.primary,
-    fontWeight: "700",
-    marginTop: 2,
-  },
-  calloutAddress: {
-    fontSize: 11,
+  bodyText: {
+    fontSize: 14,
     color: Colors.textMuted,
-    marginTop: 2,
+    textAlign: "center",
+    lineHeight: 22,
   },
 
-  // ── Filter overlay (sits over map) ─────────────────────────────────────────
-  headerOverlay: {
-    position: "absolute",
-    top: 12,
-    left: 0,
-    right: 0,
-    paddingHorizontal: Spacing.md,
-  },
-  filterRow: {
-    gap: Spacing.xs,
-    paddingRight: Spacing.md,
-  },
-  filterPill: {
-    borderRadius: Radius.pill,
-    backgroundColor: "#ffffffee",
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    ...Shadow,
-  },
-  filterPillActive: {
-    backgroundColor: Colors.primary,
-  },
-  filterText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: Colors.textMuted,
-  },
-  filterTextActive: {
-    color: "#fff",
-  },
-
-  // ── Detail card ────────────────────────────────────────────────────────────
-  detailCard: {
-    position: "absolute",
-    bottom: 90,
-    left: Spacing.md,
-    right: Spacing.md,
-    backgroundColor: "#fff",
-    borderRadius: Radius.xl,
-    padding: Spacing.md,
-    gap: Spacing.sm,
-    ...Shadow,
-  },
-  detailTop: {
+  primaryBtn: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    gap: Spacing.sm,
-  },
-  detailEmojiBg: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
     alignItems: "center",
     justifyContent: "center",
+    gap: Spacing.sm,
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.pill,
+    paddingVertical: 14,
+    paddingHorizontal: Spacing.xl,
+    alignSelf: "stretch",
+    marginTop: Spacing.sm,
   },
-  detailEmoji: {
-    fontSize: 26,
-  },
-  detailInfo: {
-    flex: 1,
-    gap: 4,
-  },
-  detailName: {
+  primaryBtnText: {
+    color: "#fff",
     fontSize: 15,
+    fontWeight: "800",
+  },
+  secondaryBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.sm,
+    backgroundColor: Colors.primaryPale,
+    borderRadius: Radius.pill,
+    paddingVertical: 14,
+    paddingHorizontal: Spacing.xl,
+    alignSelf: "stretch",
+    marginTop: Spacing.sm,
+  },
+  secondaryBtnText: {
+    color: Colors.primary,
+    fontSize: 15,
+    fontWeight: "800",
+  },
+
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    padding: Spacing.lg,
+    gap: Spacing.md,
+  },
+  card: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.xl,
+    padding: Spacing.lg,
+    gap: Spacing.md,
+    ...Shadow,
+  },
+  glutenBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 6,
+    backgroundColor: Colors.primary,
+    borderRadius: Radius.pill,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+  },
+  glutenBadgeText: {
+    color: "#fff",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  productName: {
+    fontSize: 24,
     fontWeight: "900",
     color: Colors.textDark,
   },
-  typeBadge: {
-    alignSelf: "flex-start",
-    borderRadius: Radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-  },
-  typeBadgeText: {
-    fontSize: 11,
+  productPrice: {
+    fontSize: 20,
     fontWeight: "800",
-  },
-  detailAddress: {
-    fontSize: 12,
-    color: Colors.textMuted,
-    lineHeight: 16,
-  },
-  closeBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: Colors.divider,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  closeBtnText: {
-    fontSize: 12,
-    color: Colors.textMuted,
-    fontWeight: "700",
-  },
-  tagRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: Spacing.xs,
-  },
-  tag: {
-    backgroundColor: Colors.primaryPale,
-    borderRadius: Radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  tagText: {
-    fontSize: 11,
     color: Colors.primary,
-    fontWeight: "700",
+  },
+  productDesc: {
+    fontSize: 14,
+    color: Colors.textMuted,
+    lineHeight: 22,
+  },
+
+  maskTop: {
+    backgroundColor: "rgba(0,0,0,0.55)",
+    width: "100%",
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    paddingBottom: Spacing.md,
+  },
+  maskRow: {
+    flexDirection: "row",
+    height: FRAME_H,
+  },
+  maskSide: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.55)",
+  },
+  frame: {
+    width: FRAME_W,
+    height: FRAME_H,
+    borderWidth: 3,
+    borderColor: Colors.primary,
+    borderRadius: Radius.md,
+    backgroundColor: "transparent",
+  },
+  maskBottom: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    width: "100%",
+    alignItems: "center",
+    paddingTop: Spacing.md,
+  },
+  scanTitle: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "900",
+  },
+  scanHint: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

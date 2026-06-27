@@ -16,6 +16,8 @@ import CheckoutScreen from "../screens/user/CheckoutScreen";
 import OrderSuccessScreen from "../screens/user/OrderSuccessScreen";
 import UserOrdersScreen from "../screens/user/UserOrdersScreen";
 import ScanScreen from "../screens/user/ScanScreen";
+import MapScreen from "../screens/user/MapScreen";
+import MapDetailScreen from "../screens/user/MapDetailScreen";
 import EventsScreen from "../screens/user/EventsScreen";
 import EventDetailScreen from "../screens/user/EventDetailScreen";
 import CreateEventScreen from "../screens/user/CreateEventScreen";
@@ -61,8 +63,8 @@ function UserTabs() {
       <Tabs.Screen name="Home" component={HomeScreen} />
       <Tabs.Screen name="Events" component={EventsScreen} />
       <Tabs.Screen name="Scan" component={ScanScreen} />
-      <Tabs.Screen name="Orders" component={UserOrdersScreen} />
-      <Tabs.Screen name="Account" component={AccountScreen} />
+      <Tabs.Screen name="Map" component={MapScreen} />
+      <Tabs.Screen name="Profile" component={AccountScreen} />
     </Tabs.Navigator>
   );
 }
@@ -75,9 +77,11 @@ function UserStack() {
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <Stack.Screen name="Checkout" component={CheckoutScreen} />
       <Stack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
+      <Stack.Screen name="Orders" component={UserOrdersScreen} />
       <Stack.Screen name="EventDetail" component={EventDetailScreen} />
       <Stack.Screen name="CreateEvent" component={CreateEventScreen} />
       <Stack.Screen name="BadgeCollection" component={BadgeCollectionScreen} />
+      <Stack.Screen name="MapDetail" component={MapDetailScreen} />
     </Stack.Navigator>
   );
 }

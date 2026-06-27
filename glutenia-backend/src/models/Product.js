@@ -41,6 +41,13 @@ const productSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  barcode: {
+    type: String,
+    default: null,
+    trim: true,
+  },
 });
+
+productSchema.index({ barcode: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model("Product", productSchema);

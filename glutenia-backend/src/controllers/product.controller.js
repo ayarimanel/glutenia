@@ -22,6 +22,26 @@ const pickProductFields = (body) => {
   }, {});
 };
 
+exports.getProductByBarcode = async (req, res, next) => {
+  try {
+    const product = await Product.findOne({ barcode: req.params.code });
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: product,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 exports.getProducts = async (req, res, next) => {
   try {
     const { category, search } = req.query;

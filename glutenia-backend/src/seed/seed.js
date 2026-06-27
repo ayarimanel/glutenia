@@ -15,6 +15,7 @@ const products = [
     price: 4.5,
     category: "Bread",
     stock: 25,
+    barcode: "3017620422003",
   },
   {
     name: "Pâtes de riz",
@@ -22,6 +23,7 @@ const products = [
     price: 3.2,
     category: "Pasta",
     stock: 30,
+    barcode: "8076809513456",
   },
   {
     name: "Biscuits au quinoa",
@@ -29,6 +31,7 @@ const products = [
     price: 5.8,
     category: "Snacks",
     stock: 18,
+    barcode: "3175681851752",
   },
   {
     name: "Farine de maïs",
@@ -36,6 +39,7 @@ const products = [
     price: 2.9,
     category: "Flour",
     stock: 40,
+    barcode: "3564700314551",
   },
   {
     name: "Gâteau au chocolat GF",
@@ -43,6 +47,7 @@ const products = [
     price: 7.5,
     category: "Sweets",
     stock: 12,
+    barcode: "3229820129488",
   },
   {
     name: "Crackers de sarrasin",
@@ -50,6 +55,7 @@ const products = [
     price: 4.1,
     category: "Snacks",
     stock: 22,
+    barcode: "3270190207924",
   },
 ];
 

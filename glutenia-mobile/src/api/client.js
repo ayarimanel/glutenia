@@ -122,6 +122,8 @@ export const api = {
   },
   deleteProduct: (token, id) =>
     request(`/products/${id}`, { method: "DELETE", token }),
+  productByBarcode: (barcode, token) =>
+    request(`/products/barcode/${encodeURIComponent(barcode)}`, { token }),
   createOrder: (token, body) =>
     request("/orders", { method: "POST", token, body }),
   myOrders: (token) => request("/orders/my", { token }),
