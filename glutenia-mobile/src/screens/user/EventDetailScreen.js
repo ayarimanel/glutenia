@@ -5,12 +5,14 @@ import {
   Text,
   View,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 import { useEvents } from "../../context/EventsContext";
 
 export default function EventDetailScreen({ route, navigation }) {
+  const { t } = useTranslation();
   const { event } = route.params;
   const { isGoing, joinEvent, leaveEvent } = useEvents();
   const going = isGoing(event.id);
@@ -61,13 +63,13 @@ export default function EventDetailScreen({ route, navigation }) {
                 <AppIcon name="people" size={18} color={Colors.primary} />
               </View>
               <Text style={styles.metaText}>
-                {event.going + (going ? 1 : 0)} people going
+                {t("eventDetail.going", { count: event.going + (going ? 1 : 0) })}
               </Text>
             </View>
           </View>
 
           {/* Description */}
-          <Text style={styles.sectionTitle}>About this event</Text>
+          <Text style={styles.sectionTitle}>{t("eventDetail.about")}</Text>
           <Text style={styles.description}>{event.description}</Text>
 
           {/* Price + RSVP row */}
@@ -75,7 +77,7 @@ export default function EventDetailScreen({ route, navigation }) {
             <View style={styles.priceBox}>
               <AppIcon name="cash" size={16} color={Colors.primary} />
               <Text style={styles.priceText}>
-                {event.price === 0 ? "Free" : `${event.price} TND`}
+                {event.price === 0 ? t("eventDetail.free") : `${event.price} TND`}
               </Text>
             </View>
 
@@ -89,7 +91,7 @@ export default function EventDetailScreen({ route, navigation }) {
                 color={going ? Colors.primary : "#fff"}
               />
               <Text style={[styles.rsvpText, going && styles.rsvpTextActive]}>
-                {going ? "You're going!" : "I'm going"}
+                {going ? t("eventDetail.rsvpGoing") : t("eventDetail.rsvpJoin")}
               </Text>
             </Pressable>
           </View>

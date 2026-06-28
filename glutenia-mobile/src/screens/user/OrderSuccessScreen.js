@@ -1,10 +1,12 @@
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import AppIcon from "../../components/AppIcon";
 import Screen from "../../components/Screen";
 import { PrimaryButton, SecondaryButton } from "../../components/Buttons";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 export default function OrderSuccessScreen({ navigation, route }) {
+  const { t } = useTranslation();
   const order = route.params?.order;
   const shortId = order?._id?.slice(-6)?.toUpperCase() || "DONE";
 
@@ -15,18 +17,18 @@ export default function OrderSuccessScreen({ navigation, route }) {
           <View style={styles.iconWrap}>
             <AppIcon name="checkmark" size={54} color={Colors.surface} />
           </View>
-          <Text style={styles.title}>Order placed</Text>
-          <Text style={styles.body}>Your Glutenia order is confirmed.</Text>
+          <Text style={styles.title}>{t("orderSuccess.title")}</Text>
+          <Text style={styles.body}>{t("orderSuccess.body")}</Text>
           <View style={styles.idPill}>
-            <Text style={styles.idText}>Order #{shortId}</Text>
+            <Text style={styles.idText}>{`${t("orderSuccess.orderPrefix")}${shortId}`}</Text>
           </View>
           <PrimaryButton
-            title="Continue shopping"
+            title={t("orderSuccess.continueShopping")}
             icon="basket"
             onPress={() => navigation.popToTop()}
           />
           <SecondaryButton
-            title="View orders"
+            title={t("orderSuccess.viewOrders")}
             icon="receipt"
             onPress={() => navigation.navigate("UserTabs", { screen: "Orders" })}
           />

@@ -18,6 +18,7 @@ import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTranslation } from "react-i18next";
 
 const FRAME_W = 260;
 const FRAME_H = 120;
@@ -29,6 +30,7 @@ const FOUND = "found";
 const NOT_FOUND = "not_found";
 
 export default function ScanScreen({ navigation }) {
+  const { t } = useTranslation();
   const { user, token } = useAuth();
   const cart = useCart();
   const [permission, requestPermission] = useCameraPermissions();
@@ -80,9 +82,9 @@ export default function ScanScreen({ navigation }) {
         setScreenState(NOT_FOUND);
       } else {
         // Non-404 error: show alert, then return to scanning on dismiss.
-        Alert.alert("Scan Error", error.message, [
+        Alert.alert(t("scan.scanError"), error.message, [
           {
-            text: "OK",
+            text: t("scan.ok"),
             onPress: () => {
               scanLock.current = false;
               setScreenState(SCANNING);
@@ -111,26 +113,24 @@ export default function ScanScreen({ navigation }) {
           <View style={styles.iconCircle}>
             <AppIcon name="scan" size={48} color={Colors.primary} />
           </View>
-          <Text style={styles.headingText}>Camera Access Needed</Text>
+          <Text style={styles.headingText}>{t("scan.permissionTitle")}</Text>
           <Text style={styles.bodyText}>
-            Glutenia needs your camera to scan product barcodes and instantly
-            check if they're gluten-free.
+            {t("scan.permissionBody")}
           </Text>
           {permission.canAskAgain ? (
             <Pressable style={styles.primaryBtn} onPress={requestPermission}>
-              <Text style={styles.primaryBtnText}>Grant Camera Access</Text>
+              <Text style={styles.primaryBtnText}>{t("scan.grantAccess")}</Text>
             </Pressable>
           ) : (
             <>
               <Text style={styles.bodyText}>
-                Camera access was denied. Enable it in your device settings to
-                use the scanner.
+                {t("scan.permissionDenied")}
               </Text>
               <Pressable
                 style={styles.primaryBtn}
                 onPress={() => Linking.openSettings()}
               >
-                <Text style={styles.primaryBtnText}>Open Settings</Text>
+                <Text style={styles.primaryBtnText}>{t("scan.openSettings")}</Text>
               </Pressable>
             </>
           )}
@@ -150,7 +150,7 @@ export default function ScanScreen({ navigation }) {
         />
         <View style={[styles.center, { paddingBottom: bottomPad }]}>
           <ActivityIndicator size="large" color={Colors.primary} />
-          <Text style={styles.bodyText}>Checking product…</Text>
+          <Text style={styles.bodyText}>{t("scan.checking")}</Text>
         </View>
       </View>
     );
@@ -175,7 +175,7 @@ export default function ScanScreen({ navigation }) {
           <View style={styles.card}>
             <View style={styles.glutenBadge}>
               <AppIcon name="checkmark" size={15} color="#fff" />
-              <Text style={styles.glutenBadgeText}>Gluten-Free</Text>
+              <Text style={styles.glutenBadgeText}>{t("scan.glutenFree")}</Text>
             </View>
             <Text style={styles.productName}>{product.name}</Text>
             <Text style={styles.productPrice}>
@@ -191,19 +191,19 @@ export default function ScanScreen({ navigation }) {
               if (cart) {
                 cart.addItem(product, 1);
                 Alert.alert(
-                  "Added to Cart",
-                  `${product.name} has been added to your cart.`
+                  t("scan.addedTitle"),
+                  t("scan.addedMsg", { name: product.name })
                 );
               }
             }}
             disabled={!cart}
           >
             <AppIcon name="basket" size={18} color="#fff" />
-            <Text style={styles.primaryBtnText}>Add to Cart</Text>
+            <Text style={styles.primaryBtnText}>{t("scan.addToCart")}</Text>
           </Pressable>
           <Pressable style={styles.secondaryBtn} onPress={resetToScanning}>
             <AppIcon name="scan" size={18} color={Colors.primary} />
-            <Text style={styles.secondaryBtnText}>Scan Another</Text>
+            <Text style={styles.secondaryBtnText}>{t("scan.scanAnother")}</Text>
           </Pressable>
         </ScrollView>
       </View>
@@ -223,13 +223,20 @@ export default function ScanScreen({ navigation }) {
           <View style={[styles.iconCircle, styles.iconCircleGray]}>
             <AppIcon name="close-circle" size={48} color={Colors.textMuted} />
           </View>
-          <Text style={styles.headingText}>Product Not Found</Text>
+          <Text style={styles.headingText}>{t("scan.notFoundTitle")}</Text>
           <Text style={styles.bodyText}>
-            This product is not in our gluten-free database yet.
+            {t("scan.notFoundBody")}
           </Text>
           <Pressable style={styles.primaryBtn} onPress={resetToScanning}>
             <AppIcon name="scan" size={18} color="#fff" />
-            <Text style={styles.primaryBtnText}>Try Again</Text>
+            <Text style={styles.primaryBtnText}>{t("scan.tryAgain")}</Text>
+          </Pressable>
+          <Pressable
+            style={styles.secondaryBtn}
+            onPress={() => navigation.navigate("LabelScan")}
+          >
+            <AppIcon name="image" size={18} color={Colors.primary} />
+            <Text style={styles.secondaryBtnText}>{t("labelScan.fromScan")}</Text>
           </Pressable>
         </View>
       </View>
@@ -255,7 +262,7 @@ export default function ScanScreen({ navigation }) {
       <View
         style={[styles.maskTop, { paddingTop: insets.top + Spacing.md }]}
       >
-        <Text style={styles.scanTitle}>Scan Product</Text>
+        <Text style={styles.scanTitle}>{t("scan.title")}</Text>
       </View>
 
       {/* Middle row: dark sides + transparent guide frame */}
@@ -272,7 +279,7 @@ export default function ScanScreen({ navigation }) {
           { paddingBottom: insets.bottom + TAB_BAR_HEIGHT + Spacing.md },
         ]}
       >
-        <Text style={styles.scanHint}>Point at a product barcode</Text>
+        <Text style={styles.scanHint}>{t("scan.hint")}</Text>
       </View>
     </View>
   );

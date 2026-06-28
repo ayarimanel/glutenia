@@ -1,20 +1,22 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft } from "lucide-react-native";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
-const OPTIONS = [
-  { label: "Managing celiac disease", value: "manage_celiac" },
-  { label: "Managing gluten intolerance", value: "manage_intolerance" },
-  { label: "Supporting my child", value: "support_child" },
-  { label: "Supporting my partner or family", value: "support_partner" },
-  { label: "It's a dietary choice", value: "dietary_choice" },
-  { label: "Just exploring", value: "exploring" },
-];
-
 export default function OnboardingGoalScreen({ navigation, route }) {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState(null);
+
+  const OPTIONS = [
+    { label: t("profileOnboarding.goal.manage_celiac"), value: "manage_celiac" },
+    { label: t("profileOnboarding.goal.manage_intolerance"), value: "manage_intolerance" },
+    { label: t("profileOnboarding.goal.support_child"), value: "support_child" },
+    { label: t("profileOnboarding.goal.support_partner"), value: "support_partner" },
+    { label: t("profileOnboarding.goal.dietary_choice"), value: "dietary_choice" },
+    { label: t("profileOnboarding.goal.exploring"), value: "exploring" },
+  ];
 
   const handleContinue = () => {
     navigation.navigate("OnboardingConfidence", {
@@ -33,7 +35,7 @@ export default function OnboardingGoalScreen({ navigation, route }) {
         >
           <ArrowLeft size={22} color={Colors.textDark} strokeWidth={2.5} />
         </TouchableOpacity>
-        <Text style={styles.stepLabel}>Step 3 of 4</Text>
+        <Text style={styles.stepLabel}>{t("profileOnboarding.goal.step")}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -46,7 +48,7 @@ export default function OnboardingGoalScreen({ navigation, route }) {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.question}>
-          What's your main reason for using Glutenia?
+          {t("profileOnboarding.goal.question")}
         </Text>
 
         {OPTIONS.map((opt) => {
@@ -78,7 +80,7 @@ export default function OnboardingGoalScreen({ navigation, route }) {
           activeOpacity={0.8}
           onPress={handleContinue}
         >
-          <Text style={styles.btnText}>Continue</Text>
+          <Text style={styles.btnText}>{t("profileOnboarding.goal.continue")}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

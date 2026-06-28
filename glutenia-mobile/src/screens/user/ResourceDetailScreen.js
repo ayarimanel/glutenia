@@ -1,9 +1,11 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 export default function ResourceDetailScreen({ route, navigation }) {
+  const { t } = useTranslation();
   const { resource } = route.params;
 
   return (
@@ -27,7 +29,7 @@ export default function ResourceDetailScreen({ route, navigation }) {
         <Text style={styles.title}>{resource.title}</Text>
         <View style={styles.readTimeRow}>
           <AppIcon name="clock" size={14} color={Colors.textMuted} />
-          <Text style={styles.readTimeText}>{resource.readTime} read</Text>
+          <Text style={styles.readTimeText}>{resource.readTime} {t("resourceDetail.readSuffix")}</Text>
         </View>
 
         {/* Divider */}
@@ -40,8 +42,7 @@ export default function ResourceDetailScreen({ route, navigation }) {
         <View style={styles.disclaimer}>
           <AppIcon name="info" size={15} color={Colors.secondary} />
           <Text style={styles.disclaimerText}>
-            This content is for informational purposes only and does not replace professional
-            medical advice. Always consult a healthcare provider.
+            {t("resourceDetail.disclaimer")}
           </Text>
         </View>
 

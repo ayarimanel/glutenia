@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import Field from "../../components/Field";
 import AppIcon from "../../components/AppIcon";
@@ -17,6 +18,7 @@ import { Colors, Radius, Spacing } from "../../theme/colors";
 const CATEGORIES = ["Meetups", "Classes", "Markets", "Workshops"];
 
 export default function CreateEventScreen({ navigation }) {
+  const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
@@ -26,16 +28,16 @@ export default function CreateEventScreen({ navigation }) {
 
   const handleSubmit = () => {
     const nextErrors = {};
-    if (!title.trim()) nextErrors.title = "Title is required.";
-    if (!date.trim()) nextErrors.date = "Date is required.";
-    if (!location.trim()) nextErrors.location = "Location is required.";
-    if (!category) nextErrors.category = "Please select a category.";
+    if (!title.trim()) nextErrors.title = t("createEvent.errors.titleRequired");
+    if (!date.trim()) nextErrors.date = t("createEvent.errors.dateRequired");
+    if (!location.trim()) nextErrors.location = t("createEvent.errors.locationRequired");
+    if (!category) nextErrors.category = t("createEvent.errors.categoryRequired");
 
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) return;
 
-    Alert.alert("Event Created!", `"${title}" has been added.`, [
-      { text: "OK", onPress: () => navigation.goBack() },
+    Alert.alert(t("createEvent.success"), t("createEvent.successMsg", { title }), [
+      { text: t("createEvent.ok"), onPress: () => navigation.goBack() },
     ]);
   };
 
@@ -54,38 +56,38 @@ export default function CreateEventScreen({ navigation }) {
             <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
               <AppIcon name="arrow-back" size={20} color={Colors.textDark} />
             </Pressable>
-            <Text style={styles.headerTitle}>Create Event</Text>
+            <Text style={styles.headerTitle}>{t("createEvent.title")}</Text>
             <View style={{ width: 40 }} />
           </View>
 
           {/* Form */}
           <Field
-            label="Event Title"
-            placeholder="e.g. GF Cooking Class"
+            label={t("createEvent.eventTitle")}
+            placeholder={t("createEvent.titlePlaceholder")}
             value={title}
             onChangeText={(v) => { setTitle(v); setErrors((e) => ({ ...e, title: "" })); }}
             error={errors.title}
           />
 
           <Field
-            label="Description"
-            placeholder="What is this event about?"
+            label={t("createEvent.description")}
+            placeholder={t("createEvent.descPlaceholder")}
             value={description}
             onChangeText={setDescription}
             multiline
           />
 
           <Field
-            label="Date & Time"
-            placeholder="e.g. Sat, Jun 15 • 2:00 PM"
+            label={t("createEvent.dateTime")}
+            placeholder={t("createEvent.datePlaceholder")}
             value={date}
             onChangeText={(v) => { setDate(v); setErrors((e) => ({ ...e, date: "" })); }}
             error={errors.date}
           />
 
           <Field
-            label="Location"
-            placeholder="e.g. Culinary Arts Center, Tunis"
+            label={t("createEvent.location")}
+            placeholder={t("createEvent.locationPlaceholder")}
             value={location}
             onChangeText={(v) => { setLocation(v); setErrors((e) => ({ ...e, location: "" })); }}
             error={errors.location}
@@ -93,7 +95,7 @@ export default function CreateEventScreen({ navigation }) {
 
           {/* Category picker */}
           <View style={styles.fieldWrap}>
-            <Text style={styles.fieldLabel}>Category</Text>
+            <Text style={styles.fieldLabel}>{t("createEvent.category")}</Text>
             <View style={styles.categoryRow}>
               {CATEGORIES.map((cat) => (
                 <Pressable
@@ -110,7 +112,7 @@ export default function CreateEventScreen({ navigation }) {
                       category === cat && styles.catTextActive,
                     ]}
                   >
-                    {cat}
+                    {t(`events.${cat.toLowerCase()}`)}
                   </Text>
                 </Pressable>
               ))}
@@ -123,7 +125,7 @@ export default function CreateEventScreen({ navigation }) {
           {/* Submit */}
           <Pressable style={styles.submitBtn} onPress={handleSubmit}>
             <AppIcon name="checkmark-circle" size={20} color="#fff" />
-            <Text style={styles.submitText}>Create Event</Text>
+            <Text style={styles.submitText}>{t("createEvent.submit")}</Text>
           </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>

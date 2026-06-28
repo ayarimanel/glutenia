@@ -1,5 +1,6 @@
 import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import ProductVisual from "../../components/ProductVisual";
 import GlutenFreeBadge from "../../components/GlutenFreeBadge";
@@ -10,6 +11,7 @@ import { api } from "../../api/client";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 export default function ProductDetailScreen({ navigation, route }) {
+  const { t } = useTranslation();
   const { productId } = route.params;
   const { addItem } = useCart();
   const [product, setProduct] = useState(null);
@@ -22,7 +24,7 @@ export default function ProductDetailScreen({ navigation, route }) {
         setLoading(true);
         setProduct(await api.product(productId));
       } catch (error) {
-        Alert.alert("Product", error.message);
+        Alert.alert(t("productDetail.errorTitle"), error.message);
         navigation.goBack();
       } finally {
         setLoading(false);
@@ -52,18 +54,18 @@ export default function ProductDetailScreen({ navigation, route }) {
             {product.isGlutenFree ? <GlutenFreeBadge /> : null}
           </View>
           <Text style={styles.description}>
-            {product.description || "A gluten-free Glutenia staple ready for your pantry."}
+            {product.description || t("productDetail.fallbackDesc")}
           </Text>
           <View style={styles.priceRow}>
             <Text style={styles.price}>{product.price.toFixed(2)} TND</Text>
             <QuantityStepper value={qty} onChange={setQty} />
           </View>
           <PrimaryButton
-            title={loading ? "Loading" : "Add to cart"}
+            title={loading ? t("productDetail.loading") : t("productDetail.addToCart")}
             icon="basket"
             onPress={() => {
               addItem(product, qty);
-              Alert.alert("Added", `${qty} x ${product.name} added to cart.`);
+              Alert.alert(t("productDetail.added"), t("productDetail.addedMsg", { qty, name: product.name }));
             }}
           />
         </View>

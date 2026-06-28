@@ -15,47 +15,25 @@ import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { api } from "../../api/client";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTranslation } from "react-i18next";
 
-const EVENTS_PREVIEW = [
-  {
-    id: "1",
-    title: "Gluten-Free Cooking Workshop",
-    date: "Sat, Jun 15 • 2:00 PM",
-    location: "Culinary Arts Center, Tunis",
-    color: "#E8F5E9",
-    emoji: "👨‍🍳",
-    category: "Workshops",
-    going: 24,
-    description:
-      "Join us for a hands-on gluten-free cooking workshop where you'll learn to make delicious bread, pasta, and desserts — all 100% gluten-free.",
-  },
-  {
-    id: "2",
-    title: "GF Community Picnic",
-    date: "Sun, Jun 23 • 11:00 AM",
-    location: "Parc du Belvédère, Tunis",
-    color: "#FFF8E1",
-    emoji: "🧺",
-    category: "Meetups",
-    going: 56,
-    description:
-      "A relaxed outdoor picnic for the gluten-free community. Bring a dish to share and meet others living the GF lifestyle.",
-  },
-  {
-    id: "3",
-    title: "Gluten-Free Baking Class",
-    date: "Fri, Jun 28 • 4:00 PM",
-    location: "Maison de la Culture, Tunis",
-    color: "#FCE4EC",
-    emoji: "🧁",
-    category: "Classes",
-    going: 18,
-    description:
-      "Learn the secrets of perfect gluten-free baking. From sourdough to croissants — all adapted for a gluten-free diet.",
-  },
+const EVENTS_META = [
+  { id: "1", key: "e1", color: "#E8F5E9", emoji: "👨‍🍳", categoryKey: "workshops", going: 24 },
+  { id: "2", key: "e2", color: "#FFF8E1", emoji: "🧺",  categoryKey: "meetups",   going: 56 },
+  { id: "3", key: "e3", color: "#FCE4EC", emoji: "🧁",  categoryKey: "classes",   going: 18 },
 ];
 
 export default function HomeScreen({ navigation }) {
+  const { t } = useTranslation();
+
+  const EVENTS_PREVIEW = EVENTS_META.map((e) => ({
+    ...e,
+    title: t(`homeEvents.${e.key}.title`),
+    date: t(`homeEvents.${e.key}.date`),
+    location: t(`homeEvents.${e.key}.location`),
+    description: t(`homeEvents.${e.key}.description`),
+    category: t(`events.${e.categoryKey}`),
+  }));
   const { user } = useAuth();
   const { addItem } = useCart();
   const [products, setProducts] = useState([]);
@@ -81,15 +59,15 @@ export default function HomeScreen({ navigation }) {
         >
           <AppIcon name="scan" size={80} color="#fff" strokeWidth={1.5} />
           <Text style={styles.heroSub}>
-            Instantly Check For Gluten & Find Safe Alternatives
+            {t("home.heroSub")}
           </Text>
           <View style={styles.heroBtn}>
-            <Text style={styles.heroBtnText}>Tap to Scan</Text>
+            <Text style={styles.heroBtnText}>{t("home.tapToScan")}</Text>
           </View>
         </Pressable>
 
         {/* ── Quick Access ── */}
-        <Text style={styles.sectionLabel}>Quick Access</Text>
+        <Text style={styles.sectionLabel}>{t("home.quickAccess")}</Text>
         <View style={styles.quickGrid}>
           <Pressable
             style={styles.quickCard}
@@ -98,7 +76,7 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.quickIcon}>
               <AppIcon name="utensils" size={26} color={Colors.secondary} />
             </View>
-            <Text style={styles.quickLabel}>Recipes</Text>
+            <Text style={styles.quickLabel}>{t("home.recipes")}</Text>
           </Pressable>
           <Pressable
             style={styles.quickCard}
@@ -107,7 +85,7 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.quickIcon}>
               <AppIcon name="people" size={26} color={Colors.secondary} />
             </View>
-            <Text style={styles.quickLabel}>Community</Text>
+            <Text style={styles.quickLabel}>{t("home.community")}</Text>
           </Pressable>
           <Pressable
             style={styles.quickCard}
@@ -116,7 +94,7 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.quickIcon}>
               <AppIcon name="heart" size={26} color={Colors.secondary} />
             </View>
-            <Text style={styles.quickLabel}>Patient Resources</Text>
+            <Text style={styles.quickLabel}>{t("home.patientResources")}</Text>
           </Pressable>
           <Pressable
             style={styles.quickCard}
@@ -125,18 +103,18 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.quickIcon}>
               <AppIcon name="location" size={26} color={Colors.secondary} />
             </View>
-            <Text style={styles.quickLabel}>Map</Text>
+            <Text style={styles.quickLabel}>{t("home.map")}</Text>
           </Pressable>
         </View>
 
         {/* ── Products Shop ── */}
         <View style={styles.sectionRow}>
-          <Text style={styles.sectionLabel}>Products Shop</Text>
+          <Text style={styles.sectionLabel}>{t("home.productsShop")}</Text>
           <Pressable
             style={styles.seeAll}
             onPress={() => navigation.navigate("ShopScreen")}
           >
-            <Text style={styles.seeAllText}>See All</Text>
+            <Text style={styles.seeAllText}>{t("home.seeAll")}</Text>
             <AppIcon name="chevron-right" size={15} color={Colors.secondary} />
           </Pressable>
         </View>
@@ -154,7 +132,7 @@ export default function HomeScreen({ navigation }) {
                 }
                 onAdd={() => {
                   addItem(item, 1);
-                  Alert.alert("Added", `${item.name} is in your cart.`);
+                  Alert.alert(t("home.addedTitle"), t("home.addedMsg", { name: item.name }));
                 }}
               />
             </View>
@@ -163,12 +141,12 @@ export default function HomeScreen({ navigation }) {
 
         {/* ── Check Events ── */}
         <View style={styles.sectionRow}>
-          <Text style={styles.sectionLabel}>Check Events</Text>
+          <Text style={styles.sectionLabel}>{t("home.checkEvents")}</Text>
           <Pressable
             style={styles.seeAll}
             onPress={() => navigation.navigate("Events")}
           >
-            <Text style={styles.seeAllText}>See All</Text>
+            <Text style={styles.seeAllText}>{t("home.seeAll")}</Text>
             <AppIcon name="chevron-right" size={15} color={Colors.secondary} />
           </Pressable>
         </View>

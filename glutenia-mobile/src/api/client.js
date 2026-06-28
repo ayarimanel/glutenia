@@ -140,4 +140,11 @@ export const api = {
       token,
       body: { isPinned },
     }),
+  scanLabel: (imageBase64, token) =>
+    request("/scan/label", {
+      method: "POST",
+      token,
+      body: { imageBase64, mimeType: "image/jpeg" },
+      timeoutMs: 30000,
+    }),
 };

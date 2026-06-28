@@ -9,10 +9,12 @@ import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { api } from "../../api/client";
 import { Colors, Radius, Spacing } from "../../theme/colors";
+import { useTranslation } from "react-i18next";
 
 const categories = ["All", "Bread", "Pasta", "Snacks", "Flour", "Sweets"];
 
 export default function ShopScreen({ navigation }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { addItem } = useCart();
   const [products, setProducts] = useState([]);
@@ -29,7 +31,7 @@ export default function ShopScreen({ navigation }) {
       });
       setProducts(data);
     } catch (error) {
-      Alert.alert("Products", error.message);
+      Alert.alert(t("shop.errorTitle"), error.message);
     } finally {
       setLoading(false);
     }
@@ -53,7 +55,7 @@ export default function ShopScreen({ navigation }) {
           <TextInput
             value={search}
             onChangeText={setSearch}
-            placeholder="Search bread, snacks, flour..."
+            placeholder={t("shop.searchPlaceholder")}
             placeholderTextColor={Colors.textMuted}
             style={styles.searchInput}
           />
@@ -72,7 +74,7 @@ export default function ShopScreen({ navigation }) {
                   category === item && styles.categoryTextActive,
                 ]}
               >
-                {item}
+                {t("shop." + item.toLowerCase())}
               </Text>
             </Pressable>
           ))}
@@ -89,8 +91,8 @@ export default function ShopScreen({ navigation }) {
             loading ? null : (
               <EmptyState
                 icon="search"
-                title="No products found"
-                body="Try another category or search term."
+                title={t("shop.emptyTitle")}
+                body={t("shop.emptyBody")}
               />
             )
           }
@@ -100,7 +102,7 @@ export default function ShopScreen({ navigation }) {
               onPress={() => navigation.navigate("ProductDetail", { productId: item._id })}
               onAdd={() => {
                 addItem(item, 1);
-                Alert.alert("Added", `${item.name} is in your cart.`);
+                Alert.alert(t("shop.addedTitle"), t("shop.addedMsg", { name: item.name }));
               }}
             />
           )}

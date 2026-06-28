@@ -1,4 +1,5 @@
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import AppIcon from "../../components/AppIcon";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
@@ -10,22 +11,23 @@ import { useCart } from "../../context/CartContext";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 export default function CartScreen({ navigation }) {
+  const { t } = useTranslation();
   const { items, updateQty, removeItem, clearCart, total } = useCart();
 
   return (
     <Screen>
       <View style={styles.container}>
         <SectionHeader
-          eyebrow="Basket"
-          title="Your cart"
+          eyebrow={t("cart.basket")}
+          title={t("cart.title")}
           right={
             items.length ? (
               <Pressable
                 style={styles.clear}
                 onPress={() =>
-                  Alert.alert("Clear cart", "Remove all items?", [
-                    { text: "Cancel", style: "cancel" },
-                    { text: "Clear", style: "destructive", onPress: clearCart },
+                  Alert.alert(t("cart.clearTitle"), t("cart.clearMsg"), [
+                    { text: t("cart.cancel"), style: "cancel" },
+                    { text: t("cart.clear"), style: "destructive", onPress: clearCart },
                   ])
                 }
               >
@@ -41,8 +43,8 @@ export default function CartScreen({ navigation }) {
           ListEmptyComponent={
             <EmptyState
               icon="basket"
-              title="Your cart is empty"
-              body="Add gluten-free favorites from the catalog."
+              title={t("cart.empty")}
+              body={t("cart.emptyBody")}
             />
           }
           renderItem={({ item }) => (
@@ -70,11 +72,11 @@ export default function CartScreen({ navigation }) {
         />
         <View style={styles.summary}>
           <View>
-            <Text style={styles.summaryLabel}>Subtotal</Text>
+            <Text style={styles.summaryLabel}>{t("cart.subtotal")}</Text>
             <Text style={styles.total}>{total.toFixed(2)} TND</Text>
           </View>
           <PrimaryButton
-            title="Checkout"
+            title={t("cart.checkout")}
             icon="card"
             disabled={!items.length}
             onPress={() => navigation.navigate("Checkout")}

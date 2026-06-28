@@ -1,5 +1,6 @@
 import { Alert, FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
@@ -8,6 +9,7 @@ import { api } from "../../api/client";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 export default function UserOrdersScreen() {
+  const { t } = useTranslation();
   const { token } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -17,7 +19,7 @@ export default function UserOrdersScreen() {
       setLoading(true);
       setOrders(await api.myOrders(token));
     } catch (error) {
-      Alert.alert("Orders", error.message);
+      Alert.alert(t("userOrders.errorTitle"), error.message);
     } finally {
       setLoading(false);
     }
@@ -30,7 +32,7 @@ export default function UserOrdersScreen() {
   return (
     <Screen>
       <View style={styles.container}>
-        <SectionHeader eyebrow="History" title="My orders" />
+        <SectionHeader eyebrow={t("userOrders.history")} title={t("userOrders.title")} />
         <FlatList
           data={orders}
           keyExtractor={(item) => item._id}
@@ -39,8 +41,8 @@ export default function UserOrdersScreen() {
           ListEmptyComponent={
             <EmptyState
               icon="receipt"
-              title="No orders yet"
-              body="Your confirmed orders will appear here."
+              title={t("userOrders.empty")}
+              body={t("userOrders.emptyBody")}
             />
           }
           renderItem={({ item }) => (
@@ -50,7 +52,7 @@ export default function UserOrdersScreen() {
                 <Text style={styles.status}>{item.status}</Text>
               </View>
               <Text style={styles.meta}>
-                {item.items.length} items - {new Date(item.createdAt).toLocaleDateString()}
+                {item.items.length} {t("userOrders.items")} - {new Date(item.createdAt).toLocaleDateString()}
               </Text>
               <Text style={styles.total}>{item.total.toFixed(2)} TND</Text>
             </View>

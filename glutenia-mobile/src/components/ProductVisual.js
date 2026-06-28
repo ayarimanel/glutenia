@@ -1,5 +1,6 @@
 import { Image, StyleSheet, Text, View } from "react-native";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import AppIcon from "./AppIcon";
 import { Colors, Radius } from "../theme/colors";
 
@@ -13,6 +14,7 @@ const iconByCategory = {
 };
 
 export default function ProductVisual({ product, size = "card" }) {
+  const { t } = useTranslation();
   const isLarge = size === "large";
   const [failed, setFailed] = useState(false);
   const imageUrl = product?.imageUrl;
@@ -39,7 +41,7 @@ export default function ProductVisual({ product, size = "card" }) {
         size={isLarge ? 62 : 34}
         color={Colors.primary}
       />
-      {isLarge ? <Text style={styles.category}>{product?.category || "GF"}</Text> : null}
+      {isLarge ? <Text style={styles.category}>{product?.category || t("productVisual.gfFallback")}</Text> : null}
     </View>
   );
 }

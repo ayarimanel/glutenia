@@ -1,7 +1,9 @@
 import { View, Image, StyleSheet, Text } from "react-native";
+import { useTranslation } from "react-i18next";
 import { Colors } from "../theme/colors";
 
 export default function SplashScreen() {
+  const { t } = useTranslation();
   return (
     <View style={styles.container}>
       <View style={styles.logoCard}>
@@ -12,7 +14,7 @@ export default function SplashScreen() {
         />
       </View>
       <Text style={styles.appName}>Glutenia</Text>
-      <Text style={styles.tagline}>Vivre sans gluten, simplement.</Text>
+      <Text style={styles.tagline}>{t("splash.tagline")}</Text>
     </View>
   );
 }
