@@ -79,6 +79,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async ({ name, email, password, role }) => {
+    await AsyncStorage.removeItem(ONBOARDING_PROFILE_KEY);
     const session = await api.register({ name, email, password, role });
     await persistSession(session);
     return session.user;
@@ -88,7 +89,7 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setToken(null);
     setProfileOnboardingDone(false);
-    await AsyncStorage.removeItem(STORAGE_KEY);
+    await AsyncStorage.multiRemove([STORAGE_KEY, ONBOARDING_PROFILE_KEY]);
   };
 
   const value = useMemo(

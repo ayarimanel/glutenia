@@ -23,6 +23,7 @@ const EVENTS = [
     date: "Sat, Jun 15 • 2:00 PM",
     location: "Culinary Arts Center, Tunis",
     going: 24,
+    price: 25,
     color: "#E8F5E9",
     emoji: "👨‍🍳",
     description:
@@ -35,6 +36,7 @@ const EVENTS = [
     date: "Sun, Jun 23 • 11:00 AM",
     location: "Parc du Belvédère, Tunis",
     going: 56,
+    price: 0,
     color: "#FFF8E1",
     emoji: "🧺",
     description:
@@ -47,6 +49,7 @@ const EVENTS = [
     date: "Fri, Jun 28 • 4:00 PM",
     location: "Maison de la Culture, Tunis",
     going: 18,
+    price: 15,
     color: "#FCE4EC",
     emoji: "🧁",
     description:
@@ -59,6 +62,7 @@ const EVENTS = [
     date: "Sat, Jul 5 • 9:00 AM",
     location: "Avenue Habib Bourguiba, Tunis",
     going: 102,
+    price: 5,
     color: "#E3F2FD",
     emoji: "🛍️",
     description:
@@ -71,6 +75,7 @@ const EVENTS = [
     date: "Wed, Jul 9 • 6:00 PM",
     location: "Clinique Pasteur, Tunis",
     going: 31,
+    price: 0,
     color: "#F3E5F5",
     emoji: "🥗",
     description:

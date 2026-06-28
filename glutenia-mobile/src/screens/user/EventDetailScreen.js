@@ -5,14 +5,23 @@ import {
   Text,
   View,
 } from "react-native";
-import { useState } from "react";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { useEvents } from "../../context/EventsContext";
 
 export default function EventDetailScreen({ route, navigation }) {
   const { event } = route.params;
-  const [going, setGoing] = useState(false);
+  const { isGoing, joinEvent, leaveEvent } = useEvents();
+  const going = isGoing(event.id);
+
+  const handleRsvp = () => {
+    if (going) {
+      leaveEvent(event.id);
+    } else {
+      joinEvent(event);
+    }
+  };
 
   return (
     <Screen>
@@ -61,20 +70,29 @@ export default function EventDetailScreen({ route, navigation }) {
           <Text style={styles.sectionTitle}>About this event</Text>
           <Text style={styles.description}>{event.description}</Text>
 
-          {/* RSVP button */}
-          <Pressable
-            style={[styles.rsvpBtn, going && styles.rsvpBtnActive]}
-            onPress={() => setGoing((g) => !g)}
-          >
-            <AppIcon
-              name={going ? "checkmark-circle" : "people"}
-              size={20}
-              color={going ? Colors.primary : "#fff"}
-            />
-            <Text style={[styles.rsvpText, going && styles.rsvpTextActive]}>
-              {going ? "You're going!" : "I'm going"}
-            </Text>
-          </Pressable>
+          {/* Price + RSVP row */}
+          <View style={styles.rsvpRow}>
+            <View style={styles.priceBox}>
+              <AppIcon name="cash" size={16} color={Colors.primary} />
+              <Text style={styles.priceText}>
+                {event.price === 0 ? "Free" : `${event.price} TND`}
+              </Text>
+            </View>
+
+            <Pressable
+              style={[styles.rsvpBtn, going && styles.rsvpBtnActive]}
+              onPress={handleRsvp}
+            >
+              <AppIcon
+                name={going ? "checkmark-circle" : "people"}
+                size={20}
+                color={going ? Colors.primary : "#fff"}
+              />
+              <Text style={[styles.rsvpText, going && styles.rsvpTextActive]}>
+                {going ? "You're going!" : "I'm going"}
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </ScrollView>
     </Screen>
@@ -166,7 +184,28 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     lineHeight: 22,
   },
+  rsvpRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: Spacing.xl,
+  },
+  priceBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: Colors.primaryPale,
+    borderRadius: Radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  priceText: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: Colors.primary,
+  },
   rsvpBtn: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -174,7 +213,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     borderRadius: Radius.lg,
     paddingVertical: 16,
-    marginBottom: Spacing.xl,
   },
   rsvpBtnActive: {
     backgroundColor: Colors.primaryPale,

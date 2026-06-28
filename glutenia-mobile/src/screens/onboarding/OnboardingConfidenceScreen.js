@@ -8,19 +8,16 @@ import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 const OPTIONS = [
   {
-    emoji: "😅",
     label: "Still learning",
     subtitle: "I'm never quite sure",
     value: "low",
   },
   {
-    emoji: "🤔",
     label: "Getting there",
     subtitle: "I know the basics",
     value: "medium",
   },
   {
-    emoji: "💪",
     label: "Confident",
     subtitle: "I read labels well",
     value: "high",
@@ -88,7 +85,6 @@ export default function OnboardingConfidenceScreen({ navigation, route }) {
               activeOpacity={0.75}
               onPress={() => !loading && setSelected(opt.value)}
             >
-              <Text style={styles.cardEmoji}>{opt.emoji}</Text>
               <View style={styles.cardBody}>
                 <Text style={[styles.cardLabel, active && styles.cardLabelActive]}>
                   {opt.label}
@@ -180,7 +176,6 @@ const styles = StyleSheet.create({
     ...Shadow,
   },
   cardActive: { borderColor: Colors.primary, backgroundColor: Colors.primaryPale },
-  cardEmoji: { fontSize: 28, marginRight: Spacing.md },
   cardBody: { flex: 1 },
   cardLabel: { fontSize: 16, fontWeight: "700", color: Colors.textDark, marginBottom: 2 },
   cardLabelActive: { color: Colors.primary },
