@@ -4,10 +4,10 @@ export const Colors = {
   primaryLight: "#A5D66A",
   primaryPale: "#F1F8E9",
 
-  // Secondary Brand Color (Red)
-  secondary: "#C8102E",
-  secondaryMid: "#D6334C",
-  secondaryPale: "#FDECEE",
+  // Secondary Brand Color (Brown)
+  secondary: "#7B4626",
+  secondaryMid: "#9A5C38",
+  secondaryPale: "#F5EDE8",
 
   // Neutrals
   background: "#F8F9FA",

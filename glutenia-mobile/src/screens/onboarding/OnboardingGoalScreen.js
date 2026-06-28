@@ -5,12 +5,12 @@ import { ArrowLeft } from "lucide-react-native";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 const OPTIONS = [
-  { emoji: "🏥", label: "Managing celiac disease", value: "manage_celiac" },
-  { emoji: "⚡", label: "Managing gluten intolerance", value: "manage_intolerance" },
-  { emoji: "👶", label: "Supporting my child", value: "support_child" },
-  { emoji: "❤️", label: "Supporting my partner or family", value: "support_partner" },
-  { emoji: "🥗", label: "It's a dietary choice", value: "dietary_choice" },
-  { emoji: "🔍", label: "Just exploring", value: "exploring" },
+  { label: "Managing celiac disease", value: "manage_celiac" },
+  { label: "Managing gluten intolerance", value: "manage_intolerance" },
+  { label: "Supporting my child", value: "support_child" },
+  { label: "Supporting my partner or family", value: "support_partner" },
+  { label: "It's a dietary choice", value: "dietary_choice" },
+  { label: "Just exploring", value: "exploring" },
 ];
 
 export default function OnboardingGoalScreen({ navigation, route }) {
@@ -58,7 +58,6 @@ export default function OnboardingGoalScreen({ navigation, route }) {
               activeOpacity={0.75}
               onPress={() => setSelected(opt.value)}
             >
-              <Text style={styles.cardEmoji}>{opt.emoji}</Text>
               <View style={styles.cardBody}>
                 <Text style={[styles.cardLabel, active && styles.cardLabelActive]}>
                   {opt.label}
@@ -143,7 +142,6 @@ const styles = StyleSheet.create({
     ...Shadow,
   },
   cardActive: { borderColor: Colors.primary, backgroundColor: Colors.primaryPale },
-  cardEmoji: { fontSize: 24, marginRight: Spacing.md },
   cardBody: { flex: 1 },
   cardLabel: { fontSize: 15, fontWeight: "700", color: Colors.textDark },
   cardLabelActive: { color: Colors.primary },

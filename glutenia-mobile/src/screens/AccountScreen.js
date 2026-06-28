@@ -13,6 +13,7 @@ import {
 import Screen from "../components/Screen";
 import AppIcon from "../components/AppIcon";
 import { useAuth } from "../context/AuthContext";
+import { useEvents } from "../context/EventsContext";
 import { api } from "../api/client";
 import { Colors, Radius, Shadow, Spacing } from "../theme/colors";
 
@@ -72,6 +73,7 @@ const mascot = require("../../assets/mascot.png");
 
 export default function AccountScreen({ navigation }) {
   const { user, token, logout } = useAuth();
+  const { participatingEvents } = useEvents();
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -337,7 +339,33 @@ export default function AccountScreen({ navigation }) {
           </Text>
         </View>
 
-        {/* ── I. Orders + Settings ───────────────────────────────────────── */}
+        {/* ── I. Events attending ────────────────────────────────────────── */}
+        {participatingEvents.length > 0 && (
+          <>
+            <Text style={[styles.sectionLabel, styles.mt]}>Events I'm Attending</Text>
+            <View style={styles.eventsCard}>
+              {participatingEvents.map((ev, idx) => (
+                <View
+                  key={ev.id}
+                  style={[styles.eventRow, idx > 0 && styles.eventBorder]}
+                >
+                  <View style={[styles.eventEmoji, { backgroundColor: ev.color }]}>
+                    <Text style={styles.eventEmojiText}>{ev.emoji}</Text>
+                  </View>
+                  <View style={styles.eventInfo}>
+                    <Text style={styles.eventTitle} numberOfLines={1}>{ev.title}</Text>
+                    <Text style={styles.eventDate}>{ev.date}</Text>
+                  </View>
+                  <Text style={styles.eventPrice}>
+                    {ev.price === 0 ? "Free" : `${ev.price} TND`}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+
+        {/* ── J. Orders + Settings ───────────────────────────────────────── */}
         <View style={styles.settingsList}>
           <Pressable style={styles.settingsRow} onPress={() => navigation.navigate("Orders")}>
             <View style={styles.settingsLeft}>
@@ -351,7 +379,7 @@ export default function AccountScreen({ navigation }) {
 
           <View style={styles.divider} />
 
-          <Pressable style={styles.settingsRow}>
+          <Pressable style={styles.settingsRow} onPress={() => navigation.navigate("Settings")}>
             <View style={styles.settingsLeft}>
               <View style={[styles.iconWrap, { backgroundColor: Colors.secondaryPale }]}>
                 <AppIcon name="settings" size={20} color={Colors.secondary} />
@@ -622,7 +650,35 @@ const styles = StyleSheet.create({
   mascot: { width: 56, height: 56 },
   ecoText: { flex: 1, fontSize: 14, fontWeight: "500", color: Colors.textDark, lineHeight: 20 },
 
-  // ── I. Settings ───────────────────────────────────────────────────────────
+  // ── I. Events ─────────────────────────────────────────────────────────────
+  eventsCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    marginHorizontal: Spacing.md,
+    overflow: "hidden",
+    ...Shadow,
+  },
+  eventRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: Spacing.md,
+    gap: 12,
+  },
+  eventBorder: { borderTopWidth: 1, borderTopColor: Colors.divider },
+  eventEmoji: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  eventEmojiText: { fontSize: 22 },
+  eventInfo: { flex: 1 },
+  eventTitle: { fontSize: 14, fontWeight: "700", color: Colors.textDark, marginBottom: 3 },
+  eventDate: { fontSize: 12, color: Colors.textMuted },
+  eventPrice: { fontSize: 13, fontWeight: "800", color: Colors.primary },
+
+  // ── J. Settings ───────────────────────────────────────────────────────────
   settingsList: { marginTop: 28, marginHorizontal: Spacing.md },
   settingsRow: {
     flexDirection: "row",

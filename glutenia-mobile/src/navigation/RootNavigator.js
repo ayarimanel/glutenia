@@ -32,6 +32,13 @@ import OnboardingJourneyScreen from "../screens/onboarding/OnboardingJourneyScre
 import OnboardingGoalScreen from "../screens/onboarding/OnboardingGoalScreen";
 import OnboardingConfidenceScreen from "../screens/onboarding/OnboardingConfidenceScreen";
 import BadgeCollectionScreen from "../screens/user/BadgeCollectionScreen";
+import ShopScreen from "../screens/user/ShopScreen";
+import PatientResourcesScreen from "../screens/user/PatientResourcesScreen";
+import VideoPlayerScreen from "../screens/user/VideoPlayerScreen";
+import ResourceDetailScreen from "../screens/user/ResourceDetailScreen";
+import RecipesScreen from "../screens/user/RecipesScreen";
+import RecipeDetailScreen from "../screens/user/RecipeDetailScreen";
+import SettingsScreen from "../screens/user/SettingsScreen";
 
 const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
@@ -82,6 +89,13 @@ function UserStack() {
       <Stack.Screen name="CreateEvent" component={CreateEventScreen} />
       <Stack.Screen name="BadgeCollection" component={BadgeCollectionScreen} />
       <Stack.Screen name="MapDetail" component={MapDetailScreen} />
+      <Stack.Screen name="ShopScreen" component={ShopScreen} />
+      <Stack.Screen name="PatientResources" component={PatientResourcesScreen} />
+      <Stack.Screen name="VideoPlayer" component={VideoPlayerScreen} />
+      <Stack.Screen name="ResourceDetail" component={ResourceDetailScreen} />
+      <Stack.Screen name="Recipes" component={RecipesScreen} />
+      <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} />
+      <Stack.Screen name="Settings" component={SettingsScreen} />
     </Stack.Navigator>
   );
 }

@@ -1,0 +1,12 @@
+﻿diff --git a/node_modules/react-native-reanimated/android/build.gradle b/node_modules/react-native-reanimated/android/build.gradle
+index 1234567..abcdef0 100644
+--- a/node_modules/react-native-reanimated/android/build.gradle
++++ b/node_modules/react-native-reanimated/android/build.gradle
+@@ -271,6 +271,7 @@ android {
+     externalNativeBuild {
+         cmake {
+             version = System.getenv("CMAKE_VERSION") ?: "3.22.1"
+             path "CMakeLists.txt"
++            buildStagingDirectory "C:/cxx"
+         }
+     }

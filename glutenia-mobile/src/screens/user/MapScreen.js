@@ -19,7 +19,6 @@ import { Colors, Radius, Spacing } from "../../theme/colors";
 import AppIcon from "../../components/AppIcon";
 import AppHeader from "../../components/AppHeader";
 import { useAuth } from "../../context/AuthContext";
-import { useCart } from "../../context/CartContext";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -412,7 +411,6 @@ function buildLeafletHTML(spots) {
 export default function MapScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { count } = useCart();
   const webViewRef = useRef(null);
   const bottomSheetRef = useRef(null);
 
@@ -550,55 +548,16 @@ export default function MapScreen({ navigation }) {
         mixedContentMode="compatibility"
       />
 
-      {/* ── Layer 2: AppHeader Redesign (Glassmorphism) ────────────────────────── */}
+      {/* ── Layer 2: Header ──────────────────────────────────────────────────── */}
       <View
         style={styles.headerWrap}
         onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
       >
-        <View style={[styles.headerContainer, { paddingTop: insets.top + 12 }]}>
-          <View style={styles.headerGlass}>
-            <View style={styles.headerLeft}>
-              <View style={styles.avatarContainer}>
-                <Image
-                  source={{ uri: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" }}
-                  style={styles.headerAvatar}
-                />
-                <View style={styles.headerVerifiedBadge}>
-                  <AppIcon name="shield-check" size={10} color="#fff" strokeWidth={3} />
-                </View>
-              </View>
-              <View style={styles.greetingWrap}>
-                <Text style={styles.greetingText}>Welcome back,</Text>
-                <Text style={styles.headerNameText}>{user?.name ?? "Yassmine"}</Text>
-              </View>
-            </View>
-
-            <View style={styles.headerRight}>
-              <TouchableOpacity style={styles.headerActionBtn} activeOpacity={0.7}>
-                <AppIcon name="search" size={18} color="#2E2E2E" />
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={styles.headerActionBtn} 
-                activeOpacity={0.7}
-                onPress={() => navigation.navigate("CartPage")}
-              >
-                <View style={{ position: "relative" }}>
-                  <AppIcon name="basket" size={18} color="#2E2E2E" />
-                  {count > 0 && (
-                    <View style={styles.headerCartBadge}>
-                      <Text style={styles.headerCartBadgeText}>{count}</Text>
-                    </View>
-                  )}
-                </View>
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={styles.headerActionBtn} activeOpacity={0.7}>
-                <AppIcon name="bell" size={18} color="#2E2E2E" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
+        <AppHeader
+          safeTop
+          userName={user?.name ?? ""}
+          onCartPress={() => navigation.navigate("CartPage")}
+        />
       </View>
 
       {/* ── Layer 3: Category Chips (Redesigned) ─────────────────────────────── */}
@@ -928,99 +887,6 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: 10,
   },
-  headerContainer: {
-    paddingHorizontal: 16,
-  },
-  headerGlass: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "rgba(255, 255, 255, 0.92)",
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.6)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
-  },
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    flex: 1,
-  },
-  avatarContainer: {
-    width: 44,
-    height: 44,
-    position: "relative",
-  },
-  headerAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-  },
-  headerVerifiedBadge: {
-    position: "absolute",
-    bottom: -2,
-    right: -2,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: "#8BC34A",
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
-  },
-  greetingWrap: {
-    justifyContent: "center",
-    flex: 1,
-  },
-  greetingText: {
-    fontSize: 11,
-    color: "#6C757D",
-    fontWeight: "600",
-  },
-  headerNameText: {
-    fontSize: 15,
-    color: "#2E2E2E",
-    fontWeight: "700",
-  },
-  headerRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  headerActionBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "rgba(0, 0, 0, 0.03)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  headerCartBadge: {
-    position: "absolute",
-    top: -6,
-    right: -6,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: "#C8102E",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 3,
-  },
-  headerCartBadgeText: {
-    color: "#FFFFFF",
-    fontSize: 9,
-    fontWeight: "800",
-  },
-
   filterBar: {
     position: "absolute",
     left: 0,

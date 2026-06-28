@@ -5,13 +5,11 @@ import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 const OPTIONS = [
   {
-    emoji: "🛡️",
     label: "Gluten-Free Warrior",
     subtitle: "I'm living gluten-free myself",
     value: "warrior",
   },
   {
-    emoji: "🤝",
     label: "Supporter",
     subtitle: "I'm helping someone who is gluten-free",
     value: "supporter",
@@ -48,7 +46,6 @@ export default function OnboardingRoleScreen({ navigation }) {
               activeOpacity={0.75}
               onPress={() => setSelected(opt.value)}
             >
-              <Text style={styles.cardEmoji}>{opt.emoji}</Text>
               <View style={styles.cardBody}>
                 <Text style={[styles.cardLabel, active && styles.cardLabelActive]}>
                   {opt.label}
@@ -128,7 +125,6 @@ const styles = StyleSheet.create({
     ...Shadow,
   },
   cardActive: { borderColor: Colors.primary, backgroundColor: Colors.primaryPale },
-  cardEmoji: { fontSize: 28, marginRight: Spacing.md },
   cardBody: { flex: 1 },
   cardLabel: { fontSize: 16, fontWeight: "700", color: Colors.textDark, marginBottom: 2 },
   cardLabelActive: { color: Colors.primary },
