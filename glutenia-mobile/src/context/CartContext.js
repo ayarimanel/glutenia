@@ -1,26 +1,28 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useAuth } from "./AuthContext";
 
-const STORAGE_KEY = "glutenia.cart";
+const storageKey = (userId) => `glutenia.cart.${userId}`;
 const CartContext = createContext(null);
 
 export const CartProvider = ({ children }) => {
+  const { user } = useAuth();
   const [items, setItems] = useState([]);
 
   useEffect(() => {
+    setItems([]);
+    if (!user?.id) return;
     const restore = async () => {
-      const saved = await AsyncStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        setItems(JSON.parse(saved));
-      }
+      const saved = await AsyncStorage.getItem(storageKey(user.id));
+      if (saved) setItems(JSON.parse(saved));
     };
-
     restore();
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  }, [items]);
+    if (!user?.id) return;
+    AsyncStorage.setItem(storageKey(user.id), JSON.stringify(items));
+  }, [items, user?.id]);
 
   const addItem = (product, qty = 1) => {
     setItems((current) => {

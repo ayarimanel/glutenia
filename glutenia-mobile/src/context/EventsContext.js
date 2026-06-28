@@ -1,23 +1,28 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useAuth } from "./AuthContext";
 
-const STORAGE_KEY = "glutenia.events";
+const storageKey = (userId) => `glutenia.events.${userId}`;
 const EventsContext = createContext(null);
 
 export const EventsProvider = ({ children }) => {
+  const { user } = useAuth();
   const [participatingEvents, setParticipatingEvents] = useState([]);
 
   useEffect(() => {
+    setParticipatingEvents([]);
+    if (!user?.id) return;
     const restore = async () => {
-      const saved = await AsyncStorage.getItem(STORAGE_KEY);
+      const saved = await AsyncStorage.getItem(storageKey(user.id));
       if (saved) setParticipatingEvents(JSON.parse(saved));
     };
     restore();
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(participatingEvents));
-  }, [participatingEvents]);
+    if (!user?.id) return;
+    AsyncStorage.setItem(storageKey(user.id), JSON.stringify(participatingEvents));
+  }, [participatingEvents, user?.id]);
 
   const joinEvent = (event) => {
     setParticipatingEvents((current) => {
