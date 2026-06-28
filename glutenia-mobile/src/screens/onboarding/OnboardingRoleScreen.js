@@ -1,29 +1,31 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
-const OPTIONS = [
-  {
-    label: "Gluten-Free Warrior",
-    subtitle: "I'm living gluten-free myself",
-    value: "warrior",
-  },
-  {
-    label: "Supporter",
-    subtitle: "I'm helping someone who is gluten-free",
-    value: "supporter",
-  },
-];
-
 export default function OnboardingRoleScreen({ navigation }) {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState(null);
+
+  const OPTIONS = [
+    {
+      label: t("profileOnboarding.role.warrior"),
+      subtitle: t("profileOnboarding.role.warriorSub"),
+      value: "warrior",
+    },
+    {
+      label: t("profileOnboarding.role.supporter"),
+      subtitle: t("profileOnboarding.role.supporterSub"),
+      value: "supporter",
+    },
+  ];
 
   return (
     <SafeAreaView style={styles.root}>
       <View style={styles.headerRow}>
         <View style={styles.headerSpacer} />
-        <Text style={styles.stepLabel}>Step 1 of 4</Text>
+        <Text style={styles.stepLabel}>{t("profileOnboarding.role.step")}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -35,7 +37,7 @@ export default function OnboardingRoleScreen({ navigation }) {
         contentContainerStyle={styles.body}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.question}>Which best describes you?</Text>
+        <Text style={styles.question}>{t("profileOnboarding.role.question")}</Text>
 
         {OPTIONS.map((opt) => {
           const active = selected === opt.value;
@@ -67,7 +69,7 @@ export default function OnboardingRoleScreen({ navigation }) {
           activeOpacity={0.8}
           onPress={() => navigation.navigate("OnboardingJourney", { roleType: selected })}
         >
-          <Text style={styles.btnText}>Continue</Text>
+          <Text style={styles.btnText}>{t("profileOnboarding.role.continue")}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

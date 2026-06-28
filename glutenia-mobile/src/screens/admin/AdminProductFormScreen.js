@@ -1,6 +1,7 @@
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { useEffect, useRef, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
+import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import Field from "../../components/Field";
@@ -36,6 +37,7 @@ const readUriAsDataUrl = async (uri, mimeType) => {
 
 export default function AdminProductFormScreen({ navigation, route }) {
   const { token } = useAuth();
+  const { t } = useTranslation();
   const productId = route.params?.productId;
   const imageDataUrlRef = useRef("");
   const [name, setName] = useState("");
@@ -51,6 +53,15 @@ export default function AdminProductFormScreen({ navigation, route }) {
   const [loading, setLoading] = useState(false);
   const [imageProcessing, setImageProcessing] = useState(false);
 
+  const categoryLabels = {
+    Bread: t("shop.bread"),
+    Pasta: t("shop.pasta"),
+    Snacks: t("shop.snacks"),
+    Flour: t("shop.flour"),
+    Sweets: t("shop.sweets"),
+    Other: t("admin.form.other"),
+  };
+
   useEffect(() => {
     if (!productId) {
       return;
@@ -65,12 +76,12 @@ export default function AdminProductFormScreen({ navigation, route }) {
         setCategory(product.category);
         setImageUrl(product.imageUrl || "");
         imageDataUrlRef.current = "";
-        setImageStatus(product.imageUrl ? "Current product has an image." : "");
+        setImageStatus(product.imageUrl ? t("admin.form.currentImage") : "");
         setRemoveImage(false);
         setStock(String(product.stock || 0));
         setIsGlutenFree(Boolean(product.isGlutenFree));
       } catch (error) {
-        Alert.alert("Product", error.message);
+        Alert.alert(t("admin.form.productErrorTitle"), error.message);
         navigation.goBack();
       }
     };
@@ -84,15 +95,15 @@ export default function AdminProductFormScreen({ navigation, route }) {
     const nextErrors = {};
 
     if (!name.trim()) {
-      nextErrors.name = "Product name is required.";
+      nextErrors.name = t("admin.form.errors.nameRequired");
     }
 
     if (Number.isNaN(numericPrice) || numericPrice < 0) {
-      nextErrors.price = "Enter a valid price.";
+      nextErrors.price = t("admin.form.errors.priceInvalid");
     }
 
     if (!Number.isInteger(numericStock) || numericStock < 0) {
-      nextErrors.stock = "Stock must be 0 or more.";
+      nextErrors.stock = t("admin.form.errors.stockInvalid");
     }
 
     setErrors(nextErrors);
@@ -102,7 +113,7 @@ export default function AdminProductFormScreen({ navigation, route }) {
 
     try {
       if (!token) {
-        Alert.alert("Session", "Please log in again.");
+        Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsgShort"));
         return;
       }
 
@@ -136,33 +147,33 @@ export default function AdminProductFormScreen({ navigation, route }) {
       const confirmedImageUrl = confirmedProduct?.imageUrl || "";
 
       if (imageDataUrl && !confirmedImageUrl.startsWith("data:image/")) {
-        throw new Error("The product saved, but MongoDB did not keep the image. Try a smaller photo.");
+        throw new Error(t("admin.form.imageErrorKept"));
       }
 
       if (removeImage && confirmedImageUrl) {
-        throw new Error("The product saved, but MongoDB did not remove the image.");
+        throw new Error(t("admin.form.imageErrorRemoved"));
       }
 
-      setImageStatus(imageDataUrl ? "Image saved to MongoDB." : "Product saved.");
+      setImageStatus(imageDataUrl ? t("admin.form.savedImg") : t("admin.form.saved"));
       Alert.alert(
-        "Product saved",
-        imageDataUrl ? "Image uploaded and saved successfully." : "Product details saved.",
-        [{ text: "OK", onPress: () => navigation.goBack() }]
+        t("admin.form.saved"),
+        imageDataUrl ? t("admin.form.savedImgMsg") : t("admin.form.savedMsg"),
+        [{ text: t("admin.ok"), onPress: () => navigation.goBack() }]
       );
     } catch (error) {
-      Alert.alert("Save failed", error.message);
+      Alert.alert(t("admin.form.saveFailed"), error.message);
     } finally {
       setLoading(false);
     }
   };
 
   const pickImage = async () => {
-    setImageStatus("Checking photo permission...");
+    setImageStatus(t("admin.form.image.checking"));
 
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
-      setImageStatus("Photo permission denied.");
-      Alert.alert("Photos", "Allow photo access to upload a product image.");
+      setImageStatus(t("admin.form.image.denied"));
+      Alert.alert(t("admin.form.image.permissionTitle"), t("admin.form.image.permissionMsg"));
       return;
     }
 
@@ -174,45 +185,45 @@ export default function AdminProductFormScreen({ navigation, route }) {
     });
 
     if (result.canceled) {
-      setImageStatus("Image selection cancelled.");
+      setImageStatus(t("admin.form.image.cancelled"));
       return;
     }
 
     const asset = result.assets?.[0];
     if (!asset?.uri) {
-      setImageStatus("Could not read the selected image.");
-      Alert.alert("Image", "Could not read this image. Try another photo.");
+      setImageStatus(t("admin.form.image.cantRead"));
+      Alert.alert(t("admin.form.image.errorTitle"), t("admin.form.image.cantReadMsg"));
       return;
     }
 
     try {
       setImageProcessing(true);
-      setImageStatus("Image selected. Reading image data...");
+      setImageStatus(t("admin.form.image.reading"));
       const mimeType = asset.mimeType || "image/jpeg";
       const dataUrl = asset.base64
         ? `data:${mimeType};base64,${asset.base64}`
         : await readUriAsDataUrl(asset.uri, mimeType);
 
       if (!dataUrl.startsWith("data:image/")) {
-        setImageStatus("Selected image could not be read.");
-        Alert.alert("Image", "Could not read this image. Try another photo.");
+        setImageStatus(t("admin.form.image.readFailed"));
+        Alert.alert(t("admin.form.image.errorTitle"), t("admin.form.image.cantReadMsg"));
         return;
       }
 
       if (dataUrl.length > MAX_IMAGE_DATA_URL_LENGTH) {
-        setImageStatus(`Image is too large: ${Math.ceil(dataUrl.length / 1024)} KB.`);
-        Alert.alert("Image too large", "Choose a smaller image or screenshot and try again.");
+        setImageStatus(t("admin.form.image.tooLarge", { size: Math.ceil(dataUrl.length / 1024) }));
+        Alert.alert(t("admin.form.image.tooLargeTitle"), t("admin.form.image.tooLargeMsg"));
         return;
       }
 
       imageDataUrlRef.current = dataUrl;
       setRemoveImage(false);
       setImageUrl(asset.uri);
-      setImageStatus(`Image ready: ${Math.ceil(dataUrl.length / 1024)} KB. Save product to upload.`);
-      Alert.alert("Image ready", "Now press Save product to upload it.");
+      setImageStatus(t("admin.form.image.ready", { size: Math.ceil(dataUrl.length / 1024) }));
+      Alert.alert(t("admin.form.image.readyTitle"), t("admin.form.image.readyMsg"));
     } catch (error) {
-      setImageStatus("Image preparation failed.");
-      Alert.alert("Image", "Could not prepare this image. Try another photo.");
+      setImageStatus(t("admin.form.image.failed"));
+      Alert.alert(t("admin.form.image.errorTitle"), t("admin.form.image.failedMsg"));
     } finally {
       setImageProcessing(false);
     }
@@ -222,12 +233,12 @@ export default function AdminProductFormScreen({ navigation, route }) {
     <Screen>
       <ScrollView contentContainerStyle={styles.container}>
         <SectionHeader
-          eyebrow="Inventory"
-          title={productId ? "Edit product" : "Add product"}
+          eyebrow={t("admin.form.eyebrow")}
+          title={productId ? t("admin.form.titleEdit") : t("admin.form.titleAdd")}
           right={<IconButton icon="close" onPress={() => navigation.goBack()} />}
         />
         <Field
-          label="Product name"
+          label={t("admin.form.name")}
           value={name}
           error={errors.name}
           onChangeText={(value) => {
@@ -236,14 +247,14 @@ export default function AdminProductFormScreen({ navigation, route }) {
           }}
         />
         <Field
-          label="Description"
+          label={t("admin.form.description")}
           value={description}
           onChangeText={setDescription}
           multiline
         />
         <View style={styles.split}>
           <Field
-            label="Price"
+            label={t("admin.form.price")}
             value={price}
             error={errors.price}
             onChangeText={(value) => {
@@ -254,7 +265,7 @@ export default function AdminProductFormScreen({ navigation, route }) {
             style={styles.flex}
           />
           <Field
-            label="Stock"
+            label={t("admin.form.stock")}
             value={stock}
             error={errors.stock}
             onChangeText={(value) => {
@@ -266,7 +277,7 @@ export default function AdminProductFormScreen({ navigation, route }) {
           />
         </View>
         <View style={styles.categoryWrap}>
-          <Text style={styles.label}>Category</Text>
+          <Text style={styles.label}>{t("admin.form.category")}</Text>
           <View style={styles.categories}>
             {categories.map((item) => (
               <Pressable
@@ -280,14 +291,14 @@ export default function AdminProductFormScreen({ navigation, route }) {
                     category === item && styles.categoryTextActive,
                   ]}
                 >
-                  {item}
+                  {categoryLabels[item] || item}
                 </Text>
               </Pressable>
             ))}
           </View>
         </View>
         <View style={styles.imageSection}>
-          <Text style={styles.label}>Product image</Text>
+          <Text style={styles.label}>{t("admin.form.image")}</Text>
           <View
             style={[
               styles.imageStatusBox,
@@ -295,7 +306,7 @@ export default function AdminProductFormScreen({ navigation, route }) {
             ]}
           >
             <Text style={styles.imageStatus}>
-              {imageStatus || "No image selected yet."}
+              {imageStatus || t("admin.form.noImage")}
             </Text>
           </View>
           <View style={styles.imagePreview}>
@@ -305,10 +316,10 @@ export default function AdminProductFormScreen({ navigation, route }) {
             <SecondaryButton
               title={
                 imageProcessing
-                  ? "Preparing..."
+                  ? t("admin.form.preparing")
                   : imageUrl
-                    ? "Replace image"
-                    : "Upload image"
+                    ? t("admin.form.replaceImage")
+                    : t("admin.form.uploadImage")
               }
               icon="image"
               disabled={imageProcessing || loading}
@@ -317,13 +328,13 @@ export default function AdminProductFormScreen({ navigation, route }) {
             />
             {imageUrl ? (
               <SecondaryButton
-                title="Remove"
+                title={t("admin.form.remove")}
                 icon="trash"
                 disabled={imageProcessing || loading}
                 onPress={() => {
                   setImageUrl("");
                   imageDataUrlRef.current = "";
-                  setImageStatus("Image will be removed when you save.");
+                  setImageStatus(t("admin.form.removeStatus"));
                   setRemoveImage(true);
                 }}
                 style={styles.imageAction}
@@ -333,8 +344,8 @@ export default function AdminProductFormScreen({ navigation, route }) {
         </View>
         <View style={styles.switchCard}>
           <View>
-            <Text style={styles.switchTitle}>Gluten Free Certified</Text>
-            <Text style={styles.switchSub}>Show the green GF badge on product cards.</Text>
+            <Text style={styles.switchTitle}>{t("admin.form.glutenFree")}</Text>
+            <Text style={styles.switchSub}>{t("admin.form.glutenFreeSub")}</Text>
           </View>
           <Switch
             value={isGlutenFree}
@@ -344,7 +355,7 @@ export default function AdminProductFormScreen({ navigation, route }) {
           />
         </View>
         <PrimaryButton
-          title={productId ? "Update product" : "Save product"}
+          title={productId ? t("admin.form.update") : t("admin.form.save")}
           icon="save"
           loading={loading || imageProcessing}
           disabled={imageProcessing}

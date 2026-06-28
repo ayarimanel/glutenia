@@ -17,28 +17,34 @@ const LANGUAGES = [
   { code: "en", label: "English", flag: "🇬🇧" },
 ];
 
-export default function LanguageSelector() {
+export default function LanguageSelector({ visible: externalVisible, onClose }) {
   const { t, i18n } = useTranslation();
-  const [visible, setVisible] = useState(false);
+  const [internalVisible, setInternalVisible] = useState(false);
+
+  const controlled = externalVisible !== undefined;
+  const visible = controlled ? externalVisible : internalVisible;
+  const close = controlled ? onClose : () => setInternalVisible(false);
 
   return (
     <>
-      <TouchableOpacity
-        style={styles.trigger}
-        onPress={() => setVisible(true)}
-        activeOpacity={0.8}
-      >
-        <Globe color={Colors.textDark} size={20} strokeWidth={2} />
-      </TouchableOpacity>
+      {!controlled && (
+        <TouchableOpacity
+          style={styles.trigger}
+          onPress={() => setInternalVisible(true)}
+          activeOpacity={0.8}
+        >
+          <Globe color={Colors.textDark} size={20} strokeWidth={2} />
+        </TouchableOpacity>
+      )}
 
       <Modal
         visible={visible}
         transparent
         animationType="fade"
-        onRequestClose={() => setVisible(false)}
+        onRequestClose={close}
         statusBarTranslucent
       >
-        <Pressable style={styles.backdrop} onPress={() => setVisible(false)}>
+        <Pressable style={styles.backdrop} onPress={close}>
           {/* Inner Pressable stops tap-through so tapping the sheet doesn't close it */}
           <Pressable style={styles.sheet}>
             <Text style={styles.title}>{t("language.select")}</Text>
@@ -51,7 +57,7 @@ export default function LanguageSelector() {
                   style={[styles.row, active && styles.rowActive]}
                   onPress={() => {
                     i18n.changeLanguage(lang.code);
-                    setVisible(false);
+                    close();
                   }}
                   activeOpacity={0.7}
                 >

@@ -7,6 +7,7 @@ import {
   Linking,
   Alert,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 import AppIcon from "../../components/AppIcon";
@@ -28,16 +29,17 @@ function StarRating({ rating }) {
 
 export default function MapDetailScreen({ route, navigation }) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const { spot } = route.params;
 
   const handleContact = () => {
     Alert.alert(
-      `Contact ${spot.name}`,
-      "Choose how to reach us:",
+      t("map.contactTitle", { name: spot.name }),
+      t("mapDetail.contactMsg"),
       [
-        { text: "Call", onPress: () => Linking.openURL("tel:+21671000000") },
-        { text: "WhatsApp", onPress: () => {} },
-        { text: "Cancel", style: "cancel" },
+        { text: t("mapDetail.call"), onPress: () => Linking.openURL("tel:+21671000000") },
+        { text: t("mapDetail.whatsapp"), onPress: () => {} },
+        { text: t("mapDetail.cancel"), style: "cancel" },
       ]
     );
   };
@@ -64,7 +66,7 @@ export default function MapDetailScreen({ route, navigation }) {
         {/* GF badge over hero */}
         <View style={styles.heroBadge}>
           <AppIcon name="leaf" size={12} color="#fff" />
-          <Text style={styles.heroBadgeText}>Certified Gluten-Free</Text>
+          <Text style={styles.heroBadgeText}>{t("mapDetail.certifiedGF")}</Text>
         </View>
       </View>
 
@@ -94,7 +96,7 @@ export default function MapDetailScreen({ route, navigation }) {
         <View style={styles.ratingRow}>
           <StarRating rating={spot.rating} />
           <Text style={styles.ratingNum}>{spot.rating}</Text>
-          <Text style={styles.ratingReviews}>({spot.reviews} Reviews)</Text>
+          <Text style={styles.ratingReviews}>({spot.reviews} {t("mapDetail.reviews")})</Text>
         </View>
 
         {/* Distance + price row */}
@@ -105,7 +107,7 @@ export default function MapDetailScreen({ route, navigation }) {
           </View>
           <View style={styles.metaChip}>
             <AppIcon name="cash" size={14} color={Colors.primary} />
-            <Text style={styles.metaChipText}>{spot.avgPrice} avg</Text>
+            <Text style={styles.metaChipText}>{spot.avgPrice} {t("mapDetail.avg")}</Text>
           </View>
         </View>
 
@@ -119,11 +121,11 @@ export default function MapDetailScreen({ route, navigation }) {
         </View>
 
         {/* Description */}
-        <Text style={styles.sectionLabel}>About</Text>
+        <Text style={styles.sectionLabel}>{t("mapDetail.about")}</Text>
         <Text style={styles.description}>{spot.description}</Text>
 
         {/* Tags */}
-        <Text style={styles.sectionLabel}>Highlights</Text>
+        <Text style={styles.sectionLabel}>{t("mapDetail.highlights")}</Text>
         <View style={styles.tagRow}>
           {spot.tags.map((tag) => (
             <View key={tag} style={styles.tag}>
@@ -134,12 +136,12 @@ export default function MapDetailScreen({ route, navigation }) {
         </View>
 
         {/* Opening hours (fake) */}
-        <Text style={styles.sectionLabel}>Hours</Text>
+        <Text style={styles.sectionLabel}>{t("mapDetail.hours")}</Text>
         <View style={styles.hoursBlock}>
           {[
-            { day: "Mon – Fri", time: "08:00 – 20:00" },
-            { day: "Saturday", time: "09:00 – 18:00" },
-            { day: "Sunday", time: "10:00 – 16:00" },
+            { day: t("mapDetail.monFri"), time: "08:00 – 20:00" },
+            { day: t("mapDetail.saturday"), time: "09:00 – 18:00" },
+            { day: t("mapDetail.sunday"), time: "10:00 – 16:00" },
           ].map((h) => (
             <View key={h.day} style={styles.hoursRow}>
               <Text style={styles.hoursDay}>{h.day}</Text>
@@ -157,7 +159,7 @@ export default function MapDetailScreen({ route, navigation }) {
           onPress={handleContact}
         >
           <AppIcon name="person" size={18} color="#fff" />
-          <Text style={styles.ctaBtnText}>Contact</Text>
+          <Text style={styles.ctaBtnText}>{t("mapDetail.contact")}</Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -39,6 +39,7 @@ import ResourceDetailScreen from "../screens/user/ResourceDetailScreen";
 import RecipesScreen from "../screens/user/RecipesScreen";
 import RecipeDetailScreen from "../screens/user/RecipeDetailScreen";
 import SettingsScreen from "../screens/user/SettingsScreen";
+import LabelScanScreen from "../screens/user/LabelScanScreen";
 
 const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
@@ -96,6 +97,7 @@ function UserStack() {
       <Stack.Screen name="Recipes" component={RecipesScreen} />
       <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
+      <Stack.Screen name="LabelScan" component={LabelScanScreen} />
     </Stack.Navigator>
   );
 }

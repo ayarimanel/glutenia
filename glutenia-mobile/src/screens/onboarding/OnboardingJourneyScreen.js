@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft } from "lucide-react-native";
@@ -7,22 +8,28 @@ import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const daysAgo = (n) => new Date(Date.now() - n * MS_PER_DAY).toISOString();
 
-const OPTIONS = [
-  { label: "Just getting started", value: "just_started", glutenFreeSince: daysAgo(0) },
-  { label: "Less than 6 months", value: "1_to_6_months", glutenFreeSince: daysAgo(90) },
-  { label: "6 months to 1 year", value: "6_to_12_months", glutenFreeSince: daysAgo(270) },
-  { label: "1 to 3 years", value: "1_to_3_years", glutenFreeSince: daysAgo(730) },
-  { label: "More than 3 years", value: "3_plus_years", glutenFreeSince: daysAgo(1095) },
+const OPTIONS_META = [
+  { key: "justStarted",       value: "just_started",   glutenFreeSince: daysAgo(0)    },
+  { key: "lessThan6Months",   value: "1_to_6_months",  glutenFreeSince: daysAgo(90)   },
+  { key: "sixTo12Months",     value: "6_to_12_months", glutenFreeSince: daysAgo(270)  },
+  { key: "oneToThreeYears",   value: "1_to_3_years",   glutenFreeSince: daysAgo(730)  },
+  { key: "moreThanThreeYears",value: "3_plus_years",   glutenFreeSince: daysAgo(1095) },
 ];
 
 export default function OnboardingJourneyScreen({ navigation, route }) {
+  const { t } = useTranslation();
   const { roleType } = route.params;
   const [selected, setSelected] = useState(null);
 
+  const OPTIONS = OPTIONS_META.map((o) => ({
+    ...o,
+    label: t(`profileOnboarding.journey.${o.key}`),
+  }));
+
   const question =
     roleType === "warrior"
-      ? "How long have you been gluten-free?"
-      : "How long have you been supporting someone?";
+      ? t("profileOnboarding.journey.questionWarrior")
+      : t("profileOnboarding.journey.questionSupporter");
 
   const handleContinue = () => {
     const opt = OPTIONS.find((o) => o.value === selected);
@@ -43,7 +50,7 @@ export default function OnboardingJourneyScreen({ navigation, route }) {
         >
           <ArrowLeft size={22} color={Colors.textDark} strokeWidth={2.5} />
         </TouchableOpacity>
-        <Text style={styles.stepLabel}>Step 2 of 4</Text>
+        <Text style={styles.stepLabel}>{t("profileOnboarding.journey.step")}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -86,7 +93,7 @@ export default function OnboardingJourneyScreen({ navigation, route }) {
           activeOpacity={0.8}
           onPress={handleContinue}
         >
-          <Text style={styles.btnText}>Continue</Text>
+          <Text style={styles.btnText}>{t("profileOnboarding.role.continue")}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

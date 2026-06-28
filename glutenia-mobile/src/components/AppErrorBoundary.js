@@ -2,6 +2,7 @@ import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Colors, Radius, Spacing } from "../theme/colors";
 import { PrimaryButton } from "./Buttons";
+import i18n from "../i18n";
 
 export default class AppErrorBoundary extends React.Component {
   state = {
@@ -20,9 +21,9 @@ export default class AppErrorBoundary extends React.Component {
     return (
       <View style={styles.screen}>
         <View style={styles.card}>
-          <Text style={styles.title}>Glutenia hit a startup error</Text>
+          <Text style={styles.title}>{i18n.t("errorBoundary.title")}</Text>
           <Text style={styles.body}>
-            Close and reopen the app. If this appears again, send this message with the APK.
+            {i18n.t("errorBoundary.body")}
           </Text>
           <ScrollView style={styles.errorBox}>
             <Text style={styles.errorText}>
@@ -30,7 +31,7 @@ export default class AppErrorBoundary extends React.Component {
             </Text>
           </ScrollView>
           <PrimaryButton
-            title="Try again"
+            title={i18n.t("errorBoundary.tryAgain")}
             icon="refresh"
             onPress={() => this.setState({ error: null })}
           />

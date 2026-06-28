@@ -6,6 +6,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
@@ -16,15 +17,16 @@ import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 // ─────────────────────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
-  { key: "celiac",    label: "Celiac\nDisease",     icon: "activity",     bg: Colors.secondaryPale, color: Colors.secondary },
-  { key: "diet",      label: "Diet Basics",          icon: "utensils",     bg: Colors.primaryPale,   color: Colors.primary   },
-  { key: "safe",      label: "Safe Foods\n& Risks",  icon: "shield-check", bg: Colors.primaryPale,   color: Colors.primary   },
-  { key: "lifestyle", label: "Lifestyle\nTips",      icon: "star",         bg: "#FFF9E6",            color: "#F59E0B"        },
+  { key: "celiac",    icon: "activity",     bg: Colors.secondaryPale, color: Colors.secondary },
+  { key: "diet",      icon: "utensils",     bg: Colors.primaryPale,   color: Colors.primary   },
+  { key: "safe",      icon: "shield-check", bg: Colors.primaryPale,   color: Colors.primary   },
+  { key: "lifestyle", icon: "star",         bg: "#FFF9E6",            color: "#F59E0B"        },
 ];
 
 const RESOURCES = [
   {
     id: "1",
+    resourceKey: "r1",
     title: "Starting a Gluten-Free Diet",
     description: "Learn which foods to avoid, how to read ingredient labels, and how to set up a safe gluten-free kitchen from day one.",
     readTime: "5 min",
@@ -55,6 +57,7 @@ In the first weeks, stick to naturally gluten-free whole foods (meat, fish, eggs
   },
   {
     id: "2",
+    resourceKey: "r2",
     title: "Hidden Sources of Gluten",
     description: "Gluten hides in soy sauce, salad dressings, medications, and more. Discover the unexpected products to watch out for.",
     readTime: "4 min",
@@ -95,6 +98,7 @@ When in doubt, contact the manufacturer directly or choose products with a certi
   },
   {
     id: "3",
+    resourceKey: "r3",
     title: "Nutritional Deficiencies in Celiac Patients",
     description: "Celiac disease often causes low levels of iron, calcium, vitamin D, and B12. Learn how to identify and correct them.",
     readTime: "6 min",
@@ -125,6 +129,7 @@ Ask your doctor for a full blood panel at diagnosis and again at 6 and 12 months
   },
   {
     id: "4",
+    resourceKey: "r4",
     title: "Dining Out Safely",
     description: "Tips for eating at restaurants with confidence — how to communicate with staff and spot hidden gluten on any menu.",
     readTime: "4 min",
@@ -165,6 +170,7 @@ If in doubt, choose a simpler venue or prepare your own food. Your health comes 
 const VIDEOS = [
   {
     id: "1",
+    videoKey: "v1",
     title: "Living with Celiac Disease",
     author: "Dr. Amira Ben Ali",
     duration: "12 min",
@@ -173,6 +179,7 @@ const VIDEOS = [
   },
   {
     id: "2",
+    videoKey: "v2",
     title: "Gluten-Free Meal Prep",
     author: "Nutritionist Panel",
     duration: "18 min",
@@ -186,6 +193,7 @@ const VIDEOS = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 export default function PatientResourcesScreen({ navigation }) {
+  const { t } = useTranslation();
   const openVideo = (video) => {
     navigation.navigate("VideoPlayer", {
       youtubeId: video.youtubeId,
@@ -199,14 +207,14 @@ export default function PatientResourcesScreen({ navigation }) {
         <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
           <AppIcon name="arrow-back" size={22} color={Colors.textDark} />
         </Pressable>
-        <Text style={styles.navTitle}>Patient Resources</Text>
+        <Text style={styles.navTitle}>{t("patientResources.title")}</Text>
         <View style={styles.navSpacer} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
 
         {/* ── Categories ── */}
-        <Text style={styles.sectionMeta}>Categories</Text>
+        <Text style={styles.sectionMeta}>{t("patientResources.categories")}</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -217,36 +225,33 @@ export default function PatientResourcesScreen({ navigation }) {
               <View style={[styles.catIconWrap, { backgroundColor: cat.bg }]}>
                 <AppIcon name={cat.icon} size={22} color={cat.color} />
               </View>
-              <Text style={styles.catLabel}>{cat.label}</Text>
+              <Text style={styles.catLabel}>{t(`patientResources.categoryLabels.${cat.key}`)}</Text>
             </Pressable>
           ))}
         </ScrollView>
 
         {/* ── Featured ── */}
-        <Text style={styles.sectionMeta}>Featured</Text>
+        <Text style={styles.sectionMeta}>{t("patientResources.featured")}</Text>
         <View style={styles.featuredCard}>
           <View style={styles.featuredIconCircle}>
             <AppIcon name="activity" size={34} color={Colors.secondary} />
           </View>
-          <Text style={styles.featuredTitle}>What is Celiac Disease?</Text>
-          <Text style={styles.featuredDesc}>
-            Celiac disease is an autoimmune condition triggered by gluten. Learn its symptoms,
-            how it's diagnosed with blood tests and biopsy, and what life looks like after diagnosis.
-          </Text>
+          <Text style={styles.featuredTitle}>{t("patientResources.featuredTitle")}</Text>
+          <Text style={styles.featuredDesc}>{t("patientResources.featuredDesc")}</Text>
           <View style={styles.featuredFooter}>
             <View style={styles.readTimeRow}>
               <AppIcon name="clock" size={13} color={Colors.textMuted} />
-              <Text style={styles.readTimeText}>8 min read</Text>
+              <Text style={styles.readTimeText}>{t("patientResources.readTime", { time: t("patientResources.featuredReadTime") })}</Text>
             </View>
             <Pressable
               style={styles.readMoreBtn}
               onPress={() => navigation.navigate("ResourceDetail", {
                 resource: {
-                  title: "What is Celiac Disease?",
+                  title: t("patientResources.featuredTitle"),
                   icon: "activity",
                   bg: Colors.secondaryPale,
                   color: Colors.secondary,
-                  readTime: "8 min",
+                  readTime: t("patientResources.featuredReadTime"),
                   body: `Celiac disease is a chronic autoimmune condition in which the ingestion of gluten — a protein found in wheat, barley, and rye — causes damage to the lining of the small intestine.
 
 How it works:
@@ -272,33 +277,35 @@ With the right knowledge, celiac disease is entirely manageable. Most people lea
                 },
               })}
             >
-              <Text style={styles.readMoreText}>Read more</Text>
+              <Text style={styles.readMoreText}>{t("patientResources.readMore")}</Text>
               <AppIcon name="chevron-right" size={14} color={Colors.primary} />
             </Pressable>
           </View>
         </View>
 
         {/* ── All resources ── */}
-        <Text style={styles.sectionMeta}>All resources</Text>
+        <Text style={styles.sectionMeta}>{t("patientResources.allResources")}</Text>
         <View style={styles.resourceList}>
           {RESOURCES.map((item) => (
             <Pressable
               key={item.id}
               style={styles.resourceCard}
-              onPress={() => navigation.navigate("ResourceDetail", { resource: item })}
+              onPress={() => navigation.navigate("ResourceDetail", {
+                resource: { ...item, title: t(`patientResources.resources.${item.resourceKey}.title`), description: t(`patientResources.resources.${item.resourceKey}.description`) },
+              })}
             >
               <View style={[styles.resourceIconWrap, { backgroundColor: item.bg }]}>
                 <AppIcon name={item.icon} size={22} color={item.color} />
               </View>
               <View style={styles.resourceBody}>
-                <Text style={styles.resourceTitle}>{item.title}</Text>
+                <Text style={styles.resourceTitle}>{t(`patientResources.resources.${item.resourceKey}.title`)}</Text>
                 <Text style={styles.resourceDesc} numberOfLines={2}>
-                  {item.description}
+                  {t(`patientResources.resources.${item.resourceKey}.description`)}
                 </Text>
                 <View style={styles.resourceFooter}>
                   <AppIcon name="clock" size={12} color={Colors.textMuted} />
-                  <Text style={styles.resourceTime}>{item.readTime}</Text>
-                  <Text style={styles.resourceReadMore}>  Read more →</Text>
+                  <Text style={styles.resourceTime}>{t(`patientResources.resources.${item.resourceKey}.readTime`)}</Text>
+                  <Text style={styles.resourceReadMore}>  {t("patientResources.readMore")} →</Text>
                 </View>
               </View>
             </Pressable>
@@ -307,9 +314,9 @@ With the right knowledge, celiac disease is entirely manageable. Most people lea
 
         {/* ── Videos & Sessions ── */}
         <View style={styles.videosSectionRow}>
-          <Text style={styles.videosSectionTitle}>Videos & Sessions</Text>
+          <Text style={styles.videosSectionTitle}>{t("patientResources.videosSection")}</Text>
           <Pressable style={styles.seeAll}>
-            <Text style={styles.seeAllText}>See All</Text>
+            <Text style={styles.seeAllText}>{t("patientResources.seeAll")}</Text>
             <AppIcon name="chevron-right" size={14} color={Colors.secondary} />
           </Pressable>
         </View>
@@ -334,9 +341,9 @@ With the right knowledge, celiac disease is entirely manageable. Most people lea
                 </View>
               </View>
               <Text style={styles.videoTitle} numberOfLines={2}>
-                {video.title}
+                {t(`patientResources.videos.${video.videoKey}.title`)}
               </Text>
-              <Text style={styles.videoAuthor}>{video.author}</Text>
+              <Text style={styles.videoAuthor}>{t(`patientResources.videos.${video.videoKey}.author`)}</Text>
             </Pressable>
           ))}
         </ScrollView>
@@ -344,10 +351,7 @@ With the right knowledge, celiac disease is entirely manageable. Most people lea
         {/* ── Disclaimer ── */}
         <View style={styles.disclaimer}>
           <AppIcon name="info" size={16} color={Colors.secondary} />
-          <Text style={styles.disclaimerText}>
-            This content is for informational purposes only and does not replace professional
-            medical advice. Always consult a healthcare provider.
-          </Text>
+          <Text style={styles.disclaimerText}>{t("patientResources.disclaimer")}</Text>
         </View>
 
         <View style={{ height: 40 }} />

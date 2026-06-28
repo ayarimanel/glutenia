@@ -6,6 +6,7 @@ import {
   Image,
   TouchableOpacity,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import AppHeader from "../../components/AppHeader";
 import AppIcon from "../../components/AppIcon";
@@ -13,13 +14,14 @@ import { useAuth } from "../../context/AuthContext";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 export default function RecipeDetailScreen({ navigation, route }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { recipe } = route.params;
 
   const stats = [
-    { value: recipe.calories, label: "Calories" },
-    { value: recipe.carbo, label: "Carbo" },
-    { value: recipe.protein, label: "Protein" },
+    { value: recipe.calories, label: t("recipeDetail.calories") },
+    { value: recipe.carbo, label: t("recipeDetail.carbo") },
+    { value: recipe.protein, label: t("recipeDetail.protein") },
   ];
 
   return (
@@ -43,7 +45,7 @@ export default function RecipeDetailScreen({ navigation, route }) {
         </View>
 
         {/* Nutritions */}
-        <Text style={styles.sectionTitle}>Nutritions</Text>
+        <Text style={styles.sectionTitle}>{t("recipeDetail.nutritions")}</Text>
         <View style={styles.nutritionRow}>
           <View style={styles.statsCol}>
             {stats.map((stat) => (
@@ -61,7 +63,7 @@ export default function RecipeDetailScreen({ navigation, route }) {
         </View>
 
         {/* Ingredients */}
-        <Text style={styles.sectionTitle}>Ingredients</Text>
+        <Text style={styles.sectionTitle}>{t("recipeDetail.ingredients")}</Text>
         <View style={styles.ingredientList}>
           {recipe.ingredients.map((item, i) => (
             <View key={i} style={styles.ingredientRow}>
@@ -73,7 +75,7 @@ export default function RecipeDetailScreen({ navigation, route }) {
 
         {/* Preparation */}
         <Text style={[styles.sectionTitle, { marginTop: Spacing.lg }]}>
-          Receipe Preparation
+          {t("recipeDetail.preparation")}
         </Text>
         <Text style={styles.prepText}>{recipe.preparation}</Text>
 

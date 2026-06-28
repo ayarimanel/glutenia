@@ -16,6 +16,7 @@ import { useAuth } from "../context/AuthContext";
 import { useEvents } from "../context/EventsContext";
 import { api } from "../api/client";
 import { Colors, Radius, Shadow, Spacing } from "../theme/colors";
+import { useTranslation } from "react-i18next";
 
 // Thresholds: index i → minimum XP for level (i+1), levels 1–10
 const LEVEL_THRESHOLDS = [0, 150, 350, 600, 800, 1200, 1800, 2200, 2700, 3500];
@@ -40,14 +41,6 @@ function formatTimeAgo(dateString) {
   return `${years} year${years !== 1 ? "s" : ""}`;
 }
 
-const JOURNEY_STEPS = [
-  { label: "Beginner" },
-  { label: "Aware" },
-  { label: "Safe Eater" },
-  { label: "Fighter" },
-  { label: "Titan" },
-];
-
 function levelToStep(level) {
   if (level <= 1) return 0;
   if (level <= 3) return 1;
@@ -56,22 +49,32 @@ function levelToStep(level) {
   return 4;
 }
 
-const ROLE_META = {
-  warrior: {
-    label: "Gluten-Free Warrior",
-    icon: "shield",
-    desc: "You actively manage your gluten-free lifestyle and inspire others.",
-  },
-  supporter: {
-    label: "Supporter",
-    icon: "person-add",
-    desc: "You support someone on their gluten-free journey.",
-  },
-};
-
 const mascot = require("../../assets/mascot.png");
 
 export default function AccountScreen({ navigation }) {
+  const { t } = useTranslation();
+
+  const JOURNEY_STEPS = [
+    { key: "beginner", label: t("account.journey.beginner") },
+    { key: "aware", label: t("account.journey.aware") },
+    { key: "safeEater", label: t("account.journey.safeEater") },
+    { key: "fighter", label: t("account.journey.fighter") },
+    { key: "titan", label: t("account.journey.titan") },
+  ];
+
+  const ROLE_META = {
+    warrior: {
+      label: t("account.roles.warrior.label"),
+      icon: "shield",
+      desc: t("account.roles.warrior.desc"),
+    },
+    supporter: {
+      label: t("account.roles.supporter.label"),
+      icon: "person-add",
+      desc: t("account.roles.supporter.desc"),
+    },
+  };
+
   const { user, token, logout } = useAuth();
   const { participatingEvents } = useEvents();
   const [profileData, setProfileData] = useState(null);
@@ -85,7 +88,7 @@ export default function AccountScreen({ navigation }) {
       const data = await api.getGamificationProfile(token);
       setProfileData(data);
     } catch (err) {
-      setError(err.message || "Could not load profile data.");
+      setError(err.message || t("account.errorLoad"));
     } finally {
       setLoading(false);
     }
@@ -96,9 +99,9 @@ export default function AccountScreen({ navigation }) {
   }, [fetchProfile]);
 
   const handleLogout = () => {
-    Alert.alert("Logout", "Sign out of Glutenia?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Logout", style: "destructive", onPress: logout },
+    Alert.alert(t("account.logoutTitle"), t("account.logoutMsg"), [
+      { text: t("account.cancel"), style: "cancel" },
+      { text: t("account.logout"), style: "destructive", onPress: logout },
     ]);
   };
 
@@ -115,7 +118,7 @@ export default function AccountScreen({ navigation }) {
       <Screen style={styles.centered}>
         <Text style={styles.errorMsg}>{error}</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={fetchProfile}>
-          <Text style={styles.retryText}>Retry</Text>
+          <Text style={styles.retryText}>{t("account.retry")}</Text>
         </TouchableOpacity>
       </Screen>
     );
@@ -130,7 +133,7 @@ export default function AccountScreen({ navigation }) {
 
   const roleType = user?.role_type;
   const roleMeta = ROLE_META[roleType] || ROLE_META.warrior;
-  const currentTitle = gamification?.currentTitle || "Newcomer";
+  const currentTitle = gamification?.currentTitle || t("account.newcomer");
   const level = gamification?.currentLevel ?? 1;
   const totalXp = gamification?.totalXp ?? 0;
   const currentStreak = gamification?.currentStreak ?? 0;
@@ -163,7 +166,7 @@ export default function AccountScreen({ navigation }) {
           </View>
           {timeAgo ? (
             <Text style={styles.timeText}>
-              {roleType === "supporter" ? "Supporting for" : "Gluten-free for"}{" "}
+              {roleType === "supporter" ? t("account.supportingFor") : t("account.glutenFreeFor")}{" "}
               {timeAgo} 🌿
             </Text>
           ) : null}
@@ -173,11 +176,11 @@ export default function AccountScreen({ navigation }) {
         <View style={styles.xpCard}>
           <View style={styles.xpRow}>
             <View>
-              <Text style={styles.xpLevelNum}>Level {level}</Text>
+              <Text style={styles.xpLevelNum}>{t("account.level", { level })}</Text>
               <Text style={styles.xpTitleSub}>{currentTitle}</Text>
             </View>
             <View style={styles.xpChip}>
-              <Text style={styles.xpChipText}>{totalXp} XP</Text>
+              <Text style={styles.xpChipText}>{totalXp} {t("account.xp")}</Text>
             </View>
           </View>
           <View style={styles.xpTrack}>
@@ -189,7 +192,7 @@ export default function AccountScreen({ navigation }) {
             />
           </View>
           <Text style={styles.xpHint}>
-            {totalXp} / {nextMin} XP — Level {level + 1}
+            {t("account.xpHint", { current: totalXp, next: nextMin, nextLevel: level + 1 })}
           </Text>
         </View>
 
@@ -197,22 +200,22 @@ export default function AccountScreen({ navigation }) {
         <View style={styles.statsCard}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>🔥 {currentStreak}</Text>
-            <Text style={styles.statLabel}>Streak</Text>
+            <Text style={styles.statLabel}>{t("account.streak")}</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>⚡ {longestStreak}</Text>
-            <Text style={styles.statLabel}>Best</Text>
+            <Text style={styles.statLabel}>{t("account.best")}</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>🏅 {earnedBadges.length}</Text>
-            <Text style={styles.statLabel}>Badges</Text>
+            <Text style={styles.statLabel}>{t("account.badges")}</Text>
           </View>
         </View>
 
         {/* ── D. Role card ───────────────────────────────────────────────── */}
-        <Text style={styles.sectionLabel}>Your Role</Text>
+        <Text style={styles.sectionLabel}>{t("account.yourRole")}</Text>
         <View style={styles.roleCard}>
           <View style={styles.roleIconWrap}>
             <AppIcon name={roleMeta.icon} size={32} color={Colors.primary} />
@@ -224,14 +227,14 @@ export default function AccountScreen({ navigation }) {
         </View>
 
         {/* ── E. Journey ─────────────────────────────────────────────────── */}
-        <Text style={[styles.sectionLabel, styles.mt]}>Your Journey</Text>
+        <Text style={[styles.sectionLabel, styles.mt]}>{t("account.yourJourney")}</Text>
         <View style={styles.journeyCard}>
           <View style={styles.journeyRow}>
             {JOURNEY_STEPS.map((step, index) => {
               const isDone = index <= activeStep;
               const isCurrent = index === activeStep;
               return (
-                <View key={step.label} style={styles.stepItem}>
+                <View key={step.key} style={styles.stepItem}>
                   <View style={styles.stepTrack}>
                     {index > 0 && (
                       <View
@@ -273,10 +276,10 @@ export default function AccountScreen({ navigation }) {
           <>
             <View style={[styles.badgeSectionRow, styles.mt]}>
               <Text style={styles.sectionLabel}>
-                {pinnedBadges.length > 0 ? "Pinned Badges" : "Recent Badges"}
+                {pinnedBadges.length > 0 ? t("account.pinnedBadges") : t("account.recentBadges")}
               </Text>
               <TouchableOpacity onPress={() => navigation.navigate("BadgeCollection")}>
-                <Text style={styles.viewAllLink}>View all</Text>
+                <Text style={styles.viewAllLink}>{t("account.viewAll")}</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.badgesWrap}>
@@ -299,7 +302,7 @@ export default function AccountScreen({ navigation }) {
         {/* ── G. Top achievements ────────────────────────────────────────── */}
         {topAchievements.length > 0 && (
           <>
-            <Text style={[styles.sectionLabel, styles.mt]}>In Progress</Text>
+            <Text style={[styles.sectionLabel, styles.mt]}>{t("account.inProgress")}</Text>
             <View style={styles.achCard}>
               {topAchievements.map((ua, idx) => {
                 const ach = ua.achievementId;
@@ -335,14 +338,14 @@ export default function AccountScreen({ navigation }) {
         <View style={styles.ecoCard}>
           <Image source={mascot} style={styles.mascot} resizeMode="contain" />
           <Text style={styles.ecoText}>
-            Every action makes the ecosystem stronger.
+            {t("account.ecoText")}
           </Text>
         </View>
 
         {/* ── I. Events attending ────────────────────────────────────────── */}
         {participatingEvents.length > 0 && (
           <>
-            <Text style={[styles.sectionLabel, styles.mt]}>Events I'm Attending</Text>
+            <Text style={[styles.sectionLabel, styles.mt]}>{t("account.eventsAttending")}</Text>
             <View style={styles.eventsCard}>
               {participatingEvents.map((ev, idx) => (
                 <View
@@ -357,7 +360,7 @@ export default function AccountScreen({ navigation }) {
                     <Text style={styles.eventDate}>{ev.date}</Text>
                   </View>
                   <Text style={styles.eventPrice}>
-                    {ev.price === 0 ? "Free" : `${ev.price} TND`}
+                    {ev.price === 0 ? t("account.free") : `${ev.price} TND`}
                   </Text>
                 </View>
               ))}
@@ -372,7 +375,7 @@ export default function AccountScreen({ navigation }) {
               <View style={[styles.iconWrap, { backgroundColor: Colors.primaryPale }]}>
                 <AppIcon name="receipt" size={20} color={Colors.primary} />
               </View>
-              <Text style={styles.settingsLabel}>My Orders</Text>
+              <Text style={styles.settingsLabel}>{t("account.myOrders")}</Text>
             </View>
             <AppIcon name="chevron-right" size={20} color={Colors.textMuted} />
           </Pressable>
@@ -384,7 +387,7 @@ export default function AccountScreen({ navigation }) {
               <View style={[styles.iconWrap, { backgroundColor: Colors.secondaryPale }]}>
                 <AppIcon name="settings" size={20} color={Colors.secondary} />
               </View>
-              <Text style={styles.settingsLabel}>Settings</Text>
+              <Text style={styles.settingsLabel}>{t("account.settings")}</Text>
             </View>
             <AppIcon name="chevron-right" size={20} color={Colors.textMuted} />
           </Pressable>
@@ -396,7 +399,7 @@ export default function AccountScreen({ navigation }) {
               <View style={[styles.iconWrap, { backgroundColor: Colors.secondaryPale }]}>
                 <AppIcon name="shield-check" size={20} color={Colors.secondary} />
               </View>
-              <Text style={styles.settingsLabel}>Privacy & Security</Text>
+              <Text style={styles.settingsLabel}>{t("account.privacySecurity")}</Text>
             </View>
             <AppIcon name="chevron-right" size={20} color={Colors.textMuted} />
           </Pressable>
@@ -409,7 +412,7 @@ export default function AccountScreen({ navigation }) {
                 <AppIcon name="log-out" size={20} color={Colors.secondary} />
               </View>
               <Text style={[styles.settingsLabel, styles.settingsLabelDanger]}>
-                Log out
+                {t("account.logout")}
               </Text>
             </View>
             <AppIcon name="chevron-right" size={20} color={Colors.textMuted} />

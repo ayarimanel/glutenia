@@ -19,6 +19,7 @@ import { Colors, Radius, Spacing } from "../../theme/colors";
 import AppIcon from "../../components/AppIcon";
 import AppHeader from "../../components/AppHeader";
 import { useAuth } from "../../context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -197,11 +198,6 @@ const SPOTS = [
 
 const FILTERS = ["All", "Supermarket", "Restaurant", "Health Store", "Bakery", "Pharmacy"];
 
-const HOURS = [
-  { day: "Mon – Fri", time: "08:00 – 20:00" },
-  { day: "Saturday",  time: "09:00 – 18:00" },
-  { day: "Sunday",    time: "10:00 – 16:00" },
-];
 
 // ─── Star rating helper ───────────────────────────────────────────────────────
 
@@ -243,20 +239,6 @@ const FILTER_ICONS = {
   Pharmacy: "activity"
 };
 
-const getFacilities = (type) => {
-  switch (type) {
-    case "Restaurant":
-      return ["100% GF Kitchen", "Dedicated Fryer", "Outdoor Terrace", "Celiac Certified Staff"];
-    case "Bakery":
-      return ["Dedicated GF Oven", "Baked Fresh Daily", "Custom Cake Ordering", "Vegan Friendly Options"];
-    case "Supermarket":
-      return ["Dedicated GF Aisle", "Imported GF Brands", "Organic Section", "Fresh Produce"];
-    case "Health Store":
-      return ["Natural Supplements", "Bulk Gluten-Free Flours", "Dietary Consultations", "Eco-Friendly Shop"];
-    default:
-      return ["Celiac Friendly", "Gluten-Free Certified", "Friendly Staff"];
-  }
-};
 
 // ─── Leaflet HTML builder ─────────────────────────────────────────────────────
 
@@ -410,7 +392,37 @@ function buildLeafletHTML(spots) {
 
 export default function MapScreen({ navigation }) {
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   const { user } = useAuth();
+  const filterLabels = {
+    All: t("map.all"),
+    Supermarket: t("map.supermarket"),
+    Restaurant: t("map.restaurant"),
+    "Health Store": t("map.healthStore"),
+    Bakery: t("map.bakery"),
+    Pharmacy: t("map.pharmacy"),
+  };
+
+  const hours = [
+    { day: t("map.monFri"),   time: "08:00 – 20:00" },
+    { day: t("map.saturday"), time: "09:00 – 18:00" },
+    { day: t("map.sunday"),   time: "10:00 – 16:00" },
+  ];
+
+  const getFacilities = (type) => {
+    switch (type) {
+      case "Restaurant":
+        return [t("map.facR1"), t("map.facR2"), t("map.facR3"), t("map.facR4")];
+      case "Bakery":
+        return [t("map.facB1"), t("map.facB2"), t("map.facB3"), t("map.facB4")];
+      case "Supermarket":
+        return [t("map.facS1"), t("map.facS2"), t("map.facS3"), t("map.facS4")];
+      case "Health Store":
+        return [t("map.facH1"), t("map.facH2"), t("map.facH3"), t("map.facH4")];
+      default:
+        return [t("map.facD1"), t("map.facD2"), t("map.facD3")];
+    }
+  };
   const webViewRef = useRef(null);
   const bottomSheetRef = useRef(null);
 
@@ -491,12 +503,12 @@ export default function MapScreen({ navigation }) {
   const handleContact = useCallback(() => {
     if (!selectedSpot) return;
     Alert.alert(
-      `Contact ${selectedSpot.name}`,
-      "Choose how to reach us:",
+      t("map.contactTitle", { name: selectedSpot.name }),
+      t("map.contactMsg"),
       [
-        { text: "Call", onPress: () => Linking.openURL("tel:+21671000000") },
-        { text: "WhatsApp", onPress: () => {} },
-        { text: "Cancel", style: "cancel" },
+        { text: t("map.call"), onPress: () => Linking.openURL("tel:+21671000000") },
+        { text: t("map.whatsapp"), onPress: () => {} },
+        { text: t("map.cancel"), style: "cancel" },
       ]
     );
   }, [selectedSpot]);
@@ -505,7 +517,7 @@ export default function MapScreen({ navigation }) {
     if (!selectedSpot) return;
     const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedSpot.coordinate.latitude},${selectedSpot.coordinate.longitude}`;
     Linking.openURL(url).catch(() => {
-      Alert.alert("Error", "Could not open maps application");
+      Alert.alert(t("map.errorTitle"), t("map.mapsError"));
     });
   }, [selectedSpot]);
 
@@ -592,7 +604,7 @@ export default function MapScreen({ navigation }) {
                     isActive ? styles.filterTextActive : styles.filterTextInactive,
                   ]}
                 >
-                  {f}
+                  {filterLabels[f] ?? f}
                 </Text>
               </TouchableOpacity>
             );
@@ -601,7 +613,7 @@ export default function MapScreen({ navigation }) {
 
         <TouchableOpacity style={styles.filterIconBtn} activeOpacity={0.8}>
           <AppIcon name="list" size={15} color="#2E2E2E" />
-          <Text style={styles.filterIconLabel}>Filter</Text>
+          <Text style={styles.filterIconLabel}>{t("map.filter")}</Text>
         </TouchableOpacity>
       </View>
 
@@ -631,12 +643,12 @@ export default function MapScreen({ navigation }) {
               <View style={styles.cardBadgeRow}>
                 <View style={styles.verifiedBadge}>
                   <AppIcon name="shield-check" size={10} color="#8BC34A" strokeWidth={3} />
-                  <Text style={styles.verifiedBadgeText}>Verified GF</Text>
+                  <Text style={styles.verifiedBadgeText}>{t("map.verifiedGF")}</Text>
                 </View>
                 
                 <View style={[styles.cardCategoryBadge, { backgroundColor: selectedSpot.color + "15" }]}>
                   <Text style={[styles.cardCategoryText, { color: selectedSpot.color }]}>
-                    {selectedSpot.type}
+                    {filterLabels[selectedSpot.type] ?? selectedSpot.type}
                   </Text>
                 </View>
               </View>
@@ -662,7 +674,7 @@ export default function MapScreen({ navigation }) {
 
           <View style={styles.cardActionRow}>
             <TouchableOpacity style={styles.cardCtaBtn} onPress={openSheet} activeOpacity={0.85}>
-              <Text style={styles.cardCtaText}>View Details</Text>
+              <Text style={styles.cardCtaText}>{t("map.viewDetails")}</Text>
               <AppIcon name="chevron-right" size={14} color="#FFFFFF" strokeWidth={3} />
             </TouchableOpacity>
           </View>
@@ -709,19 +721,19 @@ export default function MapScreen({ navigation }) {
                   <View style={styles.heroBadgeRow}>
                     <View style={styles.gfCertBadge}>
                       <AppIcon name="shield-check" size={12} color="#FFFFFF" strokeWidth={3} />
-                      <Text style={styles.gfCertText}>Certified Gluten-Free</Text>
+                      <Text style={styles.gfCertText}>{t("map.certifiedGF")}</Text>
                     </View>
                   </View>
                   
                   <View style={styles.heroDetailsContainer}>
-                    <Text style={styles.heroCategory}>{selectedSpot.type.toUpperCase()}</Text>
+                    <Text style={styles.heroCategory}>{(filterLabels[selectedSpot.type] ?? selectedSpot.type).toUpperCase()}</Text>
                     <Text style={styles.heroTitle}>{selectedSpot.name}</Text>
                     
                     <View style={styles.heroMetaRow}>
                       <View style={styles.heroMetaItem}>
                         <AppIcon name="star" size={12} color="#F59E0B" fill="#F59E0B" />
                         <Text style={styles.heroMetaText}>
-                          {selectedSpot.rating} ({selectedSpot.reviews} reviews)
+                          {selectedSpot.rating} ({t("map.reviewsCount", { count: selectedSpot.reviews })})
                         </Text>
                       </View>
                       <Text style={styles.heroMetaBullet}>•</Text>
@@ -742,19 +754,19 @@ export default function MapScreen({ navigation }) {
               <View style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                   <AppIcon name="info" size={16} color="#8BC34A" strokeWidth={2.5} />
-                  <Text style={styles.sectionTitle}>About</Text>
+                  <Text style={styles.sectionTitle}>{t("map.about")}</Text>
                 </View>
-                <Text style={styles.descriptionText}>{selectedSpot.description}</Text>
+                <Text style={styles.descriptionText}>{t(`map.spots.s${selectedSpot.id}.description`)}</Text>
               </View>
 
               {/* Section 3: Available GF Products */}
               <View style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                   <AppIcon name="leaf" size={16} color="#8BC34A" strokeWidth={2.5} />
-                  <Text style={styles.sectionTitle}>Available Gluten-Free Products</Text>
+                  <Text style={styles.sectionTitle}>{t("map.availableProducts")}</Text>
                 </View>
                 <View style={styles.tagCloud}>
-                  {selectedSpot.tags.map((tag) => (
+                  {[t(`map.spots.s${selectedSpot.id}.tag1`), t(`map.spots.s${selectedSpot.id}.tag2`), t(`map.spots.s${selectedSpot.id}.tag3`)].map((tag) => (
                     <View key={tag} style={styles.gfProductTag}>
                       <AppIcon name="checkmark" size={10} color="#8BC34A" strokeWidth={3} />
                       <Text style={styles.gfProductTagText}>{tag}</Text>
@@ -767,7 +779,7 @@ export default function MapScreen({ navigation }) {
               <View style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                   <AppIcon name="shield-check" size={16} color="#8BC34A" strokeWidth={2.5} />
-                  <Text style={styles.sectionTitle}>Safety & Facilities</Text>
+                  <Text style={styles.sectionTitle}>{t("map.safetyFacilities")}</Text>
                 </View>
                 <View style={styles.facilityGrid}>
                   {getFacilities(selectedSpot.type).map((fac) => (
@@ -783,10 +795,10 @@ export default function MapScreen({ navigation }) {
               <View style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                   <AppIcon name="clock" size={16} color="#8BC34A" strokeWidth={2.5} />
-                  <Text style={styles.sectionTitle}>Opening Hours</Text>
+                  <Text style={styles.sectionTitle}>{t("map.openingHours")}</Text>
                 </View>
                 <View style={styles.hoursList}>
-                  {HOURS.map((h) => (
+                  {hours.map((h) => (
                     <View key={h.day} style={styles.hoursItem}>
                       <Text style={styles.hoursDayText}>{h.day}</Text>
                       <Text style={styles.hoursTimeText}>{h.time}</Text>
@@ -799,32 +811,32 @@ export default function MapScreen({ navigation }) {
               <View style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                   <AppIcon name="person" size={16} color="#8BC34A" strokeWidth={2.5} />
-                  <Text style={styles.sectionTitle}>Customer Reviews</Text>
+                  <Text style={styles.sectionTitle}>{t("map.customerReviews")}</Text>
                 </View>
                 <View style={styles.reviewsContainer}>
                   <View style={styles.reviewItem}>
                     <View style={styles.reviewHeader}>
-                      <Text style={styles.reviewAuthor}>Sarah M.</Text>
+                      <Text style={styles.reviewAuthor}>{t("map.review1Author")}</Text>
                       <View style={styles.reviewStars}>
                         <AppIcon name="star" size={11} color="#F59E0B" fill="#F59E0B" />
                         <Text style={styles.reviewRating}>5.0</Text>
                       </View>
                     </View>
                     <Text style={styles.reviewText}>
-                      "Absolute safe haven! The staff understood cross-contamination perfectly. Highly recommend!"
+                      {t("map.review1Text")}
                     </Text>
                   </View>
                   <View style={styles.reviewDivider} />
                   <View style={styles.reviewItem}>
                     <View style={styles.reviewHeader}>
-                      <Text style={styles.reviewAuthor}>Alex K.</Text>
+                      <Text style={styles.reviewAuthor}>{t("map.review2Author")}</Text>
                       <View style={styles.reviewStars}>
                         <AppIcon name="star" size={11} color="#F59E0B" fill="#F59E0B" />
                         <Text style={styles.reviewRating}>4.8</Text>
                       </View>
                     </View>
                     <Text style={styles.reviewText}>
-                      "Amazing options. I had zero issues afterwards. Will definitely be a regular here."
+                      {t("map.review2Text")}
                     </Text>
                   </View>
                 </View>
@@ -834,7 +846,7 @@ export default function MapScreen({ navigation }) {
               <View style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                   <AppIcon name="map-pin" size={16} color="#8BC34A" strokeWidth={2.5} />
-                  <Text style={styles.sectionTitle}>Location</Text>
+                  <Text style={styles.sectionTitle}>{t("map.location")}</Text>
                 </View>
                 <Text style={styles.locationAddressText}>{selectedSpot.address}</Text>
               </View>
@@ -853,7 +865,7 @@ export default function MapScreen({ navigation }) {
                 onPress={handleContact}
               >
                 <AppIcon name="phone" size={16} color="#8BC34A" strokeWidth={2.5} />
-                <Text style={styles.ctaCallBtnText}>Call Us</Text>
+                <Text style={styles.ctaCallBtnText}>{t("map.callUs")}</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
@@ -862,7 +874,7 @@ export default function MapScreen({ navigation }) {
                 onPress={handleDirections}
               >
                 <AppIcon name="navigation" size={16} color="#FFFFFF" strokeWidth={2.5} />
-                <Text style={styles.ctaDirectionsBtnText}>Directions</Text>
+                <Text style={styles.ctaDirectionsBtnText}>{t("map.directions")}</Text>
               </TouchableOpacity>
             </View>
           </>

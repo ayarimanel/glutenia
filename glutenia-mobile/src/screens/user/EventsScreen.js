@@ -7,90 +7,41 @@ import {
   View,
 } from "react-native";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
 import AppHeader from "../../components/AppHeader";
 import { useAuth } from "../../context/AuthContext";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
-const CATEGORIES = ["All", "Meetups", "Classes", "Markets", "Workshops"];
+const CATEGORY_KEYS = ["all", "meetups", "classes", "markets", "workshops"];
 
-const EVENTS = [
-  {
-    id: "1",
-    title: "Gluten-Free Cooking Workshop",
-    category: "Workshops",
-    date: "Sat, Jun 15 • 2:00 PM",
-    location: "Culinary Arts Center, Tunis",
-    going: 24,
-    price: 25,
-    color: "#E8F5E9",
-    emoji: "👨‍🍳",
-    description:
-      "Join us for a hands-on gluten-free cooking workshop where you'll learn to make delicious bread, pasta, and desserts — all 100% gluten-free.",
-  },
-  {
-    id: "2",
-    title: "GF Community Picnic",
-    category: "Meetups",
-    date: "Sun, Jun 23 • 11:00 AM",
-    location: "Parc du Belvédère, Tunis",
-    going: 56,
-    price: 0,
-    color: "#FFF8E1",
-    emoji: "🧺",
-    description:
-      "A relaxed outdoor picnic for the gluten-free community. Bring a dish to share and meet others living the GF lifestyle.",
-  },
-  {
-    id: "3",
-    title: "Gluten-Free Baking Class",
-    category: "Classes",
-    date: "Fri, Jun 28 • 4:00 PM",
-    location: "Maison de la Culture, Tunis",
-    going: 18,
-    price: 15,
-    color: "#FCE4EC",
-    emoji: "🧁",
-    description:
-      "Learn the secrets of perfect gluten-free baking. From sourdough to croissants — all adapted for a gluten-free diet.",
-  },
-  {
-    id: "4",
-    title: "Organic & GF Market",
-    category: "Markets",
-    date: "Sat, Jul 5 • 9:00 AM",
-    location: "Avenue Habib Bourguiba, Tunis",
-    going: 102,
-    price: 5,
-    color: "#E3F2FD",
-    emoji: "🛍️",
-    description:
-      "Browse stalls from local producers selling certified gluten-free and organic products. Perfect for stocking up!",
-  },
-  {
-    id: "5",
-    title: "GF Nutrition Talk",
-    category: "Classes",
-    date: "Wed, Jul 9 • 6:00 PM",
-    location: "Clinique Pasteur, Tunis",
-    going: 31,
-    price: 0,
-    color: "#F3E5F5",
-    emoji: "🥗",
-    description:
-      "A free talk by certified nutritionists on living well with celiac disease and gluten intolerance.",
-  },
+const EVENTS_META = [
+  { id: "1", key: "e1", categoryKey: "workshops", price: 25,  color: "#E8F5E9", emoji: "👨‍🍳", going: 24  },
+  { id: "2", key: "e2", categoryKey: "meetups",   price: 0,   color: "#FFF8E1", emoji: "🧺",  going: 56  },
+  { id: "3", key: "e3", categoryKey: "classes",   price: 15,  color: "#FCE4EC", emoji: "🧁",  going: 18  },
+  { id: "4", key: "e4", categoryKey: "markets",   price: 5,   color: "#E3F2FD", emoji: "🛍️", going: 102 },
+  { id: "5", key: "e5", categoryKey: "classes",   price: 0,   color: "#F3E5F5", emoji: "🥗",  going: 31  },
 ];
 
 export default function EventsScreen({ navigation }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
-  const [activeCategory, setActiveCategory] = useState("All");
+  const [activeCategory, setActiveCategory] = useState("all");
+
+  const EVENTS = EVENTS_META.map((e) => ({
+    ...e,
+    title: t(`eventsData.${e.key}.title`),
+    date: t(`eventsData.${e.key}.date`),
+    location: t(`eventsData.${e.key}.location`),
+    description: t(`eventsData.${e.key}.description`),
+    category: t(`events.${e.categoryKey}`),
+  }));
 
   const filtered =
-    activeCategory === "All"
+    activeCategory === "all"
       ? EVENTS
-      : EVENTS.filter((e) => e.category === activeCategory);
+      : EVENTS.filter((e) => e.categoryKey === activeCategory);
 
   return (
     <Screen>
@@ -101,7 +52,7 @@ export default function EventsScreen({ navigation }) {
       <View style={styles.container}>
         {/* Screen header: title + create event */}
         <View style={styles.header}>
-          <Text style={styles.title}>Events</Text>
+          <Text style={styles.title}>{t("events.title")}</Text>
           <Pressable
             style={styles.addBtn}
             onPress={() => navigation.navigate("CreateEvent")}
@@ -117,7 +68,7 @@ export default function EventsScreen({ navigation }) {
           style={styles.filterScroll}
           contentContainerStyle={styles.filterRow}
         >
-          {CATEGORIES.map((cat) => (
+          {CATEGORY_KEYS.map((cat) => (
             <Pressable
               key={cat}
               onPress={() => setActiveCategory(cat)}
@@ -132,7 +83,7 @@ export default function EventsScreen({ navigation }) {
                   activeCategory === cat && styles.filterTextActive,
                 ]}
               >
-                {cat}
+                {t(`events.${cat}`)}
               </Text>
             </Pressable>
           ))}
@@ -170,7 +121,7 @@ export default function EventsScreen({ navigation }) {
                   </View>
                   <View style={styles.goingBadge}>
                     <AppIcon name="people" size={13} color={Colors.primary} />
-                    <Text style={styles.goingText}>{item.going} going</Text>
+                    <Text style={styles.goingText}>{t("events.going", { count: item.going })}</Text>
                   </View>
                 </View>
               </View>

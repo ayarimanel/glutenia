@@ -1,5 +1,6 @@
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import Field from "../../components/Field";
@@ -10,6 +11,7 @@ import { api } from "../../api/client";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 export default function CheckoutScreen({ navigation }) {
+  const { t } = useTranslation();
   const { token, user } = useAuth();
   const { items, total, clearCart } = useCart();
   const [fullName, setFullName] = useState(user?.name || "");
@@ -20,11 +22,11 @@ export default function CheckoutScreen({ navigation }) {
 
   const placeOrder = async () => {
     if (!items.length) {
-      Alert.alert("Cart", "Your cart is empty.");
+      Alert.alert(t("checkout.title"), t("checkout.emptyCart"));
       return;
     }
     if (!fullName || !addressLine || !city || !phone) {
-      Alert.alert("Delivery", "Complete the delivery details.");
+      Alert.alert(t("checkout.title"), t("checkout.completeDelivery"));
       return;
     }
 
@@ -42,7 +44,7 @@ export default function CheckoutScreen({ navigation }) {
       clearCart();
       navigation.replace("OrderSuccess", { order });
     } catch (error) {
-      Alert.alert("Checkout failed", error.message);
+      Alert.alert(t("checkout.failed"), error.message);
     } finally {
       setLoading(false);
     }
@@ -56,8 +58,8 @@ export default function CheckoutScreen({ navigation }) {
       >
         <ScrollView contentContainerStyle={styles.container}>
           <SectionHeader
-            eyebrow="Confirm"
-            title="Checkout"
+            eyebrow={t("checkout.confirm")}
+            title={t("checkout.title")}
             right={<IconButton icon="close" onPress={() => navigation.goBack()} />}
           />
           <View style={styles.summary}>
@@ -72,16 +74,16 @@ export default function CheckoutScreen({ navigation }) {
               </View>
             ))}
             <View style={styles.totalLine}>
-              <Text style={styles.totalLabel}>Total</Text>
+              <Text style={styles.totalLabel}>{t("checkout.total")}</Text>
               <Text style={styles.total}>{total.toFixed(2)} TND</Text>
             </View>
           </View>
-          <Field label="Full name" value={fullName} onChangeText={setFullName} />
-          <Field label="Address line" value={addressLine} onChangeText={setAddressLine} />
-          <Field label="City" value={city} onChangeText={setCity} />
-          <Field label="Phone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+          <Field label={t("checkout.fullName")} value={fullName} onChangeText={setFullName} />
+          <Field label={t("checkout.address")} value={addressLine} onChangeText={setAddressLine} />
+          <Field label={t("checkout.city")} value={city} onChangeText={setCity} />
+          <Field label={t("checkout.phone")} value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
           <PrimaryButton
-            title="Place order"
+            title={t("checkout.placeOrder")}
             icon="checkmark-circle"
             loading={loading}
             onPress={placeOrder}

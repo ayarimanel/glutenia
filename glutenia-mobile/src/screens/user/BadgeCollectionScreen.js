@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   ActivityIndicator,
   Alert,
@@ -14,16 +15,6 @@ import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
-const CATEGORY_LABELS = {
-  journey: "Journey",
-  scanner: "Scanner",
-  community: "Community",
-  safety: "Safety",
-  discovery: "Discovery",
-  supporter: "Supporter",
-  secret: "Secret",
-};
-
 const CATEGORY_COLORS = {
   journey: Colors.primary,
   scanner: Colors.secondary,
@@ -35,7 +26,18 @@ const CATEGORY_COLORS = {
 };
 
 export default function BadgeCollectionScreen({ navigation }) {
+  const { t } = useTranslation();
   const { token } = useAuth();
+
+  const CATEGORY_LABELS = {
+    journey: t("badges.categories.journey"),
+    scanner: t("badges.categories.scanner"),
+    community: t("badges.categories.community"),
+    safety: t("badges.categories.safety"),
+    discovery: t("badges.categories.discovery"),
+    supporter: t("badges.categories.supporter"),
+    secret: t("badges.categories.secret"),
+  };
   const [badges, setBadges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -48,7 +50,7 @@ export default function BadgeCollectionScreen({ navigation }) {
       const data = await api.getMyBadges(token);
       setBadges(data);
     } catch (err) {
-      setError(err.message || "Could not load badges.");
+      setError(err.message || t("badges.error"));
     } finally {
       setLoading(false);
     }
@@ -107,7 +109,7 @@ export default function BadgeCollectionScreen({ navigation }) {
             : ub
         )
       );
-      Alert.alert("Could not update badge", err.message || "Please try again.");
+      Alert.alert(t("badges.pinError"), err.message || t("badges.tryAgain"));
     } finally {
       setPinningId(null);
     }
@@ -126,7 +128,7 @@ export default function BadgeCollectionScreen({ navigation }) {
       <SafeAreaView style={[styles.root, styles.centered]}>
         <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity style={styles.retryBtn} onPress={fetchBadges}>
-          <Text style={styles.retryText}>Retry</Text>
+          <Text style={styles.retryText}>{t("badges.retry")}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -143,21 +145,21 @@ export default function BadgeCollectionScreen({ navigation }) {
         >
           <ArrowLeft size={22} color={Colors.textDark} strokeWidth={2.5} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Badges</Text>
+        <Text style={styles.headerTitle}>{t("badges.title")}</Text>
         <View style={[styles.pinChip, pinnedCount >= 3 && styles.pinChipFull]}>
           <Text
             style={[styles.pinChipText, pinnedCount >= 3 && styles.pinChipTextFull]}
           >
-            {pinnedCount}/3 pinned
+            {t("badges.pinned", { count: pinnedCount })}
           </Text>
         </View>
       </View>
 
       {badges.length === 0 ? (
         <View style={styles.centered}>
-          <Text style={styles.emptyTitle}>No badges yet</Text>
+          <Text style={styles.emptyTitle}>{t("badges.empty")}</Text>
           <Text style={styles.emptyDesc}>
-            Complete actions in the app to earn your first badge.
+            {t("badges.emptyBody")}
           </Text>
         </View>
       ) : (

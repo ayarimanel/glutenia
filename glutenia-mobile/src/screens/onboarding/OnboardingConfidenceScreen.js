@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft } from "lucide-react-native";
@@ -6,29 +7,30 @@ import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
-const OPTIONS = [
-  {
-    label: "Still learning",
-    subtitle: "I'm never quite sure",
-    value: "low",
-  },
-  {
-    label: "Getting there",
-    subtitle: "I know the basics",
-    value: "medium",
-  },
-  {
-    label: "Confident",
-    subtitle: "I read labels well",
-    value: "high",
-  },
-];
-
 export default function OnboardingConfidenceScreen({ navigation, route }) {
+  const { t } = useTranslation();
   const { token, markProfileOnboardingComplete, updateUser } = useAuth();
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const OPTIONS = [
+    {
+      label: t("profileOnboarding.confidence.still_learning"),
+      subtitle: t("profileOnboarding.confidence.still_learningSub"),
+      value: "low",
+    },
+    {
+      label: t("profileOnboarding.confidence.getting_there"),
+      subtitle: t("profileOnboarding.confidence.getting_thereSub"),
+      value: "medium",
+    },
+    {
+      label: t("profileOnboarding.confidence.confident"),
+      subtitle: t("profileOnboarding.confidence.confidentSub"),
+      value: "high",
+    },
+  ];
 
   const handleContinue = async () => {
     setLoading(true);
@@ -44,7 +46,7 @@ export default function OnboardingConfidenceScreen({ navigation, route }) {
       await updateUser(result.user);
       await markProfileOnboardingComplete();
     } catch (err) {
-      setError(err.message || "Something went wrong. Please try again.");
+      setError(err.message || t("profileOnboarding.confidence.error"));
       setLoading(false);
     }
   };
@@ -60,7 +62,7 @@ export default function OnboardingConfidenceScreen({ navigation, route }) {
         >
           <ArrowLeft size={22} color={Colors.textDark} strokeWidth={2.5} />
         </TouchableOpacity>
-        <Text style={styles.stepLabel}>Step 4 of 4</Text>
+        <Text style={styles.stepLabel}>{t("profileOnboarding.confidence.step")}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -73,7 +75,7 @@ export default function OnboardingConfidenceScreen({ navigation, route }) {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.question}>
-          How confident are you at identifying gluten-free products?
+          {t("profileOnboarding.confidence.question")}
         </Text>
 
         {OPTIONS.map((opt) => {
@@ -111,7 +113,7 @@ export default function OnboardingConfidenceScreen({ navigation, route }) {
           {loading ? (
             <ActivityIndicator color={Colors.surface} />
           ) : (
-            <Text style={styles.btnText}>Let's go!</Text>
+            <Text style={styles.btnText}>{t("profileOnboarding.confidence.finish")}</Text>
           )}
         </TouchableOpacity>
       </View>

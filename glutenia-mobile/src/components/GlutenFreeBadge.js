@@ -1,12 +1,14 @@
 import { StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import AppIcon from "./AppIcon";
 import { Colors, Radius } from "../theme/colors";
 
 export default function GlutenFreeBadge({ compact }) {
+  const { t } = useTranslation();
   return (
     <View style={[styles.badge, compact && styles.compact]}>
       <AppIcon name="leaf" size={compact ? 14 : 16} color={Colors.surface} />
-      <Text style={[styles.text, compact && styles.compactText]}>Gluten Free</Text>
+      <Text style={[styles.text, compact && styles.compactText]}>{t("glutenFreeBadge")}</Text>
     </View>
   );
 }

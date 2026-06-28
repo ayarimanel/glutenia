@@ -2,6 +2,7 @@ import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } 
 import AppIcon from "../../components/AppIcon";
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import { useAuth } from "../../context/AuthContext";
@@ -10,6 +11,7 @@ import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 export default function AdminDashboardScreen({ navigation }) {
   const { token, logout } = useAuth();
+  const { t } = useTranslation();
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -29,11 +31,11 @@ export default function AdminDashboardScreen({ navigation }) {
       setOrders(nextOrders);
     } catch (error) {
       if (error.status === 401) {
-        Alert.alert("Session expired", "Please log in as admin again.", [
-          { text: "OK", onPress: logout },
+        Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsg"), [
+          { text: t("admin.ok"), onPress: logout },
         ]);
       } else {
-        Alert.alert("Dashboard", error.message);
+        Alert.alert(t("admin.dashboard.errorTitle"), error.message);
       }
     } finally {
       setLoading(false);
@@ -54,25 +56,25 @@ export default function AdminDashboardScreen({ navigation }) {
         contentContainerStyle={styles.container}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
       >
-        <SectionHeader eyebrow="Admin panel" title="Dashboard" />
+        <SectionHeader eyebrow={t("admin.dashboard.eyebrow")} title={t("admin.dashboard.title")} />
         <View style={styles.stats}>
-          <Metric label="Products" value={products.length} icon="cube" />
-          <Metric label="Orders" value={orders.length} icon="receipt" />
-          <Metric label="Revenue" value={revenue.toFixed(2)} icon="cash" />
+          <Metric label={t("admin.dashboard.products")} value={products.length} icon="cube" />
+          <Metric label={t("admin.dashboard.orders")} value={orders.length} icon="receipt" />
+          <Metric label={t("admin.dashboard.revenue")} value={revenue.toFixed(2)} icon="cash" />
         </View>
         <View style={styles.actions}>
           <Action
-            title="Add product"
+            title={t("admin.dashboard.addProduct")}
             icon="add-circle"
             onPress={() => navigation.navigate("AdminProductForm")}
           />
           <Action
-            title="Manage products"
+            title={t("admin.dashboard.manageProducts")}
             icon="list"
             onPress={() => navigation.navigate("Products")}
           />
           <Action
-            title="View orders"
+            title={t("admin.dashboard.viewOrders")}
             icon="receipt"
             onPress={() => navigation.navigate("Orders")}
           />

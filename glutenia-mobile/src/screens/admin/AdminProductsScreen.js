@@ -2,6 +2,7 @@ import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } fr
 import AppIcon from "../../components/AppIcon";
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
@@ -12,6 +13,7 @@ import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 export default function AdminProductsScreen({ navigation }) {
   const { token, logout } = useAuth();
+  const { t } = useTranslation();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -25,11 +27,11 @@ export default function AdminProductsScreen({ navigation }) {
       setProducts(await api.products());
     } catch (error) {
       if (error.status === 401) {
-        Alert.alert("Session expired", "Please log in as admin again.", [
-          { text: "OK", onPress: logout },
+        Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsg"), [
+          { text: t("admin.ok"), onPress: logout },
         ]);
       } else {
-        Alert.alert("Products", error.message);
+        Alert.alert(t("admin.products.errorTitle"), error.message);
       }
     } finally {
       setLoading(false);
@@ -43,21 +45,21 @@ export default function AdminProductsScreen({ navigation }) {
   );
 
   const deleteProduct = (product) => {
-    Alert.alert("Delete product", `Delete ${product.name}?`, [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert(t("admin.products.deleteTitle"), t("admin.products.deleteMsg", { name: product.name }), [
+      { text: t("admin.products.cancel"), style: "cancel" },
       {
-        text: "Delete",
+        text: t("admin.products.delete"),
         style: "destructive",
         onPress: async () => {
           try {
             if (!token) {
-              Alert.alert("Session", "Please log in again.");
+              Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsgShort"));
               return;
             }
             await api.deleteProduct(token, product._id);
             await loadProducts();
           } catch (error) {
-            Alert.alert("Delete failed", error.message);
+            Alert.alert(t("admin.products.deleteFailed"), error.message);
           }
         },
       },
@@ -68,8 +70,8 @@ export default function AdminProductsScreen({ navigation }) {
     <Screen>
       <View style={styles.container}>
         <SectionHeader
-          eyebrow="Inventory"
-          title="Products"
+          eyebrow={t("admin.products.eyebrow")}
+          title={t("admin.products.title")}
           right={
             <Pressable
               style={styles.addButton}
@@ -84,7 +86,7 @@ export default function AdminProductsScreen({ navigation }) {
           keyExtractor={(item) => item._id}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={loadProducts} />}
           contentContainerStyle={styles.listContent}
-          ListEmptyComponent={<EmptyState icon="cube" title="No products" body="Add the first item." />}
+          ListEmptyComponent={<EmptyState icon="cube" title={t("admin.products.empty")} body={t("admin.products.emptyBody")} />}
           renderItem={({ item }) => (
             <View style={styles.productRow}>
               <View style={styles.visual}>
@@ -95,7 +97,7 @@ export default function AdminProductsScreen({ navigation }) {
                   {item.name}
                 </Text>
                 <Text style={styles.meta}>
-                  {item.category} - Stock {item.stock}
+                  {item.category} - {t("admin.products.stock")} {item.stock}
                 </Text>
                 <Text style={styles.price}>{item.price.toFixed(2)} TND</Text>
               </View>
@@ -107,11 +109,11 @@ export default function AdminProductsScreen({ navigation }) {
                   }
                 >
                   <AppIcon name="pencil" size={18} color={Colors.primary} />
-                  <Text style={styles.actionText}>Edit</Text>
+                  <Text style={styles.actionText}>{t("admin.products.edit")}</Text>
                 </Pressable>
                 <Pressable style={styles.actionButton} onPress={() => deleteProduct(item)}>
                   <AppIcon name="trash" size={18} color={Colors.danger} />
-                  <Text style={[styles.actionText, styles.deleteText]}>Delete</Text>
+                  <Text style={[styles.actionText, styles.deleteText]}>{t("admin.products.delete")}</Text>
                 </Pressable>
               </View>
             </View>

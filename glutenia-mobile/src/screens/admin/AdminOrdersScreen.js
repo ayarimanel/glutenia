@@ -1,6 +1,7 @@
 import { Alert, FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
@@ -10,6 +11,7 @@ import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 export default function AdminOrdersScreen() {
   const { token, logout } = useAuth();
+  const { t } = useTranslation();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -23,11 +25,11 @@ export default function AdminOrdersScreen() {
       setOrders(await api.allOrders(token));
     } catch (error) {
       if (error.status === 401) {
-        Alert.alert("Session expired", "Please log in as admin again.", [
-          { text: "OK", onPress: logout },
+        Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsg"), [
+          { text: t("admin.ok"), onPress: logout },
         ]);
       } else {
-        Alert.alert("Orders", error.message);
+        Alert.alert(t("admin.orders.errorTitle"), error.message);
       }
     } finally {
       setLoading(false);
@@ -43,13 +45,13 @@ export default function AdminOrdersScreen() {
   return (
     <Screen>
       <View style={styles.container}>
-        <SectionHeader eyebrow="Admin" title="Orders" />
+        <SectionHeader eyebrow={t("admin.orders.eyebrow")} title={t("admin.orders.title")} />
         <FlatList
           data={orders}
           keyExtractor={(item) => item._id}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={loadOrders} />}
           contentContainerStyle={styles.listContent}
-          ListEmptyComponent={<EmptyState icon="receipt" title="No orders" body="Orders arrive here after checkout." />}
+          ListEmptyComponent={<EmptyState icon="receipt" title={t("admin.orders.empty")} body={t("admin.orders.emptyBody")} />}
           renderItem={({ item }) => (
             <View style={styles.card}>
               <View style={styles.top}>
@@ -57,10 +59,10 @@ export default function AdminOrdersScreen() {
                 <Text style={styles.status}>{item.status}</Text>
               </View>
               <Text style={styles.customer}>
-                {item.user?.name || "Customer"} - {item.user?.email || "no email"}
+                {item.user?.name || t("admin.orders.customer")} - {item.user?.email || t("admin.orders.noEmail")}
               </Text>
               <Text style={styles.meta}>
-                {item.items.length} items to {item.address.city}
+                {item.items.length} {t("admin.orders.itemsSuffix")} {item.address.city}
               </Text>
               <Text style={styles.total}>{item.total.toFixed(2)} TND</Text>
             </View>

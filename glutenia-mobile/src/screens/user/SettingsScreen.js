@@ -8,8 +8,10 @@ import {
   Switch,
   Alert,
 } from "react-native";
+import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
+import LanguageSelector from "../../components/LanguageSelector";
 import { useAuth } from "../../context/AuthContext";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
@@ -45,61 +47,65 @@ function Divider() {
 
 export default function SettingsScreen({ navigation }) {
   const { logout } = useAuth();
+  const { t } = useTranslation();
 
   const [pushNotifs, setPushNotifs] = useState(true);
   const [emailUpdates, setEmailUpdates] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
+  const [langVisible, setLangVisible] = useState(false);
 
   const handleLogout = () => {
-    Alert.alert("Log out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Log out", style: "destructive", onPress: logout },
+    Alert.alert(t("settings.logout"), t("settings.logoutMsg"), [
+      { text: t("settings.cancel"), style: "cancel" },
+      { text: t("settings.logout"), style: "destructive", onPress: logout },
     ]);
   };
 
   const comingSoon = (feature) => {
-    Alert.alert("Coming Soon", `${feature} will be available in a future update.`);
+    Alert.alert(t("settings.comingSoon"), t("settings.comingSoonMsg", { feature }));
   };
 
   return (
     <Screen>
+      <LanguageSelector visible={langVisible} onClose={() => setLangVisible(false)} />
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} activeOpacity={0.7}>
           <AppIcon name="arrow-back" size={22} color={Colors.textDark} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={styles.headerTitle}>{t("settings.title")}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
         {/* ── ACCOUNT ── */}
-        <SectionLabel text="ACCOUNT" />
+        <SectionLabel text={t("settings.account")} />
         <View style={styles.card}>
           <SettingRow
             icon="person"
-            label="Edit Profile"
+            label={t("settings.editProfile")}
             isFirst
-            onPress={() => comingSoon("Edit Profile")}
+            onPress={() => comingSoon(t("settings.editProfile"))}
             right={<AppIcon name="chevron-right" size={18} color={Colors.textMuted} />}
           />
           <Divider />
           <SettingRow
             icon="shield"
-            label="Change Password"
+            label={t("settings.changePassword")}
             isLast
-            onPress={() => comingSoon("Change Password")}
+            onPress={() => comingSoon(t("settings.changePassword"))}
             right={<AppIcon name="chevron-right" size={18} color={Colors.textMuted} />}
           />
         </View>
 
         {/* ── NOTIFICATIONS ── */}
-        <SectionLabel text="NOTIFICATIONS" />
+        <SectionLabel text={t("settings.notifications")} />
         <View style={styles.card}>
           <SettingRow
             icon="bell"
-            label="Push Notifications"
+            label={t("settings.pushNotifs")}
             isFirst
             right={
               <Switch
@@ -113,7 +119,7 @@ export default function SettingsScreen({ navigation }) {
           <Divider />
           <SettingRow
             icon="info"
-            label="Email Updates"
+            label={t("settings.emailUpdates")}
             isLast
             right={
               <Switch
@@ -127,11 +133,11 @@ export default function SettingsScreen({ navigation }) {
         </View>
 
         {/* ── APPEARANCE ── */}
-        <SectionLabel text="APPEARANCE" />
+        <SectionLabel text={t("settings.appearance")} />
         <View style={styles.card}>
           <SettingRow
             icon="settings"
-            label="Dark Mode"
+            label={t("settings.darkMode")}
             isFirst
             right={
               <Switch
@@ -145,12 +151,12 @@ export default function SettingsScreen({ navigation }) {
           <Divider />
           <SettingRow
             icon="info"
-            label="Text Size"
+            label={t("settings.textSize")}
             isLast
-            onPress={() => comingSoon("Text Size")}
+            onPress={() => comingSoon(t("settings.textSize"))}
             right={
               <View style={styles.valueRow}>
-                <Text style={styles.valueText}>Medium</Text>
+                <Text style={styles.valueText}>{t("settings.textSizeMedium")}</Text>
                 <AppIcon name="chevron-right" size={18} color={Colors.textMuted} />
               </View>
             }
@@ -158,26 +164,24 @@ export default function SettingsScreen({ navigation }) {
         </View>
 
         {/* ── SUPPORT ── */}
-        <SectionLabel text="SUPPORT" />
+        <SectionLabel text={t("settings.support")} />
         <View style={styles.card}>
           <SettingRow
             icon="compass"
-            label="Language"
+            label={t("settings.language")}
             isFirst
-            onPress={() => comingSoon("Language")}
+            onPress={() => setLangVisible(true)}
             right={<AppIcon name="chevron-right" size={18} color={Colors.textMuted} />}
           />
           <Divider />
           <SettingRow
             icon="activity"
-            label="Report a Bug"
+            label={t("settings.reportBug")}
             isLast
             onPress={() =>
-              Alert.alert(
-                "Report a Bug",
-                "Please email us at support@glutenia.tn with a description of the issue.",
-                [{ text: "OK" }]
-              )
+              Alert.alert(t("settings.reportBug"), t("settings.reportBugMsg"), [
+                { text: t("settings.ok") },
+              ])
             }
             right={<AppIcon name="chevron-right" size={18} color={Colors.textMuted} />}
           />
@@ -188,7 +192,7 @@ export default function SettingsScreen({ navigation }) {
           <View style={styles.logoutIconWrap}>
             <AppIcon name="log-out" size={20} color="#fff" />
           </View>
-          <Text style={styles.logoutText}>Log out</Text>
+          <Text style={styles.logoutText}>{t("settings.logout")}</Text>
           <AppIcon name="chevron-right" size={18} color="#fff" style={styles.logoutChevron} />
         </TouchableOpacity>
 
