@@ -3,6 +3,7 @@ const cors = require("cors");
 const errorHandler = require("./middleware/errorHandler");
 
 const authRoutes = require("./routes/auth.routes");
+const eventRoutes = require("./routes/event.routes");
 const gamificationRoutes = require("./routes/gamification.routes");
 const onboardingRoutes = require("./routes/onboarding.routes");
 const orderRoutes = require("./routes/order.routes");
@@ -93,6 +94,7 @@ app.post("/api/admin/run-seed", async (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/events", eventRoutes);
 app.use("/api/gamification", gamificationRoutes);
 app.use("/api/onboarding", onboardingRoutes);
 app.use("/api/orders", orderRoutes);
