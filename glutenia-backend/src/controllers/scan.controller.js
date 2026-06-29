@@ -1,4 +1,4 @@
-const { GoogleGenAI } = require("@google/genai");
+const Groq = require("groq-sdk");
 
 const PROMPT = `You are a celiac disease specialist. Analyze the ingredient list in this food label image.
 
@@ -36,22 +36,30 @@ exports.scanLabel = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "No image provided" });
     }
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-lite",
-      contents: [
+    const completion = await groq.chat.completions.create({
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
+      messages: [
         {
           role: "user",
-          parts: [
-            { inlineData: { mimeType, data: imageBase64 } },
-            { text: PROMPT },
+          content: [
+            {
+              type: "image_url",
+              image_url: { url: `data:${mimeType};base64,${imageBase64}` },
+            },
+            {
+              type: "text",
+              text: PROMPT,
+            },
           ],
         },
       ],
+      max_tokens: 1024,
+      temperature: 0.1,
     });
 
-    const raw = response.text.trim();
+    const raw = completion.choices[0].message.content.trim();
     const cleaned = raw.replace(/^```json\s*/i, "").replace(/\s*```$/, "").trim();
 
     let parsed;
