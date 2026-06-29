@@ -1,4 +1,4 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleGenAI } = require("@google/genai");
 
 const PROMPT = `You are a celiac disease specialist. Analyze the ingredient list in this food label image.
 
@@ -36,15 +36,22 @@ exports.scanLabel = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "No image provided" });
     }
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" }, { apiVersion: "v1" });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-    const result = await model.generateContent([
-      { inlineData: { mimeType, data: imageBase64 } },
-      PROMPT,
-    ]);
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { inlineData: { mimeType, data: imageBase64 } },
+            { text: PROMPT },
+          ],
+        },
+      ],
+    });
 
-    const raw = result.response.text().trim();
+    const raw = response.text.trim();
     const cleaned = raw.replace(/^```json\s*/i, "").replace(/\s*```$/, "").trim();
 
     let parsed;
