@@ -77,12 +77,9 @@ exports.scanLabel = async (req, res, next) => {
 
     return res.json({ success: true, data: safe });
   } catch (error) {
-    if (error?.status === 429) {
-      return res.status(429).json({
-        success: false,
-        message: "Too many scans right now. Wait a moment and try again.",
-      });
-    }
-    next(error);
+    return res.status(500).json({
+      success: false,
+      message: error?.message || String(error),
+    });
   }
 };
