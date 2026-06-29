@@ -1,7 +1,5 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
 const PROMPT = `You are a celiac disease specialist. Analyze the ingredient list in this food label image.
 
 The label may be in Arabic, French, English, or a mix of all three.
@@ -38,6 +36,7 @@ exports.scanLabel = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "No image provided" });
     }
 
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
 
     const result = await model.generateContent([
