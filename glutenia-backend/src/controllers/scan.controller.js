@@ -38,7 +38,7 @@ exports.scanLabel = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "No image provided" });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-lite" });
 
     const result = await model.generateContent([
       { inlineData: { mimeType, data: imageBase64 } },
@@ -58,7 +58,25 @@ exports.scanLabel = async (req, res, next) => {
       });
     }
 
-    return res.json({ success: true, data: parsed });
+    const VALID_VERDICTS = ["safe", "caution", "unsafe", "error"];
+    if (!VALID_VERDICTS.includes(parsed.verdict)) {
+      return res.status(422).json({
+        success: false,
+        message: "Unexpected AI response format. Please try again.",
+      });
+    }
+
+    const safe = {
+      verdict: parsed.verdict,
+      flagged: Array.isArray(parsed.flagged) ? parsed.flagged : [],
+      safe_highlights: Array.isArray(parsed.safe_highlights) ? parsed.safe_highlights : [],
+      raw_text: parsed.raw_text ?? "",
+      confidence: parsed.confidence ?? "low",
+      confidence_note: parsed.confidence_note ?? null,
+      error: parsed.error ?? null,
+    };
+
+    return res.json({ success: true, data: safe });
   } catch (error) {
     if (error?.status === 429) {
       return res.status(429).json({
