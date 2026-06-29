@@ -36,13 +36,10 @@ exports.scanLabel = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "No image provided" });
     }
 
-    const ai = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY,
-      httpOptions: { apiVersion: "v1" },
-    });
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.0-flash-lite",
       contents: [
         {
           role: "user",
