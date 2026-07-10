@@ -80,9 +80,12 @@ export const AuthProvider = ({ children }) => {
 
   const register = async ({ name, email, password, role }) => {
     await AsyncStorage.removeItem(ONBOARDING_PROFILE_KEY);
-    const session = await api.register({ name, email, password, role });
-    await persistSession(session);
-    return session.user;
+    const data = await api.register({ name, email, password, role });
+    if (data.pending) {
+      return data;
+    }
+    await persistSession(data);
+    return data.user;
   };
 
   const logout = async () => {

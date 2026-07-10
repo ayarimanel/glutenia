@@ -22,6 +22,10 @@ const pickProductFields = (body) => {
   }, {});
 };
 
+const canManageProduct = (req, product) =>
+  req.user.role === "admin" ||
+  (product.createdBy && product.createdBy.toString() === req.user.id);
+
 exports.getProductByBarcode = async (req, res, next) => {
   try {
     const product = await Product.findOne({ barcode: req.params.code });
@@ -87,6 +91,21 @@ exports.getProductById = async (req, res, next) => {
   }
 };
 
+exports.getMyProducts = async (req, res, next) => {
+  try {
+    const products = await Product.find({ createdBy: req.user.id }).sort({
+      createdAt: -1,
+    });
+
+    return res.json({
+      success: true,
+      data: products,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 exports.createProduct = async (req, res, next) => {
   try {
     const product = await Product.create({
@@ -105,11 +124,7 @@ exports.createProduct = async (req, res, next) => {
 
 exports.updateProduct = async (req, res, next) => {
   try {
-    const updates = pickProductFields(req.body);
-    const product = await Product.findByIdAndUpdate(req.params.id, updates, {
-      new: true,
-      runValidators: true,
-    });
+    const product = await Product.findById(req.params.id);
 
     if (!product) {
       return res.status(404).json({
@@ -117,6 +132,16 @@ exports.updateProduct = async (req, res, next) => {
         message: "Product not found",
       });
     }
+
+    if (!canManageProduct(req, product)) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only manage your own products",
+      });
+    }
+
+    Object.assign(product, pickProductFields(req.body));
+    await product.save();
 
     return res.json({
       success: true,
@@ -143,15 +168,7 @@ exports.uploadProductImage = async (req, res, next) => {
       });
     }
 
-    const imageUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      { imageUrl },
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+    const product = await Product.findById(req.params.id);
 
     if (!product) {
       return res.status(404).json({
@@ -159,6 +176,16 @@ exports.uploadProductImage = async (req, res, next) => {
         message: "Product not found",
       });
     }
+
+    if (!canManageProduct(req, product)) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only manage your own products",
+      });
+    }
+
+    product.imageUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+    await product.save();
 
     return res.json({
       success: true,
@@ -171,7 +198,7 @@ exports.uploadProductImage = async (req, res, next) => {
 
 exports.deleteProduct = async (req, res, next) => {
   try {
-    const product = await Product.findByIdAndDelete(req.params.id);
+    const product = await Product.findById(req.params.id);
 
     if (!product) {
       return res.status(404).json({
@@ -179,6 +206,15 @@ exports.deleteProduct = async (req, res, next) => {
         message: "Product not found",
       });
     }
+
+    if (!canManageProduct(req, product)) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only manage your own products",
+      });
+    }
+
+    await product.deleteOne();
 
     return res.json({
       success: true,

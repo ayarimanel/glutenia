@@ -2,6 +2,7 @@ const express = require("express");
 const { body, param } = require("express-validator");
 const orderController = require("../controllers/order.controller");
 const isAdmin = require("../middleware/isAdmin");
+const requireRole = require("../middleware/requireRole");
 const validateRequest = require("../middleware/validateRequest");
 const verifyToken = require("../middleware/verifyToken");
 
@@ -44,6 +45,12 @@ router.post(
   orderController.createOrder
 );
 router.get("/my", verifyToken, orderController.getMyOrders);
+router.get(
+  "/seller",
+  verifyToken,
+  requireRole("admin", "professional"),
+  orderController.getSellerOrders
+);
 router.get("/", verifyToken, isAdmin, orderController.getAllOrders);
 router.get(
   "/:id",

@@ -1,4 +1,4 @@
-import { Alert, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
@@ -42,7 +42,13 @@ export default function RegisterScreen({ navigation }) {
 
     try {
       setLoading(true);
-      await register({ name: name.trim(), email: trimmedEmail, password, role });
+      const result = await register({ name: name.trim(), email: trimmedEmail, password, role });
+      if (result?.pending) {
+        navigation.replace("ProfessionalPending", {
+          approvalCode: result.approvalCode,
+          email: trimmedEmail,
+        });
+      }
     } catch (error) {
       Alert.alert(t("auth.errors.registerFailed"), error.message);
     } finally {
@@ -53,86 +59,96 @@ export default function RegisterScreen({ navigation }) {
   return (
     <Screen>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardView}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>{t("register.title")}</Text>
-          <Text style={styles.subtitle}>{t("register.subtitle")}</Text>
-        </View>
-
-        <View style={styles.card}>
-          <Field
-            label={t("auth.name")}
-            value={name}
-            error={errors.name}
-            onChangeText={(value) => {
-              setName(value);
-              setErrors((current) => ({ ...current, name: "" }));
-            }}
-          />
-          <Field
-            label={t("auth.email")}
-            value={email}
-            error={errors.email}
-            onChangeText={(value) => {
-              setEmail(value);
-              setErrors((current) => ({ ...current, email: "" }));
-            }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          <Field
-            label={t("auth.password")}
-            value={password}
-            error={errors.password}
-            onChangeText={(value) => {
-              setPassword(value);
-              setErrors((current) => ({ ...current, password: "" }));
-            }}
-            secureTextEntry
-          />
-          <View style={styles.roleWrap}>
-            <Text style={styles.roleLabel}>{t("register.role")}</Text>
-            <View style={styles.segment}>
-              {["customer", "admin"].map((option) => (
-                <Pressable
-                  key={option}
-                  onPress={() => setRole(option)}
-                  style={[styles.segmentButton, role === option && styles.segmentActive]}
-                >
-                  <Text
-                    style={[styles.segmentText, role === option && styles.segmentTextActive]}
-                  >
-                    {t(`register.role${option.charAt(0).toUpperCase() + option.slice(1)}`)}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+        <ScrollView
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.header}>
+            <Text style={styles.title}>{t("register.title")}</Text>
+            <Text style={styles.subtitle}>{t("register.subtitle")}</Text>
           </View>
-          <PrimaryButton
-            title={t("register.button")}
-            icon="checkmark-circle"
-            loading={loading}
-            onPress={handleRegister}
-          />
-          <SecondaryButton
-            title={t("register.backToLogin")}
-            icon="arrow-back"
-            onPress={() => navigation.goBack()}
-          />
-        </View>
+
+          <View style={styles.card}>
+            <Field
+              label={t("auth.name")}
+              value={name}
+              error={errors.name}
+              onChangeText={(value) => {
+                setName(value);
+                setErrors((current) => ({ ...current, name: "" }));
+              }}
+            />
+            <Field
+              label={t("auth.email")}
+              value={email}
+              error={errors.email}
+              onChangeText={(value) => {
+                setEmail(value);
+                setErrors((current) => ({ ...current, email: "" }));
+              }}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <Field
+              label={t("auth.password")}
+              value={password}
+              error={errors.password}
+              onChangeText={(value) => {
+                setPassword(value);
+                setErrors((current) => ({ ...current, password: "" }));
+              }}
+              secureTextEntry
+            />
+            <View style={styles.roleWrap}>
+              <Text style={styles.roleLabel}>{t("register.role")}</Text>
+              <View style={styles.segment}>
+                {["customer", "professional"].map((option) => (
+                  <Pressable
+                    key={option}
+                    onPress={() => setRole(option)}
+                    style={[styles.segmentButton, role === option && styles.segmentActive]}
+                  >
+                    <Text
+                      style={[styles.segmentText, role === option && styles.segmentTextActive]}
+                    >
+                      {t(`register.role${option.charAt(0).toUpperCase() + option.slice(1)}`)}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+            <PrimaryButton
+              title={t("register.button")}
+              icon="checkmark-circle"
+              loading={loading}
+              onPress={handleRegister}
+            />
+            <SecondaryButton
+              title={t("register.backToLogin")}
+              icon="arrow-back"
+              onPress={() => navigation.goBack()}
+            />
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  keyboardView: {
     flex: 1,
+  },
+  container: {
+    flexGrow: 1,
     justifyContent: "center",
     padding: Spacing.md,
     gap: Spacing.lg,
+    paddingBottom: Spacing.xl,
   },
   header: {
     gap: 8,

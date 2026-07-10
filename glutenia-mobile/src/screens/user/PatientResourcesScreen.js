@@ -1,5 +1,4 @@
 import {
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -175,7 +174,6 @@ const VIDEOS = [
     author: "Dr. Amira Ben Ali",
     duration: "12 min",
     youtubeId: "z-kyx4wgz2c",
-    thumbnail: require("../../../assets/images/video_celiac.jpg"),
   },
   {
     id: "2",
@@ -184,7 +182,6 @@ const VIDEOS = [
     author: "Nutritionist Panel",
     duration: "18 min",
     youtubeId: "fTi4-3VwMUE",
-    thumbnail: require("../../../assets/images/video_mealprep.jpg"),
   },
 ];
 
@@ -328,14 +325,7 @@ With the right knowledge, celiac disease is entirely manageable. Most people lea
           {VIDEOS.map((video) => (
             <Pressable key={video.id} style={styles.videoCard} onPress={() => openVideo(video)}>
               <View style={styles.videoThumb}>
-                <Image
-                  source={video.thumbnail}
-                  style={styles.videoThumbImage}
-                  resizeMode="cover"
-                />
-                <View style={styles.playBtn}>
-                  <Text style={styles.playIcon}>▶</Text>
-                </View>
+                <AppIcon name="play-circle" size={44} color={Colors.secondary} />
                 <View style={styles.durationBadge}>
                   <Text style={styles.durationText}>{video.duration}</Text>
                 </View>
@@ -577,23 +567,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
-  },
-  videoThumbImage: {
-    width: 180,
-    height: 115,
-  },
-  playBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "rgba(0,0,0,0.42)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  playIcon: {
-    color: "#fff",
-    fontSize: 14,
-    marginLeft: 3,
+    backgroundColor: Colors.secondaryPale,
   },
   durationBadge: {
     position: "absolute",

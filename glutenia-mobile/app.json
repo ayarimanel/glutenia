@@ -41,7 +41,8 @@
       "expo-asset",
       "expo-font",
       "expo-localization",
-      ["expo-camera", { "cameraPermission": "Glutenia needs camera access to scan product barcodes." }]
+      ["expo-camera", { "cameraPermission": "Glutenia needs camera access to scan product barcodes." }],
+      ["expo-image-picker", { "cameraPermission": "Glutenia needs camera access to photograph ingredient labels." }]
     ],
     "extra": {
       "apiBaseUrl": "http://10.0.2.2:5000/api",

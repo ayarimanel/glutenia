@@ -47,7 +47,17 @@ export default function LoginScreen({ navigation }) {
       setLoading(true);
       await login({ email: trimmedEmail, password });
     } catch (error) {
-      Alert.alert(t("auth.errors.loginFailed"), error.message);
+      const status = error.status === 403 ? error.data?.professionalStatus : null;
+      if (status === "rejected") {
+        Alert.alert(t("login.professionalRejectedTitle"), t("login.professionalRejectedMsg"));
+      } else if (status === "pending") {
+        Alert.alert(
+          t("login.professionalPendingTitle"),
+          t("login.professionalPendingMsg", { code: error.data?.approvalCode })
+        );
+      } else {
+        Alert.alert(t("auth.errors.loginFailed"), error.message);
+      }
     } finally {
       setLoading(false);
     }

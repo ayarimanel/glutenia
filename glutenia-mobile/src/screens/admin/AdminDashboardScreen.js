@@ -78,6 +78,21 @@ export default function AdminDashboardScreen({ navigation }) {
             icon="receipt"
             onPress={() => navigation.navigate("Orders")}
           />
+          <Action
+            title={t("admin.dashboard.addEvent")}
+            icon="calendar"
+            onPress={() => navigation.navigate("CreateEvent")}
+          />
+          <Action
+            title={t("admin.dashboard.manageEvents")}
+            icon="list"
+            onPress={() => navigation.navigate("AdminEvents")}
+          />
+          <Action
+            title={t("admin.dashboard.professionalRequests")}
+            icon="shield-check"
+            onPress={() => navigation.navigate("AdminProfessionalRequests")}
+          />
         </View>
       </ScrollView>
     </Screen>

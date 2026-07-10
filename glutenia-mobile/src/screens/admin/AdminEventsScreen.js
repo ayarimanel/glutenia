@@ -1,4 +1,12 @@
-import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
+import {
+  Alert,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import AppIcon from "../../components/AppIcon";
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
@@ -6,34 +14,28 @@ import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
-import ProductVisual from "../../components/ProductVisual";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
-export default function AdminProductsScreen({ navigation }) {
-  const { token, logout, user } = useAuth();
+export default function AdminEventsScreen({ navigation }) {
+  const { token, logout } = useAuth();
   const { t } = useTranslation();
-  const isAdmin = user?.role === "admin";
-  const productFormRoute = isAdmin ? "AdminProductForm" : "SellerProductForm";
-  const [products, setProducts] = useState([]);
+  const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const loadProducts = async () => {
-    if (!token) {
-      return;
-    }
-
+  const loadEvents = async () => {
+    if (!token) return;
     try {
       setLoading(true);
-      setProducts(await (isAdmin ? api.products() : api.myProducts(token)));
+      setEvents(await api.events(token));
     } catch (error) {
       if (error.status === 401) {
         Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsg"), [
           { text: t("admin.ok"), onPress: logout },
         ]);
       } else {
-        Alert.alert(t("admin.products.errorTitle"), error.message);
+        Alert.alert(t("admin.events.errorTitle"), error.message);
       }
     } finally {
       setLoading(false);
@@ -42,80 +44,92 @@ export default function AdminProductsScreen({ navigation }) {
 
   useFocusEffect(
     useCallback(() => {
-      loadProducts();
+      loadEvents();
     }, [token])
   );
 
-  const deleteProduct = (product) => {
-    Alert.alert(t("admin.products.deleteTitle"), t("admin.products.deleteMsg", { name: product.name }), [
-      { text: t("admin.products.cancel"), style: "cancel" },
-      {
-        text: t("admin.products.delete"),
-        style: "destructive",
-        onPress: async () => {
-          try {
-            if (!token) {
-              Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsgShort"));
-              return;
+  const deleteEvent = (event) => {
+    Alert.alert(
+      t("admin.events.deleteTitle"),
+      t("admin.events.deleteMsg", { title: event.title }),
+      [
+        { text: t("admin.events.cancel"), style: "cancel" },
+        {
+          text: t("admin.events.delete"),
+          style: "destructive",
+          onPress: async () => {
+            try {
+              if (!token) {
+                Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsgShort"));
+                return;
+              }
+              await api.deleteEvent(token, event._id);
+              await loadEvents();
+            } catch (error) {
+              Alert.alert(t("admin.events.deleteFailed"), error.message);
             }
-            await api.deleteProduct(token, product._id);
-            await loadProducts();
-          } catch (error) {
-            Alert.alert(t("admin.products.deleteFailed"), error.message);
-          }
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   return (
     <Screen>
       <View style={styles.container}>
         <SectionHeader
-          eyebrow={isAdmin ? t("admin.products.eyebrow") : t("account.myProductsEyebrow")}
-          title={isAdmin ? t("admin.products.title") : t("account.myProducts")}
+          eyebrow={t("admin.events.eyebrow")}
+          title={t("admin.events.title")}
           right={
             <Pressable
               style={styles.addButton}
-              onPress={() => navigation.navigate(productFormRoute)}
+              onPress={() => navigation.navigate("CreateEvent")}
             >
               <AppIcon name="add" size={24} color={Colors.surface} />
             </Pressable>
           }
         />
         <FlatList
-          data={products}
+          data={events}
           keyExtractor={(item) => item._id}
-          refreshControl={<RefreshControl refreshing={loading} onRefresh={loadProducts} />}
+          refreshControl={<RefreshControl refreshing={loading} onRefresh={loadEvents} />}
           contentContainerStyle={styles.listContent}
-          ListEmptyComponent={<EmptyState icon="cube" title={t("admin.products.empty")} body={t("admin.products.emptyBody")} />}
+          ListEmptyComponent={
+            <EmptyState
+              icon="calendar"
+              title={t("admin.events.empty")}
+              body={t("admin.events.emptyBody")}
+            />
+          }
           renderItem={({ item }) => (
-            <View style={styles.productRow}>
-              <View style={styles.visual}>
-                <ProductVisual product={item} />
+            <View style={styles.eventRow}>
+              <View style={[styles.visual, { backgroundColor: item.color }]}>
+                <Text style={styles.emoji}>{item.emoji}</Text>
               </View>
-              <View style={styles.productBody}>
-                <Text style={styles.name} numberOfLines={2}>
-                  {item.name}
+              <View style={styles.eventBody}>
+                <Text style={styles.name} numberOfLines={2}>{item.title}</Text>
+                <Text style={styles.meta}>{item.category} · {item.date}</Text>
+                <Text style={styles.meta} numberOfLines={1}>{item.location}</Text>
+                <Text style={styles.going}>
+                  {t("events.going", { count: item.attendeeCount })}
                 </Text>
-                <Text style={styles.meta}>
-                  {item.category} - {t("admin.products.stock")} {item.stock}
-                </Text>
-                <Text style={styles.price}>{item.price.toFixed(2)} TND</Text>
               </View>
               <View style={styles.actions}>
                 <Pressable
                   style={styles.actionButton}
-                  onPress={() =>
-                    navigation.navigate(productFormRoute, { productId: item._id })
-                  }
+                  onPress={() => navigation.navigate("CreateEvent", { eventId: item._id })}
                 >
                   <AppIcon name="pencil" size={18} color={Colors.primary} />
-                  <Text style={styles.actionText}>{t("admin.products.edit")}</Text>
+                  <Text style={styles.actionText}>{t("admin.events.edit")}</Text>
                 </Pressable>
-                <Pressable style={styles.actionButton} onPress={() => deleteProduct(item)}>
+                <Pressable
+                  style={styles.actionButton}
+                  onPress={() => deleteEvent(item)}
+                >
                   <AppIcon name="trash" size={18} color={Colors.danger} />
-                  <Text style={[styles.actionText, styles.deleteText]}>{t("admin.products.delete")}</Text>
+                  <Text style={[styles.actionText, styles.deleteText]}>
+                    {t("admin.events.delete")}
+                  </Text>
                 </Pressable>
               </View>
             </View>
@@ -144,7 +158,7 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingBottom: 24,
   },
-  productRow: {
+  eventRow: {
     flexDirection: "row",
     alignItems: "center",
     borderRadius: Radius.lg,
@@ -154,25 +168,33 @@ const styles = StyleSheet.create({
     ...Shadow,
   },
   visual: {
-    width: 82,
+    width: 72,
+    height: 72,
+    borderRadius: Radius.md,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  productBody: {
+  emoji: {
+    fontSize: 32,
+  },
+  eventBody: {
     flex: 1,
-    gap: 5,
+    gap: 4,
   },
   name: {
     color: Colors.textDark,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "900",
   },
   meta: {
     color: Colors.textMuted,
     fontSize: 12,
-    fontWeight: "700",
+    fontWeight: "600",
   },
-  price: {
+  going: {
     color: Colors.primary,
-    fontWeight: "900",
+    fontSize: 12,
+    fontWeight: "800",
   },
   actions: {
     gap: 8,

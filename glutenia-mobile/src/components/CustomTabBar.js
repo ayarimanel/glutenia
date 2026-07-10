@@ -1,34 +1,17 @@
 
-
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from "react-native";
+import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useTranslation } from "react-i18next";
 import AppIcon from "./AppIcon";
+import { useTheme } from "../context/ThemeContext";
 import { Colors } from "../theme/colors";
 
 export default function CustomTabBar({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
-  const { t } = useTranslation();
-
-  const getTabLabel = (routeName) => {
-    const map = {
-      Home: t("tabs.home"),
-      Cart: t("tabs.cart"),
-      Scan: t("tabs.scan"),
-      Map: t("tabs.map"),
-      Events: t("tabs.events"),
-      Profile: t("tabs.profile"),
-      Orders: t("tabs.orders"),
-      Account: t("tabs.account"),
-      Dashboard: t("tabs.dashboard"),
-      Products: t("tabs.products"),
-    };
-    return map[routeName] ?? routeName;
-  };
+  const { colors } = useTheme();
 
   return (
     <View style={[styles.wrapper, { paddingBottom: insets.bottom || 10 }]}>
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.surface }]}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const isFocused = state.index === index;
@@ -82,12 +65,9 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
             >
               <AppIcon
                 name={iconMap[route.name] || "ellipse"}
-                size={22}
-                color={isFocused ? Colors.primary : Colors.textMuted}
+                size={24}
+                color={isFocused ? colors.primary : colors.textMuted}
               />
-              <Text style={[styles.label, isFocused && styles.labelActive]}>
-                {getTabLabel(route.name)}
-              </Text>
             </TouchableOpacity>
           );
         })}
@@ -108,7 +88,6 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
     borderRadius: 32,
     height: 66,
     width: "100%",
@@ -123,15 +102,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 3,
-  },
-  label: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: Colors.textMuted,
-  },
-  labelActive: {
-    color: Colors.primary,
   },
   centerWrapper: {
     flex: 1,

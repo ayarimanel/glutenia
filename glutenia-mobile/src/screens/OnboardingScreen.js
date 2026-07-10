@@ -1,11 +1,11 @@
 import { useRef, useState } from "react";
 import {
-  Dimensions,
   FlatList,
   Image,
   StyleSheet,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,9 +14,6 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import { Colors, Spacing } from "../theme/colors";
 import LanguageSelector from "../components/LanguageSelector";
-
-const { width } = Dimensions.get("window");
-const IMAGE_SIZE = width * 0.82;
 
 const SLIDE_ASSETS = [
   { id: "1", image: require("../../assets/onboarding/scan.png") },
@@ -29,6 +26,8 @@ const SLIDE_ASSETS = [
 export default function OnboardingScreen() {
   const { completeOnboarding } = useAuth();
   const { t } = useTranslation();
+  const { width } = useWindowDimensions();
+  const IMAGE_SIZE = width * 0.82;
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef(null);
 
@@ -80,8 +79,8 @@ export default function OnboardingScreen() {
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
         renderItem={({ item }) => (
-          <View style={styles.slide}>
-            <View style={styles.imageWrap}>
+          <View style={[styles.slide, { width }]}>
+            <View style={[styles.imageWrap, { width: IMAGE_SIZE, height: IMAGE_SIZE }]}>
               <Image source={item.image} style={styles.image} resizeMode="contain" />
             </View>
             <Text style={styles.title}>
@@ -144,14 +143,11 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   slide: {
-    width,
     alignItems: "center",
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.xl * 1.5,
   },
   imageWrap: {
-    width: IMAGE_SIZE,
-    height: IMAGE_SIZE,
     marginBottom: Spacing.xl * 1.5,
   },
   image: {

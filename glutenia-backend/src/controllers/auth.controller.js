@@ -22,6 +22,9 @@ const toSafeUser = (user) => {
   return safeUser;
 };
 
+const generateApprovalCode = () =>
+  Math.floor(100000 + Math.random() * 900000).toString();
+
 exports.register = async (req, res, next) => {
   try {
     const { name, email, password, role } = req.body;
@@ -34,13 +37,28 @@ exports.register = async (req, res, next) => {
       });
     }
 
+    const isProfessional = role === "professional";
     const hashedPassword = await bcrypt.hash(password, 12);
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
-      role: role || "customer",
+      role: isProfessional ? "professional" : "customer",
+      professionalStatus: isProfessional ? "pending" : null,
+      approvalCode: isProfessional ? generateApprovalCode() : null,
     });
+
+    if (isProfessional) {
+      return res.status(201).json({
+        success: true,
+        data: {
+          pending: true,
+          approvalCode: user.approvalCode,
+          message:
+            "Your professional account request has been sent to the admin for approval.",
+        },
+      });
+    }
 
     const token = createToken(user);
 
@@ -76,6 +94,18 @@ exports.login = async (req, res, next) => {
       });
     }
 
+    if (user.role === "professional" && user.professionalStatus !== "approved") {
+      const status = user.professionalStatus || "pending";
+      return res.status(403).json({
+        success: false,
+        message:
+          status === "rejected"
+            ? "Your professional account request was rejected by the admin."
+            : "Your professional account is still pending admin approval.",
+        data: { professionalStatus: status, approvalCode: user.approvalCode },
+      });
+    }
+
     const token = createToken(user);
 
     return res.json({
@@ -90,9 +120,22 @@ exports.login = async (req, res, next) => {
   }
 };
 
-exports.getMe = (req, res) => {
-  res.json({
-    success: true,
-    data: req.user,
-  });
+exports.getMe = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: toSafeUser(user),
+    });
+  } catch (error) {
+    return next(error);
+  }
 };

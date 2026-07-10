@@ -46,6 +46,7 @@ import {
   Utensils,
   Croissant,
   Activity,
+  Eye,
 } from "lucide-react-native";
 
 const icons = {
@@ -106,6 +107,7 @@ const icons = {
   utensils: Utensils,
   croissant: Croissant,
   activity: Activity,
+  eye: Eye,
 };
 
 export default function AppIcon({

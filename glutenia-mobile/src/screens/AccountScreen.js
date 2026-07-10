@@ -41,12 +41,18 @@ function formatTimeAgo(dateString) {
   return `${years} year${years !== 1 ? "s" : ""}`;
 }
 
-function levelToStep(level) {
-  if (level <= 1) return 0;
-  if (level <= 3) return 1;
-  if (level <= 5) return 2;
-  if (level <= 8) return 3;
-  return 4;
+// "How long have you been gluten-free?" onboarding answer → Your Journey step.
+const EXPERIENCE_TO_STEP = {
+  just_started: 0,
+  "1_to_6_months": 1,
+  "6_to_12_months": 2,
+  "1_to_3_years": 3,
+  "3_plus_years": 4,
+};
+
+function daysSince(dateString) {
+  if (!dateString) return 0;
+  return Math.max(0, Math.floor((Date.now() - new Date(dateString)) / 86400000));
 }
 
 const mascot = require("../../assets/mascot.png");
@@ -72,6 +78,11 @@ export default function AccountScreen({ navigation }) {
       label: t("account.roles.supporter.label"),
       icon: "person-add",
       desc: t("account.roles.supporter.desc"),
+    },
+    professional: {
+      label: t("account.roles.professional.label"),
+      icon: "basket",
+      desc: t("account.roles.professional.desc"),
     },
   };
 
@@ -131,8 +142,11 @@ export default function AccountScreen({ navigation }) {
     topAchievements = [],
   } = profileData || {};
 
+  const isProfessional = user?.role === "professional";
   const roleType = user?.role_type;
-  const roleMeta = ROLE_META[roleType] || ROLE_META.warrior;
+  const roleMeta = isProfessional ? ROLE_META.professional : ROLE_META[roleType] || ROLE_META.warrior;
+  const accentColor = isProfessional ? Colors.secondary : Colors.primary;
+  const accentPale = isProfessional ? Colors.secondaryPale : Colors.primaryPale;
   const currentTitle = gamification?.currentTitle || t("account.newcomer");
   const level = gamification?.currentLevel ?? 1;
   const totalXp = gamification?.totalXp ?? 0;
@@ -140,7 +154,8 @@ export default function AccountScreen({ navigation }) {
   const longestStreak = gamification?.longestStreak ?? 0;
   const { nextMin, progress: xpProgress } = getLevelProgress(level, totalXp);
   const timeAgo = formatTimeAgo(user?.gluten_free_since);
-  const activeStep = levelToStep(level);
+  const activeStep = EXPERIENCE_TO_STEP[user?.experience_level] ?? 0;
+  const daysOnGlutenia = daysSince(user?.createdAt);
   const badgesToShow =
     pinnedBadges.length > 0 ? pinnedBadges : earnedBadges.slice(0, 3);
 
@@ -156,13 +171,13 @@ export default function AccountScreen({ navigation }) {
             <View style={styles.avatar}>
               <AppIcon name="person" size={40} color={Colors.primary} />
             </View>
-            <View style={styles.avatarBadge}>
+            <View style={[styles.avatarBadge, { backgroundColor: accentColor }]}>
               <AppIcon name={roleMeta.icon} size={13} color="#fff" strokeWidth={2.5} />
             </View>
           </View>
           <Text style={styles.userName}>{user?.name}</Text>
-          <View style={styles.titlePill}>
-            <Text style={styles.titlePillText}>{currentTitle}</Text>
+          <View style={[styles.titlePill, { backgroundColor: accentColor }]}>
+            <Text style={styles.titlePillText}>{isProfessional ? roleMeta.label : currentTitle}</Text>
           </View>
           {timeAgo ? (
             <Text style={styles.timeText}>
@@ -209,16 +224,16 @@ export default function AccountScreen({ navigation }) {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>🏅 {earnedBadges.length}</Text>
-            <Text style={styles.statLabel}>{t("account.badges")}</Text>
+            <Text style={styles.statValue}>🌱 {daysOnGlutenia}</Text>
+            <Text style={styles.statLabel}>{t("account.daysOnGlutenia")}</Text>
           </View>
         </View>
 
         {/* ── D. Role card ───────────────────────────────────────────────── */}
         <Text style={styles.sectionLabel}>{t("account.yourRole")}</Text>
-        <View style={styles.roleCard}>
+        <View style={[styles.roleCard, { backgroundColor: accentPale }]}>
           <View style={styles.roleIconWrap}>
-            <AppIcon name={roleMeta.icon} size={32} color={Colors.primary} />
+            <AppIcon name={roleMeta.icon} size={32} color={accentColor} />
           </View>
           <View style={styles.roleTextWrap}>
             <Text style={styles.roleTitle}>{roleMeta.label}</Text>
@@ -226,50 +241,120 @@ export default function AccountScreen({ navigation }) {
           </View>
         </View>
 
-        {/* ── E. Journey ─────────────────────────────────────────────────── */}
-        <Text style={[styles.sectionLabel, styles.mt]}>{t("account.yourJourney")}</Text>
-        <View style={styles.journeyCard}>
-          <View style={styles.journeyRow}>
-            {JOURNEY_STEPS.map((step, index) => {
-              const isDone = index <= activeStep;
-              const isCurrent = index === activeStep;
-              return (
-                <View key={step.key} style={styles.stepItem}>
-                  <View style={styles.stepTrack}>
-                    {index > 0 && (
-                      <View
-                        style={[
-                          styles.trackLine,
-                          isDone ? styles.lineDone : styles.lineGray,
-                        ]}
-                      />
-                    )}
-                    <View
-                      style={[
-                        styles.stepCircle,
-                        isDone ? styles.circleDone : styles.circleGray,
-                      ]}
-                    />
-                    {index < JOURNEY_STEPS.length - 1 && (
-                      <View
-                        style={[
-                          styles.trackLine,
-                          index < activeStep ? styles.lineDone : styles.lineGray,
-                        ]}
-                      />
-                    )}
+        {/* ── E. Journey (not applicable to professional/seller accounts) ──── */}
+        {!isProfessional && (
+          <>
+            <Text style={[styles.sectionLabel, styles.mt]}>{t("account.yourJourney")}</Text>
+            <View style={styles.journeyCard}>
+              <View style={styles.journeyRow}>
+                {JOURNEY_STEPS.map((step, index) => {
+                  const isDone = index <= activeStep;
+                  const isCurrent = index === activeStep;
+                  return (
+                    <View key={step.key} style={styles.stepItem}>
+                      <View style={styles.stepTrack}>
+                        {index > 0 && (
+                          <View
+                            style={[
+                              styles.trackLine,
+                              isDone ? styles.lineDone : styles.lineGray,
+                            ]}
+                          />
+                        )}
+                        <View
+                          style={[
+                            styles.stepCircle,
+                            isDone ? styles.circleDone : styles.circleGray,
+                          ]}
+                        />
+                        {index < JOURNEY_STEPS.length - 1 && (
+                          <View
+                            style={[
+                              styles.trackLine,
+                              index < activeStep ? styles.lineDone : styles.lineGray,
+                            ]}
+                          />
+                        )}
+                      </View>
+                      <Text
+                        style={[styles.stepLbl, isCurrent && styles.stepLblActive]}
+                        numberOfLines={1}
+                      >
+                        {step.label}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          </>
+        )}
+
+        {/* ── E.2 Seller activity (professionals only) ─────────────────────── */}
+        {isProfessional && (
+          <>
+            <Text style={[styles.sectionLabel, styles.mt]}>{t("account.activity")}</Text>
+            <View style={styles.activityCard}>
+              <Pressable
+                style={styles.settingsRow}
+                onPress={() => navigation.navigate("SellerEstablishment")}
+              >
+                <View style={styles.settingsLeft}>
+                  <View style={[styles.iconWrap, { backgroundColor: accentPale }]}>
+                    <AppIcon name="basket" size={20} color={accentColor} />
                   </View>
-                  <Text
-                    style={[styles.stepLbl, isCurrent && styles.stepLblActive]}
-                    numberOfLines={1}
-                  >
-                    {step.label}
-                  </Text>
+                  <Text style={styles.settingsLabel}>{t("account.myBusiness")}</Text>
                 </View>
-              );
-            })}
-          </View>
-        </View>
+                <AppIcon name="chevron-right" size={20} color={Colors.textMuted} />
+              </Pressable>
+
+              <View style={styles.divider} />
+
+              <Pressable
+                style={styles.settingsRow}
+                onPress={() => navigation.navigate("SellerProducts")}
+              >
+                <View style={styles.settingsLeft}>
+                  <View style={[styles.iconWrap, { backgroundColor: accentPale }]}>
+                    <AppIcon name="search" size={20} color={accentColor} />
+                  </View>
+                  <Text style={styles.settingsLabel}>{t("account.myProducts")}</Text>
+                </View>
+                <AppIcon name="chevron-right" size={20} color={Colors.textMuted} />
+              </Pressable>
+
+              <View style={styles.divider} />
+
+              <Pressable
+                style={styles.settingsRow}
+                onPress={() => navigation.navigate("SellerVisibility")}
+              >
+                <View style={styles.settingsLeft}>
+                  <View style={[styles.iconWrap, { backgroundColor: accentPale }]}>
+                    <AppIcon name="eye" size={20} color={accentColor} />
+                  </View>
+                  <Text style={styles.settingsLabel}>{t("account.visibility")}</Text>
+                </View>
+                <AppIcon name="chevron-right" size={20} color={Colors.textMuted} />
+              </Pressable>
+
+              <View style={styles.divider} />
+
+              <Pressable
+                style={styles.settingsRow}
+                onPress={() => navigation.navigate("SellerOrders")}
+              >
+                <View style={styles.settingsLeft}>
+                  <View style={[styles.iconWrap, { backgroundColor: accentPale }]}>
+                    <AppIcon name="receipt" size={20} color={accentColor} />
+                  </View>
+                  <Text style={styles.settingsLabel}>{t("account.sellerOrders")}</Text>
+                </View>
+                <AppIcon name="chevron-right" size={20} color={Colors.textMuted} />
+              </Pressable>
+            </View>
+          </>
+        )}
 
         {/* ── F. Badges ──────────────────────────────────────────────────── */}
         {badgesToShow.length > 0 && (
@@ -566,6 +651,15 @@ const styles = StyleSheet.create({
   roleTextWrap: { flex: 1 },
   roleTitle: { fontSize: 15, fontWeight: "700", color: Colors.textDark, marginBottom: 4 },
   roleDesc: { fontSize: 13, color: Colors.textMuted, lineHeight: 19 },
+
+  // ── E.2 Seller activity ──────────────────────────────────────────────────
+  activityCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    marginHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    ...Shadow,
+  },
 
   // ── E. Journey ────────────────────────────────────────────────────────────
   journeyCard: {

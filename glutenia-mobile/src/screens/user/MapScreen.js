@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useMemo } from "react";
+import { useRef, useState, useCallback, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import { Colors, Radius, Spacing } from "../../theme/colors";
 import AppIcon from "../../components/AppIcon";
 import AppHeader from "../../components/AppHeader";
 import { useAuth } from "../../context/AuthContext";
+import { api } from "../../api/client";
 import { useTranslation } from "react-i18next";
 
 // ─── Data ────────────────────────────────────────────────────────────────────
@@ -239,6 +240,60 @@ const FILTER_ICONS = {
   Pharmacy: "activity"
 };
 
+// ─── Real (professional-submitted) establishments → map spot shape ──────────
+
+const CATEGORY_VISUAL = {
+  Supermarket: { emoji: "🛒", color: Colors.primary, accentEmoji: "🛒" },
+  Restaurant: { emoji: "🍽️", color: Colors.secondary, accentEmoji: "🍽️" },
+  "Health Store": { emoji: "🌿", color: Colors.primary, accentEmoji: "🌿" },
+  Bakery: { emoji: "🥐", color: Colors.secondary, accentEmoji: "🥐" },
+  Pharmacy: { emoji: "💊", color: Colors.primary, accentEmoji: "💊" },
+  Other: { emoji: "🏪", color: Colors.secondary, accentEmoji: "🏪" },
+};
+
+const MAP_CENTER = { latitude: 36.82, longitude: 10.2 };
+
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function normalizeEstablishment(est) {
+  const visual = CATEGORY_VISUAL[est.category] || CATEGORY_VISUAL.Other;
+  const lat = est.coordinates?.latitude;
+  const lng = est.coordinates?.longitude;
+  const hasCoords = typeof lat === "number" && typeof lng === "number";
+  const distanceKm = hasCoords
+    ? haversineKm(MAP_CENTER.latitude, MAP_CENTER.longitude, lat, lng)
+    : null;
+
+  return {
+    id: est._id,
+    name: est.name,
+    type: est.category || "Other",
+    address: est.address || "",
+    emoji: visual.emoji,
+    rating: 5,
+    reviews: 0,
+    distance: distanceKm != null ? `${distanceKm.toFixed(1)} km` : "-",
+    avgPrice: "-",
+    coordinate: hasCoords ? { latitude: lat, longitude: lng } : null,
+    description: est.description || "",
+    tags: [est.category || "Other"],
+    color: visual.color,
+    accentEmoji: visual.accentEmoji,
+    coverImageUrl: est.coverImageUrl || null,
+    isReal: true,
+    verified: Boolean(est.verified),
+    phone: est.phone,
+    hours: est.hours,
+  };
+}
 
 // ─── Leaflet HTML builder ─────────────────────────────────────────────────────
 
@@ -430,12 +485,32 @@ export default function MapScreen({ navigation }) {
   const [selectedId, setSelectedId] = useState(SPOTS[0].id);
   const [headerHeight, setHeaderHeight] = useState(88);
   const [sheetIndex, setSheetIndex] = useState(-1);
+  const [realSpots, setRealSpots] = useState([]);
 
   const snapPoints = useMemo(() => ["55%", "90%"], []);
   const leafletHTML = useMemo(() => buildLeafletHTML(SPOTS), []);
 
+  const allSpots = useMemo(() => [...SPOTS, ...realSpots], [realSpots]);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .establishments()
+      .then((list) => {
+        if (cancelled) return;
+        const normalized = (list || [])
+          .filter((e) => e.coordinates?.latitude != null && e.coordinates?.longitude != null)
+          .map(normalizeEstablishment);
+        setRealSpots(normalized);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const filtered =
-    activeFilter === "All" ? SPOTS : SPOTS.filter((s) => s.type === activeFilter);
+    activeFilter === "All" ? allSpots : allSpots.filter((s) => s.type === activeFilter);
 
   const selectedSpot =
     filtered.find((s) => s.id === selectedId) ?? filtered[0] ?? null;
@@ -447,6 +522,26 @@ export default function MapScreen({ navigation }) {
       `window.handleFromRN(${JSON.stringify(data)}); true;`
     );
   }, []);
+
+  useEffect(() => {
+    if (realSpots.length === 0) return;
+    const next =
+      activeFilter === "All" ? allSpots : allSpots.filter((s) => s.type === activeFilter);
+    sendToMap({
+      type: "updateSpots",
+      spots: next
+        .filter((s) => s.coordinate)
+        .map((s) => ({
+          id: s.id,
+          lat: s.coordinate.latitude,
+          lng: s.coordinate.longitude,
+          emoji: s.emoji,
+          color: s.color,
+          type: s.type,
+        })),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [realSpots]);
 
   const animateToSpot = useCallback(
     (spot) => {
@@ -470,7 +565,7 @@ export default function MapScreen({ navigation }) {
       try {
         const msg = JSON.parse(event.nativeEvent.data);
         if (msg.type === "markerPress") {
-          const spot = SPOTS.find((s) => s.id === msg.spotId);
+          const spot = allSpots.find((s) => s.id === msg.spotId);
           if (spot) {
             setSelectedId(spot.id);
             setTimeout(() => bottomSheetRef.current?.snapToIndex(0), 120);
@@ -478,26 +573,28 @@ export default function MapScreen({ navigation }) {
         }
       } catch (_) {}
     },
-    []
+    [allSpots]
   );
 
   const handleFilterChange = useCallback(
     (f) => {
       bottomSheetRef.current?.close();
       setActiveFilter(f);
-      const next = f === "All" ? SPOTS : SPOTS.filter((s) => s.type === f);
-      const nextData = next.map((s) => ({
-        id: s.id,
-        lat: s.coordinate.latitude,
-        lng: s.coordinate.longitude,
-        emoji: s.emoji,
-        color: s.color,
-        type: s.type,
-      }));
+      const next = f === "All" ? allSpots : allSpots.filter((s) => s.type === f);
+      const nextData = next
+        .filter((s) => s.coordinate)
+        .map((s) => ({
+          id: s.id,
+          lat: s.coordinate.latitude,
+          lng: s.coordinate.longitude,
+          emoji: s.emoji,
+          color: s.color,
+          type: s.type,
+        }));
       sendToMap({ type: "updateSpots", spots: nextData });
       if (next[0]) setSelectedId(next[0].id);
     },
-    [sendToMap]
+    [sendToMap, allSpots]
   );
 
   const handleContact = useCallback(() => {
@@ -506,7 +603,10 @@ export default function MapScreen({ navigation }) {
       t("map.contactTitle", { name: selectedSpot.name }),
       t("map.contactMsg"),
       [
-        { text: t("map.call"), onPress: () => Linking.openURL("tel:+21671000000") },
+        {
+          text: t("map.call"),
+          onPress: () => Linking.openURL(`tel:${selectedSpot.phone || "+21671000000"}`),
+        },
         { text: t("map.whatsapp"), onPress: () => {} },
         { text: t("map.cancel"), style: "cancel" },
       ]
@@ -626,7 +726,7 @@ export default function MapScreen({ navigation }) {
         >
           <View style={styles.cardContentRow}>
             <Image
-              source={{ uri: SPOT_IMAGES[selectedSpot.id] || SPOT_IMAGES["1"] }}
+              source={{ uri: selectedSpot.coverImageUrl || SPOT_IMAGES[selectedSpot.id] || SPOT_IMAGES["1"] }}
               style={styles.cardImage}
             />
             
@@ -641,11 +741,13 @@ export default function MapScreen({ navigation }) {
               </View>
 
               <View style={styles.cardBadgeRow}>
-                <View style={styles.verifiedBadge}>
-                  <AppIcon name="shield-check" size={10} color="#8BC34A" strokeWidth={3} />
-                  <Text style={styles.verifiedBadgeText}>{t("map.verifiedGF")}</Text>
-                </View>
-                
+                {selectedSpot.verified !== false && (
+                  <View style={styles.verifiedBadge}>
+                    <AppIcon name="shield-check" size={10} color="#8BC34A" strokeWidth={3} />
+                    <Text style={styles.verifiedBadgeText}>{t("map.verifiedGF")}</Text>
+                  </View>
+                )}
+
                 <View style={[styles.cardCategoryBadge, { backgroundColor: selectedSpot.color + "15" }]}>
                   <Text style={[styles.cardCategoryText, { color: selectedSpot.color }]}>
                     {filterLabels[selectedSpot.type] ?? selectedSpot.type}
@@ -714,17 +816,19 @@ export default function MapScreen({ navigation }) {
               {/* Section 1: Hero Image + Gradient Overlay */}
               <View style={styles.sheetHero}>
                 <Image
-                  source={{ uri: SPOT_IMAGES[selectedSpot.id] || SPOT_IMAGES["1"] }}
+                  source={{ uri: selectedSpot.coverImageUrl || SPOT_IMAGES[selectedSpot.id] || SPOT_IMAGES["1"] }}
                   style={styles.heroImage}
                 />
                 <View style={styles.heroGradient}>
-                  <View style={styles.heroBadgeRow}>
-                    <View style={styles.gfCertBadge}>
-                      <AppIcon name="shield-check" size={12} color="#FFFFFF" strokeWidth={3} />
-                      <Text style={styles.gfCertText}>{t("map.certifiedGF")}</Text>
+                  {selectedSpot.verified !== false && (
+                    <View style={styles.heroBadgeRow}>
+                      <View style={styles.gfCertBadge}>
+                        <AppIcon name="shield-check" size={12} color="#FFFFFF" strokeWidth={3} />
+                        <Text style={styles.gfCertText}>{t("map.certifiedGF")}</Text>
+                      </View>
                     </View>
-                  </View>
-                  
+                  )}
+
                   <View style={styles.heroDetailsContainer}>
                     <Text style={styles.heroCategory}>{(filterLabels[selectedSpot.type] ?? selectedSpot.type).toUpperCase()}</Text>
                     <Text style={styles.heroTitle}>{selectedSpot.name}</Text>
@@ -756,7 +860,11 @@ export default function MapScreen({ navigation }) {
                   <AppIcon name="info" size={16} color="#8BC34A" strokeWidth={2.5} />
                   <Text style={styles.sectionTitle}>{t("map.about")}</Text>
                 </View>
-                <Text style={styles.descriptionText}>{t(`map.spots.s${selectedSpot.id}.description`)}</Text>
+                <Text style={styles.descriptionText}>
+                  {selectedSpot.isReal
+                    ? selectedSpot.description || t("map.noDescription")
+                    : t(`map.spots.s${selectedSpot.id}.description`)}
+                </Text>
               </View>
 
               {/* Section 3: Available GF Products */}
@@ -766,7 +874,14 @@ export default function MapScreen({ navigation }) {
                   <Text style={styles.sectionTitle}>{t("map.availableProducts")}</Text>
                 </View>
                 <View style={styles.tagCloud}>
-                  {[t(`map.spots.s${selectedSpot.id}.tag1`), t(`map.spots.s${selectedSpot.id}.tag2`), t(`map.spots.s${selectedSpot.id}.tag3`)].map((tag) => (
+                  {(selectedSpot.isReal
+                    ? selectedSpot.tags
+                    : [
+                        t(`map.spots.s${selectedSpot.id}.tag1`),
+                        t(`map.spots.s${selectedSpot.id}.tag2`),
+                        t(`map.spots.s${selectedSpot.id}.tag3`),
+                      ]
+                  ).map((tag) => (
                     <View key={tag} style={styles.gfProductTag}>
                       <AppIcon name="checkmark" size={10} color="#8BC34A" strokeWidth={3} />
                       <Text style={styles.gfProductTagText}>{tag}</Text>
@@ -797,14 +912,18 @@ export default function MapScreen({ navigation }) {
                   <AppIcon name="clock" size={16} color="#8BC34A" strokeWidth={2.5} />
                   <Text style={styles.sectionTitle}>{t("map.openingHours")}</Text>
                 </View>
-                <View style={styles.hoursList}>
-                  {hours.map((h) => (
-                    <View key={h.day} style={styles.hoursItem}>
-                      <Text style={styles.hoursDayText}>{h.day}</Text>
-                      <Text style={styles.hoursTimeText}>{h.time}</Text>
-                    </View>
-                  ))}
-                </View>
+                {selectedSpot.isReal && selectedSpot.hours ? (
+                  <Text style={styles.descriptionText}>{selectedSpot.hours}</Text>
+                ) : (
+                  <View style={styles.hoursList}>
+                    {hours.map((h) => (
+                      <View key={h.day} style={styles.hoursItem}>
+                        <Text style={styles.hoursDayText}>{h.day}</Text>
+                        <Text style={styles.hoursTimeText}>{h.time}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
               </View>
 
               {/* Section 6: Customer Reviews */}

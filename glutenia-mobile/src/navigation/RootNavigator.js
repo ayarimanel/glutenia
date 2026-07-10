@@ -3,12 +3,14 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { ActivityIndicator, View } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import SplashScreen from "../screens/SplashScreen";
-import { Colors } from "../theme/colors";
 import CustomTabBar from "../components/CustomTabBar";
 import LoginScreen from "../screens/auth/LoginScreen";
 import RegisterScreen from "../screens/auth/RegisterScreen";
+import ProfessionalPendingScreen from "../screens/auth/ProfessionalPendingScreen";
 import HomeScreen from "../screens/user/HomeScreen";
 import ProductDetailScreen from "../screens/user/ProductDetailScreen";
 import CartScreen from "../screens/user/CartScreen";
@@ -22,9 +24,11 @@ import EventsScreen from "../screens/user/EventsScreen";
 import EventDetailScreen from "../screens/user/EventDetailScreen";
 import CreateEventScreen from "../screens/user/CreateEventScreen";
 import AdminDashboardScreen from "../screens/admin/AdminDashboardScreen";
+import AdminEventsScreen from "../screens/admin/AdminEventsScreen";
 import AdminProductsScreen from "../screens/admin/AdminProductsScreen";
 import AdminProductFormScreen from "../screens/admin/AdminProductFormScreen";
 import AdminOrdersScreen from "../screens/admin/AdminOrdersScreen";
+import AdminProfessionalRequestsScreen from "../screens/admin/AdminProfessionalRequestsScreen";
 import AccountScreen from "../screens/AccountScreen";
 import OnboardingScreen from "../screens/OnboardingScreen";
 import OnboardingRoleScreen from "../screens/onboarding/OnboardingRoleScreen";
@@ -40,24 +44,21 @@ import RecipesScreen from "../screens/user/RecipesScreen";
 import RecipeDetailScreen from "../screens/user/RecipeDetailScreen";
 import SettingsScreen from "../screens/user/SettingsScreen";
 import LabelScanScreen from "../screens/user/LabelScanScreen";
+import AdminSettingsScreen from "../screens/admin/AdminSettingsScreen";
+import SellerVisibilityScreen from "../screens/user/SellerVisibilityScreen";
+import SellerOrdersScreen from "../screens/user/SellerOrdersScreen";
+import SellerEstablishmentScreen from "../screens/user/SellerEstablishmentScreen";
+import SellerEstablishmentFormScreen from "../screens/user/SellerEstablishmentFormScreen";
 
 const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
 
-const screenOptions = {
-  headerShown: false,
-  contentStyle: { backgroundColor: Colors.background },
-};
-
-function BlankScreen() {
-  return <View style={{ flex: 1, backgroundColor: Colors.background }} />;
-}
-
-function AuthStack() {
+function AuthStack({ bg }) {
   return (
-    <Stack.Navigator screenOptions={screenOptions}>
+    <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: bg } }}>
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="ProfessionalPending" component={ProfessionalPendingScreen} />
     </Stack.Navigator>
   );
 }
@@ -77,9 +78,9 @@ function UserTabs() {
   );
 }
 
-function UserStack() {
+function UserStack({ bg }) {
   return (
-    <Stack.Navigator screenOptions={screenOptions}>
+    <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: bg } }}>
       <Stack.Screen name="UserTabs" component={UserTabs} />
       <Stack.Screen name="CartPage" component={CartScreen} />
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
@@ -87,7 +88,6 @@ function UserStack() {
       <Stack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
       <Stack.Screen name="Orders" component={UserOrdersScreen} />
       <Stack.Screen name="EventDetail" component={EventDetailScreen} />
-      <Stack.Screen name="CreateEvent" component={CreateEventScreen} />
       <Stack.Screen name="BadgeCollection" component={BadgeCollectionScreen} />
       <Stack.Screen name="MapDetail" component={MapDetailScreen} />
       <Stack.Screen name="ShopScreen" component={ShopScreen} />
@@ -98,6 +98,12 @@ function UserStack() {
       <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="LabelScan" component={LabelScanScreen} />
+      <Stack.Screen name="SellerProducts" component={AdminProductsScreen} />
+      <Stack.Screen name="SellerProductForm" component={AdminProductFormScreen} />
+      <Stack.Screen name="SellerVisibility" component={SellerVisibilityScreen} />
+      <Stack.Screen name="SellerOrders" component={SellerOrdersScreen} />
+      <Stack.Screen name="SellerEstablishment" component={SellerEstablishmentScreen} />
+      <Stack.Screen name="SellerEstablishmentForm" component={SellerEstablishmentFormScreen} />
     </Stack.Navigator>
   );
 }
@@ -117,11 +123,15 @@ function AdminTabs() {
   );
 }
 
-function AdminStack() {
+function AdminStack({ bg }) {
   return (
-    <Stack.Navigator screenOptions={screenOptions}>
+    <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: bg } }}>
       <Stack.Screen name="AdminTabs" component={AdminTabs} />
       <Stack.Screen name="AdminProductForm" component={AdminProductFormScreen} />
+      <Stack.Screen name="AdminEvents" component={AdminEventsScreen} />
+      <Stack.Screen name="AdminProfessionalRequests" component={AdminProfessionalRequestsScreen} />
+      <Stack.Screen name="CreateEvent" component={CreateEventScreen} />
+      <Stack.Screen name="Settings" component={AdminSettingsScreen} />
     </Stack.Navigator>
   );
 }
@@ -147,6 +157,7 @@ function ProfileOnboardingStack() {
 
 export default function RootNavigator() {
   const { user, loading, hasSeenOnboarding, profileOnboardingDone } = useAuth();
+  const { isDark, colors } = useTheme();
   const [splashVisible, setSplashVisible] = useState(true);
 
   useEffect(() => {
@@ -158,23 +169,24 @@ export default function RootNavigator() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: Colors.background }}>
-        <ActivityIndicator color={Colors.primary} size="large" />
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background }}>
+        <ActivityIndicator color={colors.primary} size="large" />
       </View>
     );
   }
 
   return (
     <NavigationContainer>
+      <StatusBar style={isDark ? "light" : "dark"} />
       {!hasSeenOnboarding
         ? <OnboardingStack />
         : !user
-        ? <AuthStack />
+        ? <AuthStack bg={colors.background} />
         : user.role === "admin"
-        ? <AdminStack />
-        : !profileOnboardingDone
+        ? <AdminStack bg={colors.background} />
+        : !profileOnboardingDone && user.role !== "professional"
         ? <ProfileOnboardingStack />
-        : <UserStack />}
+        : <UserStack bg={colors.background} />}
     </NavigationContainer>
   );
 }

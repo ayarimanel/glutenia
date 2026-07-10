@@ -33,12 +33,22 @@ export default function LabelScanScreen({ navigation }) {
   const bottomPad = insets.bottom + TAB_BAR_HEIGHT + Spacing.lg;
 
   const handleTakePhoto = async () => {
-    const picked = await ImagePicker.launchCameraAsync({ quality: 1 });
-    if (picked.canceled) return;
-
-    setScreenState(LOADING);
-
     try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(t("labelScan.permissionTitle"), t("labelScan.permissionBody"));
+        return;
+      }
+
+      const picked = await ImagePicker.launchCameraAsync({
+        mediaTypes: ["images"],
+        quality: 0.8,
+        allowsEditing: false,
+      });
+      if (picked.canceled) return;
+
+      setScreenState(LOADING);
+
       const compressed = await ImageManipulator.manipulateAsync(
         picked.assets[0].uri,
         [{ resize: { width: 800 } }],
@@ -50,7 +60,7 @@ export default function LabelScanScreen({ navigation }) {
       setScreenState(RESULT);
     } catch (err) {
       setScreenState(IDLE);
-      Alert.alert(t("labelScan.error"), err.message);
+      Alert.alert(t("labelScan.error"), err.message ?? String(err));
     }
   };
 

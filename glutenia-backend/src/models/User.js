@@ -20,8 +20,17 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["customer", "admin"],
+    enum: ["customer", "admin", "professional"],
     default: "customer",
+  },
+  professionalStatus: {
+    type: String,
+    enum: ["pending", "approved", "rejected"],
+    default: null,
+  },
+  approvalCode: {
+    type: String,
+    default: null,
   },
   role_type: {
     type: String,

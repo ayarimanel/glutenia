@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   FlatList,
   Pressable,
   ScrollView,
@@ -6,42 +7,47 @@ import {
   Text,
   View,
 } from "react-native";
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
 import AppHeader from "../../components/AppHeader";
+import EmptyState from "../../components/EmptyState";
 import { useAuth } from "../../context/AuthContext";
+import { api } from "../../api/client";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 const CATEGORY_KEYS = ["all", "meetups", "classes", "markets", "workshops"];
 
-const EVENTS_META = [
-  { id: "1", key: "e1", categoryKey: "workshops", price: 25,  color: "#E8F5E9", emoji: "👨‍🍳", going: 24  },
-  { id: "2", key: "e2", categoryKey: "meetups",   price: 0,   color: "#FFF8E1", emoji: "🧺",  going: 56  },
-  { id: "3", key: "e3", categoryKey: "classes",   price: 15,  color: "#FCE4EC", emoji: "🧁",  going: 18  },
-  { id: "4", key: "e4", categoryKey: "markets",   price: 5,   color: "#E3F2FD", emoji: "🛍️", going: 102 },
-  { id: "5", key: "e5", categoryKey: "classes",   price: 0,   color: "#F3E5F5", emoji: "🥗",  going: 31  },
-];
-
 export default function EventsScreen({ navigation }) {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [activeCategory, setActiveCategory] = useState("all");
 
-  const EVENTS = EVENTS_META.map((e) => ({
-    ...e,
-    title: t(`eventsData.${e.key}.title`),
-    date: t(`eventsData.${e.key}.date`),
-    location: t(`eventsData.${e.key}.location`),
-    description: t(`eventsData.${e.key}.description`),
-    category: t(`events.${e.categoryKey}`),
-  }));
+  useFocusEffect(
+    useCallback(() => {
+      const load = async () => {
+        try {
+          setLoading(true);
+          const data = await api.events(token);
+          setEvents(data);
+        } catch {
+          // leave previous data visible on error
+        } finally {
+          setLoading(false);
+        }
+      };
+      load();
+    }, [token])
+  );
 
   const filtered =
     activeCategory === "all"
-      ? EVENTS
-      : EVENTS.filter((e) => e.categoryKey === activeCategory);
+      ? events
+      : events.filter((e) => e.category.toLowerCase() === activeCategory);
 
   return (
     <Screen>
@@ -50,15 +56,9 @@ export default function EventsScreen({ navigation }) {
         onCartPress={() => navigation.navigate("CartPage")}
       />
       <View style={styles.container}>
-        {/* Screen header: title + create event */}
+        {/* Screen header */}
         <View style={styles.header}>
           <Text style={styles.title}>{t("events.title")}</Text>
-          <Pressable
-            style={styles.addBtn}
-            onPress={() => navigation.navigate("CreateEvent")}
-          >
-            <AppIcon name="add" size={22} color={Colors.primary} />
-          </Pressable>
         </View>
 
         {/* Category filter */}
@@ -89,45 +89,60 @@ export default function EventsScreen({ navigation }) {
           ))}
         </ScrollView>
 
-        {/* Events list */}
-        <FlatList
-          data={filtered}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => (
-            <Pressable
-              style={styles.card}
-              onPress={() => navigation.navigate("EventDetail", { event: item })}
-            >
-              <View style={[styles.cardImage, { backgroundColor: item.color }]}>
-                <Text style={styles.cardEmoji}>{item.emoji}</Text>
-                <View style={styles.categoryBadge}>
-                  <Text style={styles.categoryBadgeText}>{item.category}</Text>
+        {/* Loading */}
+        {loading && events.length === 0 ? (
+          <View style={styles.loadingWrap}>
+            <ActivityIndicator color={Colors.primary} />
+          </View>
+        ) : (
+          <FlatList
+            data={filtered}
+            keyExtractor={(item) => item._id}
+            contentContainerStyle={styles.list}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <EmptyState
+                icon="calendar"
+                title={t("events.empty")}
+                body={t("events.emptyBody")}
+              />
+            }
+            renderItem={({ item }) => (
+              <Pressable
+                style={styles.card}
+                onPress={() => navigation.navigate("EventDetail", { event: item })}
+              >
+                <View style={[styles.cardImage, { backgroundColor: item.color }]}>
+                  <Text style={styles.cardEmoji}>{item.emoji}</Text>
+                  <View style={styles.categoryBadge}>
+                    <Text style={styles.categoryBadgeText}>{item.category}</Text>
+                  </View>
                 </View>
-              </View>
-              <View style={styles.cardBody}>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                <View style={styles.cardMeta}>
-                  <AppIcon name="calendar" size={13} color={Colors.textMuted} />
-                  <Text style={styles.cardMetaText}>{item.date}</Text>
-                </View>
-                <View style={styles.cardFooter}>
+                <View style={styles.cardBody}>
+                  <Text style={styles.cardTitle}>{item.title}</Text>
                   <View style={styles.cardMeta}>
-                    <AppIcon name="location" size={13} color={Colors.textMuted} />
-                    <Text style={styles.cardMetaText} numberOfLines={1}>
-                      {item.location}
-                    </Text>
+                    <AppIcon name="calendar" size={13} color={Colors.textMuted} />
+                    <Text style={styles.cardMetaText}>{item.date}</Text>
                   </View>
-                  <View style={styles.goingBadge}>
-                    <AppIcon name="people" size={13} color={Colors.primary} />
-                    <Text style={styles.goingText}>{t("events.going", { count: item.going })}</Text>
+                  <View style={styles.cardFooter}>
+                    <View style={styles.cardMeta}>
+                      <AppIcon name="location" size={13} color={Colors.textMuted} />
+                      <Text style={styles.cardMetaText} numberOfLines={1}>
+                        {item.location}
+                      </Text>
+                    </View>
+                    <View style={styles.goingBadge}>
+                      <AppIcon name="people" size={13} color={Colors.primary} />
+                      <Text style={styles.goingText}>
+                        {t("events.going", { count: item.attendeeCount })}
+                      </Text>
+                    </View>
                   </View>
                 </View>
-              </View>
-            </Pressable>
-          )}
-        />
+              </Pressable>
+            )}
+          />
+        )}
       </View>
     </Screen>
   );
@@ -140,9 +155,6 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
     paddingHorizontal: Spacing.md,
   },
   title: {
@@ -150,11 +162,8 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: Colors.textDark,
   },
-  addBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.primaryPale,
+  loadingWrap: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
   },

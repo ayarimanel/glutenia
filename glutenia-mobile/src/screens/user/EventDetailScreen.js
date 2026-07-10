@@ -1,27 +1,41 @@
 import {
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
+import { useAuth } from "../../context/AuthContext";
+import { api } from "../../api/client";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
-import { useEvents } from "../../context/EventsContext";
 
 export default function EventDetailScreen({ route, navigation }) {
   const { t } = useTranslation();
+  const { token } = useAuth();
   const { event } = route.params;
-  const { isGoing, joinEvent, leaveEvent } = useEvents();
-  const going = isGoing(event.id);
+  const [going, setGoing] = useState(event.isGoing ?? false);
+  const [attendeeCount, setAttendeeCount] = useState(event.attendeeCount ?? 0);
+  const [loading, setLoading] = useState(false);
 
-  const handleRsvp = () => {
-    if (going) {
-      leaveEvent(event.id);
-    } else {
-      joinEvent(event);
+  const handleRsvp = async () => {
+    if (!token) {
+      Alert.alert(t("eventDetail.loginRequired"), t("eventDetail.loginMsg"));
+      return;
+    }
+    try {
+      setLoading(true);
+      const result = await api.rsvpEvent(token, event._id);
+      setGoing(result.isGoing);
+      setAttendeeCount(result.attendeeCount);
+    } catch (error) {
+      Alert.alert(t("eventDetail.rsvpError"), error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -63,7 +77,7 @@ export default function EventDetailScreen({ route, navigation }) {
                 <AppIcon name="people" size={18} color={Colors.primary} />
               </View>
               <Text style={styles.metaText}>
-                {t("eventDetail.going", { count: event.going + (going ? 1 : 0) })}
+                {t("eventDetail.going", { count: attendeeCount })}
               </Text>
             </View>
           </View>
@@ -82,8 +96,9 @@ export default function EventDetailScreen({ route, navigation }) {
             </View>
 
             <Pressable
-              style={[styles.rsvpBtn, going && styles.rsvpBtnActive]}
+              style={[styles.rsvpBtn, going && styles.rsvpBtnActive, loading && { opacity: 0.6 }]}
               onPress={handleRsvp}
+              disabled={loading}
             >
               <AppIcon
                 name={going ? "checkmark-circle" : "people"}

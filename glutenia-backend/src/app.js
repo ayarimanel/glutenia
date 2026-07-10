@@ -3,11 +3,13 @@ const cors = require("cors");
 const errorHandler = require("./middleware/errorHandler");
 
 const authRoutes = require("./routes/auth.routes");
+const establishmentRoutes = require("./routes/establishment.routes");
 const eventRoutes = require("./routes/event.routes");
 const gamificationRoutes = require("./routes/gamification.routes");
 const onboardingRoutes = require("./routes/onboarding.routes");
 const orderRoutes = require("./routes/order.routes");
 const productRoutes = require("./routes/product.routes");
+const professionalRoutes = require("./routes/professional.routes");
 const scanRoutes = require("./routes/scan.routes");
 const userRoutes = require("./routes/user.routes");
 
@@ -94,11 +96,13 @@ app.post("/api/admin/run-seed", async (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/establishments", establishmentRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/gamification", gamificationRoutes);
 app.use("/api/onboarding", onboardingRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/professionals", professionalRoutes);
 app.use("/api/scan", scanRoutes);
 app.use("/api/users", userRoutes);
 

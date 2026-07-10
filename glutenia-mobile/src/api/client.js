@@ -84,6 +84,7 @@ const request = async (path, options = {}) => {
   if (!response.ok || payload.success === false) {
     const error = new Error(payload.message || "Request failed");
     error.status = response.status;
+    error.data = payload.data;
     throw error;
   }
 
@@ -122,12 +123,14 @@ export const api = {
   },
   deleteProduct: (token, id) =>
     request(`/products/${id}`, { method: "DELETE", token }),
+  myProducts: (token) => request("/products/mine", { token }),
   productByBarcode: (barcode, token) =>
     request(`/products/barcode/${encodeURIComponent(barcode)}`, { token }),
   createOrder: (token, body) =>
     request("/orders", { method: "POST", token, body }),
   myOrders: (token) => request("/orders/my", { token }),
   allOrders: (token) => request("/orders", { token }),
+  sellerOrders: (token) => request("/orders/seller", { token }),
   saveOnboardingProfile: (token, data) =>
     request("/onboarding/profile", { method: "PUT", token, body: data }),
   getGamificationProfile: (token) =>
@@ -147,4 +150,41 @@ export const api = {
       body: { imageBase64, mimeType: "image/jpeg" },
       timeoutMs: 30000,
     }),
+  events: (token) => request("/events", { token }),
+  event: (id, token) => request(`/events/${id}`, { token }),
+  createEvent: (token, body) => request("/events", { method: "POST", token, body }),
+  updateEvent: (token, id, body) => request(`/events/${id}`, { method: "PUT", token, body }),
+  deleteEvent: (token, id) => request(`/events/${id}`, { method: "DELETE", token }),
+  rsvpEvent: (token, id) => request(`/events/${id}/rsvp`, { method: "POST", token }),
+  professionalRequests: (token, status = "pending") =>
+    request(`/professionals/requests?status=${status}`, { token }),
+  approveProfessional: (token, id) =>
+    request(`/professionals/requests/${id}/approve`, { method: "POST", token }),
+  rejectProfessional: (token, id) =>
+    request(`/professionals/requests/${id}/reject`, { method: "POST", token }),
+  establishments: (params = {}) => {
+    const query = new URLSearchParams(
+      Object.entries(params).filter(([, value]) => value)
+    ).toString();
+    return request(`/establishments${query ? `?${query}` : ""}`);
+  },
+  establishment: (id) => request(`/establishments/${id}`),
+  myEstablishment: (token) => request("/establishments/mine", { token }),
+  upsertMyEstablishment: (token, body) =>
+    request("/establishments/mine", { method: "PUT", token, body }),
+  uploadEstablishmentImage: (token, image) => {
+    const formData = new FormData();
+    formData.append("image", {
+      uri: image.uri,
+      name: image.name || "establishment.jpg",
+      type: image.type || "image/jpeg",
+    });
+
+    return request("/establishments/mine/image", {
+      method: "PUT",
+      token,
+      body: formData,
+      timeoutMs: 45000,
+    });
+  },
 };

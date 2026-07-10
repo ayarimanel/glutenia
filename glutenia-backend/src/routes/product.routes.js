@@ -2,7 +2,7 @@ const express = require("express");
 const { body, param } = require("express-validator");
 const multer = require("multer");
 const productController = require("../controllers/product.controller");
-const isAdmin = require("../middleware/isAdmin");
+const requireRole = require("../middleware/requireRole");
 const validateRequest = require("../middleware/validateRequest");
 const verifyToken = require("../middleware/verifyToken");
 
@@ -75,11 +75,17 @@ const idValidator = [
 
 router.get("/", productController.getProducts);
 router.get("/barcode/:code", productController.getProductByBarcode);
+router.get(
+  "/mine",
+  verifyToken,
+  requireRole("admin", "professional"),
+  productController.getMyProducts
+);
 router.get("/:id", idValidator, validateRequest, productController.getProductById);
 router.post(
   "/",
   verifyToken,
-  isAdmin,
+  requireRole("admin", "professional"),
   productValidators,
   validateRequest,
   productController.createProduct
@@ -87,7 +93,7 @@ router.post(
 router.put(
   "/:id/image",
   verifyToken,
-  isAdmin,
+  requireRole("admin", "professional"),
   idValidator,
   validateRequest,
   upload.single("image"),
@@ -96,7 +102,7 @@ router.put(
 router.put(
   "/:id",
   verifyToken,
-  isAdmin,
+  requireRole("admin", "professional"),
   idValidator,
   productUpdateValidators,
   validateRequest,
@@ -105,7 +111,7 @@ router.put(
 router.delete(
   "/:id",
   verifyToken,
-  isAdmin,
+  requireRole("admin", "professional"),
   idValidator,
   validateRequest,
   productController.deleteProduct

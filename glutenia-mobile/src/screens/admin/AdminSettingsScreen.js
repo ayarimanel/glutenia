@@ -71,18 +71,13 @@ function SettingRow({ icon, label, onPress, right, isFirst, isLast, colors }) {
 }
 
 function Divider({ colors }) {
-  return (
-    <View style={{ height: 1, backgroundColor: colors.divider, marginLeft: 66 }} />
-  );
+  return <View style={{ height: 1, backgroundColor: colors.divider, marginLeft: 66 }} />;
 }
 
-export default function SettingsScreen({ navigation }) {
+export default function AdminSettingsScreen({ navigation }) {
   const { logout } = useAuth();
   const { t } = useTranslation();
   const { isDark, toggleTheme, colors } = useTheme();
-
-  const [pushNotifs, setPushNotifs] = useState(true);
-  const [emailUpdates, setEmailUpdates] = useState(true);
   const [langVisible, setLangVisible] = useState(false);
 
   const handleLogout = () => {
@@ -92,14 +87,11 @@ export default function SettingsScreen({ navigation }) {
     ]);
   };
 
-  const comingSoon = (feature) => {
-    Alert.alert(t("settings.comingSoon"), t("settings.comingSoonMsg", { feature }));
-  };
-
   return (
     <Screen>
       <LanguageSelector visible={langVisible} onClose={() => setLangVisible(false)} />
 
+      {/* Header */}
       <View
         style={{
           flexDirection: "row",
@@ -134,62 +126,6 @@ export default function SettingsScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: Spacing.md }}
       >
-        {/* ACCOUNT */}
-        <SectionLabel text={t("settings.account")} colors={colors} />
-        <View style={{ backgroundColor: colors.surface, borderRadius: Radius.lg, overflow: "hidden" }}>
-          <SettingRow
-            icon="person"
-            label={t("settings.editProfile")}
-            isFirst
-            colors={colors}
-            onPress={() => comingSoon(t("settings.editProfile"))}
-            right={<AppIcon name="chevron-right" size={18} color={colors.textMuted} />}
-          />
-          <Divider colors={colors} />
-          <SettingRow
-            icon="shield"
-            label={t("settings.changePassword")}
-            isLast
-            colors={colors}
-            onPress={() => comingSoon(t("settings.changePassword"))}
-            right={<AppIcon name="chevron-right" size={18} color={colors.textMuted} />}
-          />
-        </View>
-
-        {/* NOTIFICATIONS */}
-        <SectionLabel text={t("settings.notifications")} colors={colors} />
-        <View style={{ backgroundColor: colors.surface, borderRadius: Radius.lg, overflow: "hidden" }}>
-          <SettingRow
-            icon="bell"
-            label={t("settings.pushNotifs")}
-            isFirst
-            colors={colors}
-            right={
-              <Switch
-                value={pushNotifs}
-                onValueChange={setPushNotifs}
-                trackColor={{ false: colors.divider, true: colors.primary }}
-                thumbColor={colors.surface}
-              />
-            }
-          />
-          <Divider colors={colors} />
-          <SettingRow
-            icon="info"
-            label={t("settings.emailUpdates")}
-            isLast
-            colors={colors}
-            right={
-              <Switch
-                value={emailUpdates}
-                onValueChange={setEmailUpdates}
-                trackColor={{ false: colors.divider, true: colors.primary }}
-                thumbColor={colors.surface}
-              />
-            }
-          />
-        </View>
-
         {/* APPEARANCE */}
         <SectionLabel text={t("settings.appearance")} colors={colors} />
         <View style={{ backgroundColor: colors.surface, borderRadius: Radius.lg, overflow: "hidden" }}>
@@ -197,6 +133,7 @@ export default function SettingsScreen({ navigation }) {
             icon="settings"
             label={t("settings.darkMode")}
             isFirst
+            isLast
             colors={colors}
             right={
               <Switch
@@ -205,22 +142,6 @@ export default function SettingsScreen({ navigation }) {
                 trackColor={{ false: colors.divider, true: colors.primary }}
                 thumbColor={colors.surface}
               />
-            }
-          />
-          <Divider colors={colors} />
-          <SettingRow
-            icon="info"
-            label={t("settings.textSize")}
-            isLast
-            colors={colors}
-            onPress={() => comingSoon(t("settings.textSize"))}
-            right={
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                <Text style={{ fontSize: 14, color: colors.textMuted, fontWeight: "500" }}>
-                  {t("settings.textSizeMedium")}
-                </Text>
-                <AppIcon name="chevron-right" size={18} color={colors.textMuted} />
-              </View>
             }
           />
         </View>

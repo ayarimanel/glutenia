@@ -19,8 +19,8 @@ router.post(
       .withMessage("Password must be at least 6 characters"),
     body("role")
       .optional()
-      .isIn(["customer", "admin"])
-      .withMessage("Role must be customer or admin"),
+      .isIn(["customer", "professional"])
+      .withMessage("Role must be customer or professional"),
   ],
   validateRequest,
   authController.register

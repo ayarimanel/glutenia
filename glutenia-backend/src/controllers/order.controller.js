@@ -2,6 +2,30 @@ const Cart = require("../models/Cart");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 
+exports.getSellerOrders = async (req, res, next) => {
+  try {
+    const productIds = await Product.find({ createdBy: req.user.id }).distinct("_id");
+    const ownedIds = new Set(productIds.map((id) => id.toString()));
+
+    const orders = await Order.find({ "items.product": { $in: productIds } })
+      .populate("user", "name email")
+      .sort({ createdAt: -1 });
+
+    const sellerOrders = orders.map((order) => {
+      const plain = order.toObject();
+      plain.items = plain.items.filter((item) => ownedIds.has(item.product.toString()));
+      return plain;
+    });
+
+    return res.json({
+      success: true,
+      data: sellerOrders,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
 const buildOrderItems = async (requestItems) => {
   const productIds = requestItems.map((item) => item.productId);
   const products = await Product.find({ _id: { $in: productIds } });
