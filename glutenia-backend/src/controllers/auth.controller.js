@@ -40,7 +40,7 @@ exports.register = async (req, res, next) => {
     const { name, email, password, role } = req.body;
 
     const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    if (existingUser && existingUser.isEmailVerified) {
       return res.status(409).json({
         success: false,
         message: "Email is already taken",
@@ -52,7 +52,7 @@ exports.register = async (req, res, next) => {
     const verificationCode = generateVerificationCode();
     const now = new Date();
 
-    const user = await User.create({
+    const userData = {
       name,
       email,
       password: hashedPassword,
@@ -63,7 +63,14 @@ exports.register = async (req, res, next) => {
       emailVerificationCode: verificationCode,
       emailVerificationCodeExpires: new Date(now.getTime() + VERIFICATION_CODE_TTL_MS),
       emailVerificationLastSentAt: now,
-    });
+    };
+
+    // An unverified record from a previous, abandoned signup attempt
+    // shouldn't permanently reserve the email — restart it in place.
+    const user = existingUser
+      ? Object.assign(existingUser, userData)
+      : new User(userData);
+    await user.save();
 
     const emailSent = await sendVerificationEmail(user.email, verificationCode);
 
