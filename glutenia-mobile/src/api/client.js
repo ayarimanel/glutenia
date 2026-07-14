@@ -94,8 +94,6 @@ const request = async (path, options = {}) => {
 export const api = {
   login: (body) => request("/auth/login", { method: "POST", body }),
   register: (body) => request("/auth/register", { method: "POST", body }),
-  verifyEmail: (body) => request("/auth/verify-email", { method: "POST", body }),
-  resendVerificationCode: (body) => request("/auth/resend-code", { method: "POST", body }),
   me: (token, options = {}) => request("/auth/me", { token, ...options }),
   products: (params = {}) => {
     const query = new URLSearchParams(

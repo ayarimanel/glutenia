@@ -11,7 +11,6 @@ import CustomTabBar from "../components/CustomTabBar";
 import LoginScreen from "../screens/auth/LoginScreen";
 import RegisterScreen from "../screens/auth/RegisterScreen";
 import ProfessionalPendingScreen from "../screens/auth/ProfessionalPendingScreen";
-import VerifyEmailScreen from "../screens/auth/VerifyEmailScreen";
 import HomeScreen from "../screens/user/HomeScreen";
 import ProductDetailScreen from "../screens/user/ProductDetailScreen";
 import CartScreen from "../screens/user/CartScreen";
@@ -61,7 +60,6 @@ function AuthStack({ bg }) {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="ProfessionalPending" component={ProfessionalPendingScreen} />
-      <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
     </Stack.Navigator>
   );
 }

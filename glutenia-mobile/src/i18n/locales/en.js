@@ -57,20 +57,6 @@ export default {
     hint: "Keep this code for reference. You can try logging in again once the admin approves your request.",
     backToLogin: "Back to login",
   },
-  verifyEmail: {
-    title: "Confirm your email",
-    subtitle: "We sent a 6-digit code to {{email}}. Enter it below to confirm your account.",
-    codeLabel: "Verification code",
-    submit: "Confirm",
-    resend: "Resend code",
-    resendCooldown: "Resend in {{seconds}}s",
-    errors: {
-      codeRequired: "Enter the 6-digit code.",
-      codeInvalid: "Invalid verification code.",
-      codeExpired: "This code has expired. Tap resend to get a new one.",
-      resendFailed: "Could not resend the code",
-    },
-  },
   home: {
     heroSub: "Instantly Check For Gluten & Find Safe Alternatives",
     tapToScan: "Tap to Scan",

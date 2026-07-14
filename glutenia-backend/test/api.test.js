@@ -50,22 +50,13 @@ test.after(async () => {
 // Shared state, populated as the suites below run in order.
 const ctx = {};
 
-const registerAndVerify = async ({ name, email, password, role }) => {
+const registerCustomer = async ({ name, email, password, role }) => {
   const registerResponse = await request(app)
     .post("/api/auth/register")
     .send({ name, email, password, role })
     .expect(201);
 
-  assert.equal(registerResponse.body.data.pendingVerification, true);
-  assert.equal(registerResponse.body.data.token, undefined);
-
-  const stored = await User.findOne({ email }).select("+emailVerificationCode");
-  const verify = await request(app)
-    .post("/api/auth/verify-email")
-    .send({ email, code: stored.emailVerificationCode })
-    .expect(200);
-
-  return verify.body.data;
+  return registerResponse.body.data;
 };
 
 describe("Authentication", () => {
@@ -80,7 +71,7 @@ describe("Authentication", () => {
       message: "Route not found",
     });
 
-    const verified = await registerAndVerify({
+    const verified = await registerCustomer({
       name: "Customer One",
       email: "customer@glutenia.test",
       password: "secret123",
@@ -314,7 +305,7 @@ describe("Orders", () => {
 
     assert.equal(orderDetail.body.data.total, 9);
 
-    const secondCustomer = await registerAndVerify({
+    const secondCustomer = await registerCustomer({
       name: "Customer Two",
       email: "customer2@glutenia.test",
       password: "secret123",
@@ -346,69 +337,6 @@ describe("Orders", () => {
       .expect(200);
 
     assert.equal(deletedProduct.body.data._id, ctx.productId);
-  });
-});
-
-describe("Email verification", () => {
-  test("blocks login until the email is verified, then unblocks it after the correct code", async () => {
-    await request(app)
-      .post("/api/auth/register")
-      .send({
-        name: "Pending Verifier",
-        email: "verify-me@glutenia.test",
-        password: "secret123",
-      })
-      .expect(201);
-
-    const blocked = await request(app)
-      .post("/api/auth/login")
-      .send({ email: "verify-me@glutenia.test", password: "secret123" })
-      .expect(403);
-
-    assert.equal(blocked.body.data.needsVerification, true);
-
-    const wrongCode = await request(app)
-      .post("/api/auth/verify-email")
-      .send({ email: "verify-me@glutenia.test", code: "000000" })
-      .expect(400);
-
-    assert.equal(wrongCode.body.success, false);
-
-    const stored = await User.findOne({ email: "verify-me@glutenia.test" }).select(
-      "+emailVerificationCode"
-    );
-
-    const verified = await request(app)
-      .post("/api/auth/verify-email")
-      .send({ email: "verify-me@glutenia.test", code: stored.emailVerificationCode })
-      .expect(200);
-
-    assert.ok(verified.body.data.token);
-
-    const login = await request(app)
-      .post("/api/auth/login")
-      .send({ email: "verify-me@glutenia.test", password: "secret123" })
-      .expect(200);
-
-    assert.ok(login.body.data.token);
-  });
-
-  test("enforces a resend cooldown", async () => {
-    await request(app)
-      .post("/api/auth/register")
-      .send({
-        name: "Resend Tester",
-        email: "resend-me@glutenia.test",
-        password: "secret123",
-      })
-      .expect(201);
-
-    const resend = await request(app)
-      .post("/api/auth/resend-code")
-      .send({ email: "resend-me@glutenia.test" })
-      .expect(429);
-
-    assert.ok(resend.body.data.secondsRemaining > 0);
   });
 });
 

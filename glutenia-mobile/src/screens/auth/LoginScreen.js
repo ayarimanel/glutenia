@@ -48,9 +48,7 @@ export default function LoginScreen({ navigation }) {
       await login({ email: trimmedEmail, password });
     } catch (error) {
       const status = error.status === 403 ? error.data?.professionalStatus : null;
-      if (error.status === 403 && error.data?.needsVerification) {
-        navigation.navigate("VerifyEmail", { email: trimmedEmail });
-      } else if (status === "rejected") {
+      if (status === "rejected") {
         Alert.alert(t("login.professionalRejectedTitle"), t("login.professionalRejectedMsg"));
       } else if (status === "pending") {
         Alert.alert(

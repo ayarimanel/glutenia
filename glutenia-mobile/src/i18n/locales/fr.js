@@ -57,20 +57,6 @@ export default {
     hint: "Conservez ce code. Vous pourrez réessayer de vous connecter une fois votre demande approuvée.",
     backToLogin: "Retour à la connexion",
   },
-  verifyEmail: {
-    title: "Confirmez votre email",
-    subtitle: "Nous avons envoyé un code à 6 chiffres à {{email}}. Entrez-le ci-dessous pour confirmer votre compte.",
-    codeLabel: "Code de vérification",
-    submit: "Confirmer",
-    resend: "Renvoyer le code",
-    resendCooldown: "Renvoyer dans {{seconds}}s",
-    errors: {
-      codeRequired: "Entrez le code à 6 chiffres.",
-      codeInvalid: "Code de vérification invalide.",
-      codeExpired: "Ce code a expiré. Appuyez sur renvoyer pour en obtenir un nouveau.",
-      resendFailed: "Impossible de renvoyer le code",
-    },
-  },
   home: {
     heroSub: "Vérifiez instantanément la présence de gluten et trouvez des alternatives sûres",
     tapToScan: "Appuyer pour scanner",
