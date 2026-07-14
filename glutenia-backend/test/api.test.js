@@ -16,6 +16,7 @@ const Event = require("../src/models/Event");
 const Notification = require("../src/models/Notification");
 const Order = require("../src/models/Order");
 const Product = require("../src/models/Product");
+const Recipe = require("../src/models/Recipe");
 const User = require("../src/models/User");
 
 const resetDatabase = async () => {
@@ -25,6 +26,7 @@ const resetDatabase = async () => {
     Notification.deleteMany({}),
     Order.deleteMany({}),
     Product.deleteMany({}),
+    Recipe.deleteMany({}),
     User.deleteMany({}),
   ]);
 };
@@ -266,6 +268,67 @@ describe("Products", () => {
         category: "Snacks",
       })
       .expect(403);
+  });
+});
+
+describe("Recipes", () => {
+  test("lets an admin create, update, and delete a recipe; reads are public", async () => {
+    const blockedCreate = await request(app)
+      .post("/api/recipes")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .send({ name: "Blocked Recipe" })
+      .expect(403);
+    assert.equal(blockedCreate.body.success, false);
+
+    const created = await request(app)
+      .post("/api/recipes")
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .send({
+        name: "Test Salad",
+        description: "A fresh test salad.",
+        category: "Easy",
+        imageUrl: "https://example.com/salad.jpg",
+        calories: 200,
+        carbo: 10,
+        protein: 5,
+        popular: true,
+        ingredients: ["Lettuce", "Tomato"],
+        preparation: "Mix everything together.",
+      })
+      .expect(201);
+
+    assert.equal(created.body.data.name, "Test Salad");
+    assert.deepEqual(created.body.data.ingredients, ["Lettuce", "Tomato"]);
+    ctx.recipeId = created.body.data._id;
+
+    const list = await request(app).get("/api/recipes").expect(200);
+    assert.equal(list.body.data.some((r) => r._id === ctx.recipeId), true);
+
+    const filtered = await request(app).get("/api/recipes?category=Easy").expect(200);
+    assert.equal(filtered.body.data.every((r) => r.category === "Easy"), true);
+
+    const detail = await request(app).get(`/api/recipes/${ctx.recipeId}`).expect(200);
+    assert.equal(detail.body.data.name, "Test Salad");
+
+    const updated = await request(app)
+      .put(`/api/recipes/${ctx.recipeId}`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .send({ name: "Updated Salad", popular: false })
+      .expect(200);
+    assert.equal(updated.body.data.name, "Updated Salad");
+    assert.equal(updated.body.data.popular, false);
+
+    await request(app)
+      .delete(`/api/recipes/${ctx.recipeId}`)
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .expect(403);
+
+    await request(app)
+      .delete(`/api/recipes/${ctx.recipeId}`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .expect(200);
+
+    await request(app).get(`/api/recipes/${ctx.recipeId}`).expect(404);
   });
 });
 

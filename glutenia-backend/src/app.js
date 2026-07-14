@@ -11,6 +11,7 @@ const onboardingRoutes = require("./routes/onboarding.routes");
 const orderRoutes = require("./routes/order.routes");
 const productRoutes = require("./routes/product.routes");
 const professionalRoutes = require("./routes/professional.routes");
+const recipeRoutes = require("./routes/recipe.routes");
 const scanRoutes = require("./routes/scan.routes");
 const userRoutes = require("./routes/user.routes");
 
@@ -105,6 +106,7 @@ app.use("/api/onboarding", onboardingRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/professionals", professionalRoutes);
+app.use("/api/recipes", recipeRoutes);
 app.use("/api/scan", scanRoutes);
 app.use("/api/users", userRoutes);
 

@@ -128,6 +128,19 @@ export const api = {
   deleteProduct: (token, id) =>
     request(`/products/${id}`, { method: "DELETE", token }),
   myProducts: (token) => request("/products/mine", { token }),
+  recipes: (params = {}) => {
+    const query = new URLSearchParams(
+      Object.entries(params).filter(([, value]) => value)
+    ).toString();
+    return request(`/recipes${query ? `?${query}` : ""}`);
+  },
+  recipe: (id) => request(`/recipes/${id}`),
+  createRecipe: (token, body) =>
+    request("/recipes", { method: "POST", token, body, timeoutMs: 30000 }),
+  updateRecipe: (token, id, body) =>
+    request(`/recipes/${id}`, { method: "PUT", token, body, timeoutMs: 30000 }),
+  deleteRecipe: (token, id) =>
+    request(`/recipes/${id}`, { method: "DELETE", token }),
   productByBarcode: (barcode, token) =>
     request(`/products/barcode/${encodeURIComponent(barcode)}`, { token }),
   createOrder: (token, body) =>

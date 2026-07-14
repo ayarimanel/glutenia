@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import {
+  ActivityIndicator,
   View,
   Text,
   StyleSheet,
@@ -12,18 +14,8 @@ import Screen from "../../components/Screen";
 import AppHeader from "../../components/AppHeader";
 import AppIcon from "../../components/AppIcon";
 import { useAuth } from "../../context/AuthContext";
+import { api } from "../../api/client";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
-
-const RECIPES_META = [
-  { id: "1", key: "r1", category: "Quick",    image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600", calories: 370, carbo: 35, protein: 14, popular: false },
-  { id: "2", key: "r2", category: "Tunisian", image: "https://images.unsplash.com/photo-1574484284002-952d92456975?w=600", calories: 280, carbo: 22, protein: 18, popular: false },
-  { id: "3", key: "r3", category: "Tunisian", image: "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=600", calories: 180, carbo: 14, protein: 12, popular: false },
-  { id: "4", key: "r4", category: "Tunisian", image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600", calories: 410, carbo: 62, protein: 12, popular: true  },
-  { id: "5", key: "r5", category: "Easy",     image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=600", calories: 220, carbo: 28, protein: 9,  popular: true  },
-  { id: "6", key: "r6", category: "Easy",     image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600", calories: 350, carbo: 55, protein: 8,  popular: false },
-  { id: "7", key: "r7", category: "Quick",    image: "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=600", calories: 190, carbo: 30, protein: 11, popular: true  },
-  { id: "8", key: "r8", category: "Quick",    image: "https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=600", calories: 140, carbo: 4,  protein: 12, popular: false },
-];
 
 const FILTERS = ["Tunisian", "Easy", "Quick"];
 
@@ -31,17 +23,35 @@ export default function RecipesScreen({ navigation }) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [activeFilter, setActiveFilter] = useState("Tunisian");
+  const [recipes, setRecipes] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const RECIPES = RECIPES_META.map((r) => ({
-    ...r,
-    name: t(`recipes.items.${r.key}.name`),
-    description: t(`recipes.items.${r.key}.description`),
-    ingredients: t(`recipes.items.${r.key}.ingredients`).split("\n"),
-    preparation: t(`recipes.items.${r.key}.preparation`),
-  }));
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      (async () => {
+        try {
+          setLoading(true);
+          const data = await api.recipes();
+          if (!cancelled) {
+            setRecipes(
+              data.map((r) => ({ ...r, id: r._id, image: r.imageUrl }))
+            );
+          }
+        } catch (error) {
+          // Keep whatever was previously loaded; recipes are non-critical content.
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
 
-  const featured = RECIPES.filter((r) => r.category === activeFilter).slice(0, 2);
-  const popular = RECIPES.filter((r) => r.popular);
+  const featured = recipes.filter((r) => r.category === activeFilter).slice(0, 2);
+  const popular = recipes.filter((r) => r.popular);
 
   return (
     <Screen>
@@ -79,6 +89,10 @@ export default function RecipesScreen({ navigation }) {
             </TouchableOpacity>
           ))}
         </ScrollView>
+
+        {loading && recipes.length === 0 ? (
+          <ActivityIndicator color={Colors.primary} style={styles.loading} />
+        ) : null}
 
         {/* 2-column featured grid */}
         <View style={styles.grid}>
@@ -149,6 +163,9 @@ const styles = StyleSheet.create({
   },
   filterRow: {
     marginBottom: Spacing.md,
+  },
+  loading: {
+    marginVertical: Spacing.lg,
   },
   filterContent: {
     gap: 10,

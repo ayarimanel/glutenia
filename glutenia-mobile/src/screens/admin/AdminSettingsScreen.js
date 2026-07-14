@@ -126,6 +126,20 @@ export default function AdminSettingsScreen({ navigation }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: Spacing.md }}
       >
+        {/* MANAGEMENT */}
+        <SectionLabel text={t("settings.management")} colors={colors} />
+        <View style={{ backgroundColor: colors.surface, borderRadius: Radius.lg, overflow: "hidden" }}>
+          <SettingRow
+            icon="utensils"
+            label={t("settings.manageRecipes")}
+            isFirst
+            isLast
+            colors={colors}
+            onPress={() => navigation.navigate("AdminRecipes")}
+            right={<AppIcon name="chevron-right" size={18} color={colors.textMuted} />}
+          />
+        </View>
+
         {/* APPEARANCE */}
         <SectionLabel text={t("settings.appearance")} colors={colors} />
         <View style={{ backgroundColor: colors.surface, borderRadius: Radius.lg, overflow: "hidden" }}>
