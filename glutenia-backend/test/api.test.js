@@ -144,6 +144,64 @@ describe("Authentication", () => {
   });
 });
 
+describe("Profile", () => {
+  test("updates name and avatar", async () => {
+    const updated = await request(app)
+      .put("/api/auth/me")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .send({ name: "Customer One Updated", avatar: "data:image/png;base64,abc123" })
+      .expect(200);
+
+    assert.equal(updated.body.data.name, "Customer One Updated");
+    assert.equal(updated.body.data.avatar, "data:image/png;base64,abc123");
+
+    const me = await request(app)
+      .get("/api/auth/me")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .expect(200);
+
+    assert.equal(me.body.data.name, "Customer One Updated");
+  });
+
+  test("rejects an empty name", async () => {
+    const response = await request(app)
+      .put("/api/auth/me")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .send({ name: "   " })
+      .expect(400);
+
+    assert.equal(response.body.success, false);
+  });
+
+  test("changes the password and rejects the wrong current password", async () => {
+    const wrongCurrent = await request(app)
+      .put("/api/auth/change-password")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .send({ currentPassword: "not-the-password", newPassword: "newsecret123" })
+      .expect(401);
+
+    assert.equal(wrongCurrent.body.success, false);
+
+    await request(app)
+      .put("/api/auth/change-password")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .send({ currentPassword: "secret123", newPassword: "newsecret123" })
+      .expect(200);
+
+    await request(app)
+      .post("/api/auth/login")
+      .send({ email: "customer@glutenia.test", password: "secret123" })
+      .expect(401);
+
+    const relogin = await request(app)
+      .post("/api/auth/login")
+      .send({ email: "customer@glutenia.test", password: "newsecret123" })
+      .expect(200);
+
+    assert.ok(relogin.body.data.token);
+  });
+});
+
 describe("Products", () => {
   test("lets an admin create, update and search for products", async () => {
     const createdProduct = await request(app)

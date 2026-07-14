@@ -140,3 +140,64 @@ exports.getMe = async (req, res, next) => {
     return next(error);
   }
 };
+
+exports.updateProfile = async (req, res, next) => {
+  try {
+    const { name, avatar } = req.body;
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (name !== undefined) {
+      user.name = name;
+    }
+    if (avatar !== undefined) {
+      user.avatar = avatar || null;
+    }
+    await user.save();
+
+    return res.json({
+      success: true,
+      data: toSafeUser(user),
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user.id).select("+password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const currentMatches = await bcrypt.compare(currentPassword, user.password);
+    if (!currentMatches) {
+      return res.status(401).json({
+        success: false,
+        message: "Current password is incorrect",
+      });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 12);
+    await user.save();
+
+    return res.json({
+      success: true,
+      data: { message: "Password updated successfully" },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};

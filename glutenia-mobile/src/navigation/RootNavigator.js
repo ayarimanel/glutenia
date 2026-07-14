@@ -44,6 +44,8 @@ import ResourceDetailScreen from "../screens/user/ResourceDetailScreen";
 import RecipesScreen from "../screens/user/RecipesScreen";
 import RecipeDetailScreen from "../screens/user/RecipeDetailScreen";
 import SettingsScreen from "../screens/user/SettingsScreen";
+import EditProfileScreen from "../screens/user/EditProfileScreen";
+import ChangePasswordScreen from "../screens/user/ChangePasswordScreen";
 import LabelScanScreen from "../screens/user/LabelScanScreen";
 import AdminSettingsScreen from "../screens/admin/AdminSettingsScreen";
 import SellerVisibilityScreen from "../screens/user/SellerVisibilityScreen";
@@ -99,6 +101,8 @@ function UserStack({ bg }) {
       <Stack.Screen name="Recipes" component={RecipesScreen} />
       <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+      <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       <Stack.Screen name="LabelScan" component={LabelScanScreen} />
       <Stack.Screen name="SellerProducts" component={AdminProductsScreen} />
       <Stack.Screen name="SellerProductForm" component={AdminProductFormScreen} />

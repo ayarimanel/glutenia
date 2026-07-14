@@ -167,14 +167,21 @@ export default function AccountScreen({ navigation }) {
       >
         {/* ── A. Avatar ──────────────────────────────────────────────────── */}
         <View style={styles.avatarSection}>
-          <View style={styles.avatarWrap}>
-            <View style={styles.avatar}>
-              <AppIcon name="person" size={40} color={Colors.primary} />
-            </View>
+          <Pressable
+            style={styles.avatarWrap}
+            onPress={() => navigation.navigate("EditProfile")}
+          >
+            {user?.avatar ? (
+              <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
+            ) : (
+              <View style={styles.avatar}>
+                <AppIcon name="person" size={40} color={Colors.primary} />
+              </View>
+            )}
             <View style={[styles.avatarBadge, { backgroundColor: accentColor }]}>
               <AppIcon name={roleMeta.icon} size={13} color="#fff" strokeWidth={2.5} />
             </View>
-          </View>
+          </Pressable>
           <Text style={styles.userName}>{user?.name}</Text>
           <View style={[styles.titlePill, { backgroundColor: accentColor }]}>
             <Text style={styles.titlePillText}>{isProfessional ? roleMeta.label : currentTitle}</Text>
@@ -538,6 +545,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primaryPale,
     alignItems: "center",
     justifyContent: "center",
+  },
+  avatarImage: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
   },
   avatarBadge: {
     position: "absolute",

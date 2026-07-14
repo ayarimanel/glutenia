@@ -53,4 +53,28 @@ router.post(
 
 router.get("/me", verifyToken, authController.getMe);
 
+router.put(
+  "/me",
+  verifyToken,
+  [
+    body("name").optional().trim().notEmpty().withMessage("Name cannot be empty"),
+    body("avatar").optional({ checkFalsy: true }).isString(),
+  ],
+  validateRequest,
+  authController.updateProfile
+);
+
+router.put(
+  "/change-password",
+  verifyToken,
+  [
+    body("currentPassword").notEmpty().withMessage("Current password is required"),
+    body("newPassword")
+      .isLength({ min: 6 })
+      .withMessage("New password must be at least 6 characters"),
+  ],
+  validateRequest,
+  authController.changePassword
+);
+
 module.exports = router;

@@ -95,6 +95,10 @@ export const api = {
   login: (body) => request("/auth/login", { method: "POST", body }),
   register: (body) => request("/auth/register", { method: "POST", body }),
   me: (token, options = {}) => request("/auth/me", { token, ...options }),
+  updateProfile: (token, body) =>
+    request("/auth/me", { method: "PUT", token, body, timeoutMs: 30000 }),
+  changePassword: (token, body) =>
+    request("/auth/change-password", { method: "PUT", token, body }),
   products: (params = {}) => {
     const query = new URLSearchParams(
       Object.entries(params).filter(([, value]) => value)

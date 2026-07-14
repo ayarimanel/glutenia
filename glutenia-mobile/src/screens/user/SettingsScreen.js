@@ -142,7 +142,7 @@ export default function SettingsScreen({ navigation }) {
             label={t("settings.editProfile")}
             isFirst
             colors={colors}
-            onPress={() => comingSoon(t("settings.editProfile"))}
+            onPress={() => navigation.navigate("EditProfile")}
             right={<AppIcon name="chevron-right" size={18} color={colors.textMuted} />}
           />
           <Divider colors={colors} />
@@ -151,7 +151,7 @@ export default function SettingsScreen({ navigation }) {
             label={t("settings.changePassword")}
             isLast
             colors={colors}
-            onPress={() => comingSoon(t("settings.changePassword"))}
+            onPress={() => navigation.navigate("ChangePassword")}
             right={<AppIcon name="chevron-right" size={18} color={colors.textMuted} />}
           />
         </View>
