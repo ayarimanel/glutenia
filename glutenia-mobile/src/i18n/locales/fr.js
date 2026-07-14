@@ -57,6 +57,20 @@ export default {
     hint: "Conservez ce code. Vous pourrez réessayer de vous connecter une fois votre demande approuvée.",
     backToLogin: "Retour à la connexion",
   },
+  verifyEmail: {
+    title: "Confirmez votre email",
+    subtitle: "Nous avons envoyé un code à 6 chiffres à {{email}}. Entrez-le ci-dessous pour confirmer votre compte.",
+    codeLabel: "Code de vérification",
+    submit: "Confirmer",
+    resend: "Renvoyer le code",
+    resendCooldown: "Renvoyer dans {{seconds}}s",
+    errors: {
+      codeRequired: "Entrez le code à 6 chiffres.",
+      codeInvalid: "Code de vérification invalide.",
+      codeExpired: "Ce code a expiré. Appuyez sur renvoyer pour en obtenir un nouveau.",
+      resendFailed: "Impossible de renvoyer le code",
+    },
+  },
   home: {
     heroSub: "Vérifiez instantanément la présence de gluten et trouvez des alternatives sûres",
     tapToScan: "Appuyer pour scanner",
@@ -797,6 +811,8 @@ export default {
     },
     orders: {
       eyebrow: "Votre commerce",
+      markShipped: "Marquer comme envoyée",
+      marking: "Mise à jour…",
     },
     business: {
       title: "Mon commerce",
@@ -822,6 +838,10 @@ export default {
       address: "Adresse",
       phone: "Téléphone",
       hours: "Horaires d'ouverture",
+      openTime: "Heure d'ouverture",
+      closeTime: "Heure de fermeture",
+      done: "Terminé",
+      cancel: "Annuler",
       coverImage: "Photo de couverture",
       location: "Emplacement sur la carte",
       locationHint: "Touchez la carte pour placer votre commerce, ou faites glisser le repère pour l'ajuster.",
@@ -833,7 +853,15 @@ export default {
       loadFailed: "Impossible de charger les infos de votre commerce",
       errors: {
         nameRequired: "Le nom du commerce est requis.",
+        locationRequired: "Touchez la carte pour définir l'emplacement de votre commerce afin qu'il y apparaisse.",
       },
     },
+  },
+  notifications: {
+    eyebrow: "Restez informé",
+    title: "Notifications",
+    markAllRead: "Tout marquer comme lu",
+    empty: "Aucune notification",
+    emptyBody: "Les mises à jour de vos événements et commandes apparaîtront ici.",
   },
 };

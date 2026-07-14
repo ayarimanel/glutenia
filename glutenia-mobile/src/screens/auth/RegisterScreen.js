@@ -43,11 +43,8 @@ export default function RegisterScreen({ navigation }) {
     try {
       setLoading(true);
       const result = await register({ name: name.trim(), email: trimmedEmail, password, role });
-      if (result?.pending) {
-        navigation.replace("ProfessionalPending", {
-          approvalCode: result.approvalCode,
-          email: trimmedEmail,
-        });
+      if (result?.pendingVerification) {
+        navigation.replace("VerifyEmail", { email: trimmedEmail });
       }
     } catch (error) {
       Alert.alert(t("auth.errors.registerFailed"), error.message);

@@ -94,6 +94,8 @@ const request = async (path, options = {}) => {
 export const api = {
   login: (body) => request("/auth/login", { method: "POST", body }),
   register: (body) => request("/auth/register", { method: "POST", body }),
+  verifyEmail: (body) => request("/auth/verify-email", { method: "POST", body }),
+  resendVerificationCode: (body) => request("/auth/resend-code", { method: "POST", body }),
   me: (token, options = {}) => request("/auth/me", { token, ...options }),
   products: (params = {}) => {
     const query = new URLSearchParams(
@@ -131,6 +133,8 @@ export const api = {
   myOrders: (token) => request("/orders/my", { token }),
   allOrders: (token) => request("/orders", { token }),
   sellerOrders: (token) => request("/orders/seller", { token }),
+  updateOrderStatus: (token, id, status) =>
+    request(`/orders/${id}/status`, { method: "PUT", token, body: { status } }),
   saveOnboardingProfile: (token, data) =>
     request("/onboarding/profile", { method: "PUT", token, body: data }),
   getGamificationProfile: (token) =>
@@ -172,6 +176,11 @@ export const api = {
   myEstablishment: (token) => request("/establishments/mine", { token }),
   upsertMyEstablishment: (token, body) =>
     request("/establishments/mine", { method: "PUT", token, body }),
+  notifications: (token) => request("/notifications", { token }),
+  markNotificationRead: (token, id) =>
+    request(`/notifications/${id}/read`, { method: "PUT", token }),
+  markAllNotificationsRead: (token) =>
+    request("/notifications/read-all", { method: "PUT", token }),
   uploadEstablishmentImage: (token, image) => {
     const formData = new FormData();
     formData.append("image", {

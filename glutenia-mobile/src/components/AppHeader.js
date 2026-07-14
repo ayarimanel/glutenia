@@ -1,7 +1,9 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
 import AppIcon from "./AppIcon";
 import { useCart } from "../context/CartContext";
+import { useNotifications } from "../context/NotificationContext";
 import { Colors, Shadow, Spacing } from "../theme/colors";
 
 /**
@@ -15,7 +17,9 @@ import { Colors, Shadow, Spacing } from "../theme/colors";
  */
 export default function AppHeader({ userName, avatarUri, onCartPress, safeTop = false }) {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
   const { count } = useCart();
+  const { unreadCount } = useNotifications() ?? {};
 
   return (
     <View style={[styles.container, safeTop && { paddingTop: insets.top + 12 }]}>
@@ -36,15 +40,28 @@ export default function AppHeader({ userName, avatarUri, onCartPress, safeTop = 
         <Text style={styles.name} numberOfLines={1}>{userName}</Text>
       </View>
 
-      {/* Right: cart icon with badge */}
-      <Pressable style={styles.cartBtn} onPress={onCartPress}>
-        <AppIcon name="basket" size={26} color={Colors.primary} />
-        {count > 0 && (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{count}</Text>
-          </View>
-        )}
-      </Pressable>
+      {/* Right: notification bell + cart icon, each with a badge */}
+      <View style={styles.rightRow}>
+        <Pressable
+          style={styles.iconBtn}
+          onPress={() => navigation.navigate("Notifications")}
+        >
+          <AppIcon name="bell" size={24} color={Colors.primary} />
+          {unreadCount > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{unreadCount}</Text>
+            </View>
+          )}
+        </Pressable>
+        <Pressable style={styles.iconBtn} onPress={onCartPress}>
+          <AppIcon name="basket" size={26} color={Colors.primary} />
+          {count > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{count}</Text>
+            </View>
+          )}
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -106,7 +123,12 @@ const styles = StyleSheet.create({
     color: Colors.textDark,
     flex: 1,
   },
-  cartBtn: {
+  rightRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  iconBtn: {
     width: 44,
     height: 44,
     alignItems: "center",

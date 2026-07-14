@@ -1,4 +1,4 @@
-import { Alert, FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
@@ -14,6 +14,7 @@ export default function SellerOrdersScreen() {
   const { t } = useTranslation();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [updatingId, setUpdatingId] = useState(null);
 
   const loadOrders = async () => {
     if (!token) {
@@ -41,6 +42,18 @@ export default function SellerOrdersScreen() {
       loadOrders();
     }, [token])
   );
+
+  const markAsShipped = async (orderId) => {
+    try {
+      setUpdatingId(orderId);
+      await api.updateOrderStatus(token, orderId, "shipped");
+      await loadOrders();
+    } catch (error) {
+      Alert.alert(t("admin.orders.errorTitle"), error.message);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   return (
     <Screen>
@@ -77,6 +90,19 @@ export default function SellerOrdersScreen() {
                   {item.items.length} {t("admin.orders.itemsSuffix")} {item.address.city}
                 </Text>
                 <Text style={styles.total}>{subtotal.toFixed(2)} TND</Text>
+                {item.status !== "shipped" && item.status !== "delivered" ? (
+                  <Pressable
+                    style={[styles.shipBtn, updatingId === item._id && styles.shipBtnDisabled]}
+                    disabled={updatingId === item._id}
+                    onPress={() => markAsShipped(item._id)}
+                  >
+                    <Text style={styles.shipBtnText}>
+                      {updatingId === item._id
+                        ? t("seller.orders.marking")
+                        : t("seller.orders.markShipped")}
+                    </Text>
+                  </Pressable>
+                ) : null}
               </View>
             );
           }}
@@ -129,5 +155,21 @@ const styles = StyleSheet.create({
     color: Colors.primary,
     fontSize: 18,
     fontWeight: "900",
+  },
+  shipBtn: {
+    alignSelf: "flex-start",
+    borderRadius: Radius.md,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    marginTop: 4,
+  },
+  shipBtnDisabled: {
+    opacity: 0.6,
+  },
+  shipBtnText: {
+    color: Colors.surface,
+    fontSize: 13,
+    fontWeight: "800",
   },
 });

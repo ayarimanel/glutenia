@@ -37,6 +37,12 @@ const createOrderValidators = [
 
 const idValidator = [param("id").isMongoId().withMessage("Invalid order id")];
 
+const statusValidators = [
+  body("status")
+    .isIn(["pending", "confirmed", "shipped", "delivered"])
+    .withMessage("Invalid status"),
+];
+
 router.post(
   "/",
   verifyToken,
@@ -58,6 +64,15 @@ router.get(
   idValidator,
   validateRequest,
   orderController.getOrderById
+);
+router.put(
+  "/:id/status",
+  verifyToken,
+  requireRole("admin", "professional"),
+  idValidator,
+  statusValidators,
+  validateRequest,
+  orderController.updateOrderStatus
 );
 
 module.exports = router;

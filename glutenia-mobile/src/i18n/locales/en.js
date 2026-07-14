@@ -57,6 +57,20 @@ export default {
     hint: "Keep this code for reference. You can try logging in again once the admin approves your request.",
     backToLogin: "Back to login",
   },
+  verifyEmail: {
+    title: "Confirm your email",
+    subtitle: "We sent a 6-digit code to {{email}}. Enter it below to confirm your account.",
+    codeLabel: "Verification code",
+    submit: "Confirm",
+    resend: "Resend code",
+    resendCooldown: "Resend in {{seconds}}s",
+    errors: {
+      codeRequired: "Enter the 6-digit code.",
+      codeInvalid: "Invalid verification code.",
+      codeExpired: "This code has expired. Tap resend to get a new one.",
+      resendFailed: "Could not resend the code",
+    },
+  },
   home: {
     heroSub: "Instantly Check For Gluten & Find Safe Alternatives",
     tapToScan: "Tap to Scan",
@@ -797,6 +811,8 @@ export default {
     },
     orders: {
       eyebrow: "Your business",
+      markShipped: "Mark as shipped",
+      marking: "Updating…",
     },
     business: {
       title: "My Business",
@@ -822,6 +838,10 @@ export default {
       address: "Address",
       phone: "Phone",
       hours: "Opening hours",
+      openTime: "Opening time",
+      closeTime: "Closing time",
+      done: "Done",
+      cancel: "Cancel",
       coverImage: "Cover photo",
       location: "Location on the map",
       locationHint: "Tap the map to place your business, or drag the pin to fine-tune it.",
@@ -833,7 +853,15 @@ export default {
       loadFailed: "Could not load your business info",
       errors: {
         nameRequired: "Business name is required.",
+        locationRequired: "Tap the map to set your business location so it can appear there.",
       },
     },
+  },
+  notifications: {
+    eyebrow: "Stay updated",
+    title: "Notifications",
+    markAllRead: "Mark all as read",
+    empty: "No notifications yet",
+    emptyBody: "Updates about your events and orders will show up here.",
   },
 };

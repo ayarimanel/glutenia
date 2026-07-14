@@ -11,6 +11,7 @@ import CustomTabBar from "../components/CustomTabBar";
 import LoginScreen from "../screens/auth/LoginScreen";
 import RegisterScreen from "../screens/auth/RegisterScreen";
 import ProfessionalPendingScreen from "../screens/auth/ProfessionalPendingScreen";
+import VerifyEmailScreen from "../screens/auth/VerifyEmailScreen";
 import HomeScreen from "../screens/user/HomeScreen";
 import ProductDetailScreen from "../screens/user/ProductDetailScreen";
 import CartScreen from "../screens/user/CartScreen";
@@ -23,6 +24,7 @@ import MapDetailScreen from "../screens/user/MapDetailScreen";
 import EventsScreen from "../screens/user/EventsScreen";
 import EventDetailScreen from "../screens/user/EventDetailScreen";
 import CreateEventScreen from "../screens/user/CreateEventScreen";
+import NotificationsScreen from "../screens/user/NotificationsScreen";
 import AdminDashboardScreen from "../screens/admin/AdminDashboardScreen";
 import AdminEventsScreen from "../screens/admin/AdminEventsScreen";
 import AdminProductsScreen from "../screens/admin/AdminProductsScreen";
@@ -59,6 +61,7 @@ function AuthStack({ bg }) {
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="ProfessionalPending" component={ProfessionalPendingScreen} />
+      <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} />
     </Stack.Navigator>
   );
 }
@@ -88,6 +91,7 @@ function UserStack({ bg }) {
       <Stack.Screen name="OrderSuccess" component={OrderSuccessScreen} />
       <Stack.Screen name="Orders" component={UserOrdersScreen} />
       <Stack.Screen name="EventDetail" component={EventDetailScreen} />
+      <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="BadgeCollection" component={BadgeCollectionScreen} />
       <Stack.Screen name="MapDetail" component={MapDetailScreen} />
       <Stack.Screen name="ShopScreen" component={ShopScreen} />

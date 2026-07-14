@@ -1,6 +1,10 @@
-import { View, Image, StyleSheet, Text } from "react-native";
+import { View, Image, StyleSheet, Text, Dimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import { Colors } from "../theme/colors";
+
+const LOGO_ASPECT_RATIO = 1043 / 459;
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const LOGO_WIDTH = Math.min(SCREEN_WIDTH * 0.78, 460);
 
 export default function SplashScreen() {
   const { t } = useTranslation();
@@ -24,9 +28,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   logo: {
-    width: 300,
-    height: 120,
-    marginBottom: 20,
+    width: LOGO_WIDTH,
+    height: LOGO_WIDTH / LOGO_ASPECT_RATIO,
+    marginBottom: 24,
   },
   tagline: {
     fontSize: 14,

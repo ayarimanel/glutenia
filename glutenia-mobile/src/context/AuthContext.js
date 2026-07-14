@@ -80,13 +80,18 @@ export const AuthProvider = ({ children }) => {
 
   const register = async ({ name, email, password, role }) => {
     await AsyncStorage.removeItem(ONBOARDING_PROFILE_KEY);
-    const data = await api.register({ name, email, password, role });
-    if (data.pending) {
-      return data;
-    }
-    await persistSession(data);
-    return data.user;
+    return api.register({ name, email, password, role });
   };
+
+  const verifyEmail = async ({ email, code }) => {
+    const data = await api.verifyEmail({ email, code });
+    if (data.token) {
+      await persistSession({ token: data.token, user: data.user });
+    }
+    return data;
+  };
+
+  const resendVerificationCode = async (email) => api.resendVerificationCode({ email });
 
   const logout = async () => {
     setUser(null);
@@ -104,6 +109,8 @@ export const AuthProvider = ({ children }) => {
       profileOnboardingDone,
       login,
       register,
+      verifyEmail,
+      resendVerificationCode,
       logout,
       completeOnboarding,
       markProfileOnboardingComplete,

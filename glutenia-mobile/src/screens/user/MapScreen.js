@@ -10,6 +10,7 @@ import {
   Image,
 } from "react-native";
 import { WebView } from "react-native-webview";
+import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BottomSheet, {
   BottomSheetScrollView,
@@ -492,22 +493,24 @@ export default function MapScreen({ navigation }) {
 
   const allSpots = useMemo(() => [...SPOTS, ...realSpots], [realSpots]);
 
-  useEffect(() => {
-    let cancelled = false;
-    api
-      .establishments()
-      .then((list) => {
-        if (cancelled) return;
-        const normalized = (list || [])
-          .filter((e) => e.coordinates?.latitude != null && e.coordinates?.longitude != null)
-          .map(normalizeEstablishment);
-        setRealSpots(normalized);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      api
+        .establishments()
+        .then((list) => {
+          if (cancelled) return;
+          const normalized = (list || [])
+            .filter((e) => e.coordinates?.latitude != null && e.coordinates?.longitude != null)
+            .map(normalizeEstablishment);
+          setRealSpots(normalized);
+        })
+        .catch(() => {});
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
 
   const filtered =
     activeFilter === "All" ? allSpots : allSpots.filter((s) => s.type === activeFilter);

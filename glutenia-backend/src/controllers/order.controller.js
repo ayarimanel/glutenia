@@ -1,6 +1,14 @@
 const Cart = require("../models/Cart");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
+const { notify } = require("../services/notificationService");
+
+const STATUS_NOTIFICATIONS = {
+  pending: "Your order is pending.",
+  confirmed: "Your order has been confirmed.",
+  shipped: "Your order is on its way!",
+  delivered: "Your order has been delivered.",
+};
 
 exports.getSellerOrders = async (req, res, next) => {
   try {
@@ -136,6 +144,48 @@ exports.getOrderById = async (req, res, next) => {
         message: "You can only access your own orders",
       });
     }
+
+    return res.json({
+      success: true,
+      data: order,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.updateOrderStatus = async (req, res, next) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    if (req.user.role !== "admin") {
+      const productIds = await Product.find({ createdBy: req.user.id }).distinct("_id");
+      const ownedIds = new Set(productIds.map((id) => id.toString()));
+      const ownsItem = order.items.some((item) => ownedIds.has(item.product.toString()));
+
+      if (!ownsItem) {
+        return res.status(403).json({
+          success: false,
+          message: "You can only update orders containing your own products",
+        });
+      }
+    }
+
+    order.status = req.body.status;
+    await order.save();
+
+    await notify(order.user, {
+      type: "order_status",
+      title: "Order update",
+      body: STATUS_NOTIFICATIONS[order.status] || `Your order status changed to ${order.status}.`,
+    });
 
     return res.json({
       success: true,

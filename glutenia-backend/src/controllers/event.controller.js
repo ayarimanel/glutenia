@@ -1,4 +1,5 @@
 const Event = require("../models/Event");
+const { notify } = require("../services/notificationService");
 
 const ALLOWED_FIELDS = ["title", "description", "date", "location", "category", "price", "emoji", "color"];
 
@@ -88,16 +89,25 @@ exports.rsvp = async (req, res, next) => {
 
     const userId = req.user.id;
     const idx = event.attendees.findIndex((id) => id.toString() === userId);
-    if (idx === -1) {
+    const isJoining = idx === -1;
+    if (isJoining) {
       event.attendees.push(userId);
     } else {
       event.attendees.splice(idx, 1);
     }
     await event.save();
 
+    await notify(userId, {
+      type: isJoining ? "event_join" : "event_leave",
+      title: isJoining ? "You're going!" : "RSVP removed",
+      body: isJoining
+        ? `You're all set for ${event.title}.`
+        : `You're no longer attending ${event.title}.`,
+    });
+
     return res.json({
       success: true,
-      data: { isGoing: idx === -1, attendeeCount: event.attendees.length },
+      data: { isGoing: isJoining, attendeeCount: event.attendees.length },
     });
   } catch (error) {
     return next(error);

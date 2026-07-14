@@ -7,9 +7,9 @@
     "start": "expo start --lan",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "assets": "node scripts/generate-brand-assets.js",
+    "assets:placeholder": "node scripts/generate-brand-assets.js",
     "prebuild:android": "expo prebuild --platform android --no-install && node scripts/ensure-android-cleartext.js",
-    "build:apk": "npm run assets && npm run prebuild:android && cd android && gradlew.bat assembleRelease && cd .. && node scripts/finalize-apk.js",
+    "build:apk": "npm run prebuild:android && cd android && .\\gradlew.bat assembleRelease && cd .. && node scripts/finalize-apk.js",
     "check": "expo install --check",
     "doctor": "npx expo-doctor",
     "postinstall": "patch-package"

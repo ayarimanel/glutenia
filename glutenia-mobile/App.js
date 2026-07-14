@@ -4,6 +4,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AuthProvider } from "./src/context/AuthContext";
 import { CartProvider } from "./src/context/CartContext";
 import { EventsProvider } from "./src/context/EventsContext";
+import { NotificationProvider } from "./src/context/NotificationContext";
 import { ThemeProvider } from "./src/context/ThemeContext";
 import RootNavigator from "./src/navigation/RootNavigator";
 import AppErrorBoundary from "./src/components/AppErrorBoundary";
@@ -17,7 +18,9 @@ export default function App() {
             <AuthProvider>
               <CartProvider>
                 <EventsProvider>
-                  <RootNavigator />
+                  <NotificationProvider>
+                    <RootNavigator />
+                  </NotificationProvider>
                 </EventsProvider>
               </CartProvider>
             </AuthProvider>

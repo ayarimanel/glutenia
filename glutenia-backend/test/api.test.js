@@ -1,5 +1,5 @@
 const assert = require("node:assert/strict");
-const test = require("node:test");
+const { test, describe } = require("node:test");
 const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 const request = require("supertest");
@@ -12,6 +12,8 @@ process.env.MONGO_URI =
 
 const app = require("../src/app");
 const Cart = require("../src/models/Cart");
+const Event = require("../src/models/Event");
+const Notification = require("../src/models/Notification");
 const Order = require("../src/models/Order");
 const Product = require("../src/models/Product");
 const User = require("../src/models/User");
@@ -19,6 +21,8 @@ const User = require("../src/models/User");
 const resetDatabase = async () => {
   await Promise.all([
     Cart.deleteMany({}),
+    Event.deleteMany({}),
+    Notification.deleteMany({}),
     Order.deleteMany({}),
     Product.deleteMany({}),
     User.deleteMany({}),
@@ -43,240 +47,490 @@ test.after(async () => {
   await mongoose.disconnect();
 });
 
-test("Glutenia API integration flow", async () => {
-  const health = await request(app).get("/").expect(200);
-  assert.equal(health.body.success, true);
-  assert.equal(health.body.data.status, "running");
+// Shared state, populated as the suites below run in order.
+const ctx = {};
 
-  const missing = await request(app).get("/missing-route").expect(404);
-  assert.deepEqual(missing.body, {
-    success: false,
-    message: "Route not found",
-  });
-
-  const customerRegister = await request(app)
+const registerAndVerify = async ({ name, email, password, role }) => {
+  const registerResponse = await request(app)
     .post("/api/auth/register")
-    .send({
+    .send({ name, email, password, role })
+    .expect(201);
+
+  assert.equal(registerResponse.body.data.pendingVerification, true);
+  assert.equal(registerResponse.body.data.token, undefined);
+
+  const stored = await User.findOne({ email }).select("+emailVerificationCode");
+  const verify = await request(app)
+    .post("/api/auth/verify-email")
+    .send({ email, code: stored.emailVerificationCode })
+    .expect(200);
+
+  return verify.body.data;
+};
+
+describe("Authentication", () => {
+  test("registers a new customer and issues a JWT", async () => {
+    const health = await request(app).get("/").expect(200);
+    assert.equal(health.body.success, true);
+    assert.equal(health.body.data.status, "running");
+
+    const missing = await request(app).get("/missing-route").expect(404);
+    assert.deepEqual(missing.body, {
+      success: false,
+      message: "Route not found",
+    });
+
+    const verified = await registerAndVerify({
       name: "Customer One",
       email: "customer@glutenia.test",
       password: "secret123",
-    })
-    .expect(201);
+    });
 
-  assert.equal(customerRegister.body.success, true);
-  assert.ok(customerRegister.body.data.token);
-  assert.equal(customerRegister.body.data.user.email, "customer@glutenia.test");
-  assert.equal(customerRegister.body.data.user.password, undefined);
+    assert.ok(verified.token);
+    assert.equal(verified.user.email, "customer@glutenia.test");
+    assert.equal(verified.user.password, undefined);
 
-  const customerToken = customerRegister.body.data.token;
-  const customerId = customerRegister.body.data.user._id;
+    ctx.customerToken = verified.token;
+    ctx.customerId = verified.user._id;
 
-  const duplicate = await request(app)
-    .post("/api/auth/register")
-    .send({
-      name: "Customer Duplicate",
-      email: "customer@glutenia.test",
-      password: "secret123",
-    })
-    .expect(409);
+    const duplicate = await request(app)
+      .post("/api/auth/register")
+      .send({
+        name: "Customer Duplicate",
+        email: "customer@glutenia.test",
+        password: "secret123",
+      })
+      .expect(409);
 
-  assert.equal(duplicate.body.success, false);
-
-  const login = await request(app)
-    .post("/api/auth/login")
-    .send({
-      email: "customer@glutenia.test",
-      password: "secret123",
-    })
-    .expect(200);
-
-  assert.ok(login.body.data.token);
-
-  const me = await request(app)
-    .get("/api/auth/me")
-    .set("Authorization", `Bearer ${customerToken}`)
-    .expect(200);
-
-  assert.equal(me.body.data.email, "customer@glutenia.test");
-  assert.equal(me.body.data.role, "customer");
-
-  const adminPassword = await bcrypt.hash("admin123", 12);
-  await User.create({
-    name: "Admin",
-    email: "admin@glutenia.test",
-    password: adminPassword,
-    role: "admin",
+    assert.equal(duplicate.body.success, false);
   });
 
-  const adminLogin = await request(app)
-    .post("/api/auth/login")
-    .send({
+  test("logs in an existing user and returns their profile", async () => {
+    const login = await request(app)
+      .post("/api/auth/login")
+      .send({
+        email: "customer@glutenia.test",
+        password: "secret123",
+      })
+      .expect(200);
+
+    assert.ok(login.body.data.token);
+
+    const me = await request(app)
+      .get("/api/auth/me")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .expect(200);
+
+    assert.equal(me.body.data.email, "customer@glutenia.test");
+    assert.equal(me.body.data.role, "customer");
+
+    const adminPassword = await bcrypt.hash("admin123", 12);
+    const admin = await User.create({
+      name: "Admin",
       email: "admin@glutenia.test",
-      password: "admin123",
-    })
-    .expect(200);
+      password: adminPassword,
+      role: "admin",
+    });
+    ctx.adminId = admin._id.toString();
 
-  const adminToken = adminLogin.body.data.token;
+    await request(app)
+      .post("/api/auth/login")
+      .send({
+        email: "admin@glutenia.test",
+        password: "wrong-password",
+      })
+      .expect(401);
 
-  await request(app)
-    .post("/api/products")
-    .set("Authorization", `Bearer ${customerToken}`)
-    .send({
-      name: "Blocked Product",
-      price: 1,
-      category: "Snacks",
-    })
-    .expect(403);
+    const adminLogin = await request(app)
+      .post("/api/auth/login")
+      .send({
+        email: "admin@glutenia.test",
+        password: "admin123",
+      })
+      .expect(200);
 
-  const createdProduct = await request(app)
-    .post("/api/products")
-    .set("Authorization", `Bearer ${adminToken}`)
-    .send({
-      name: "Pain sans gluten",
-      description: "Pain moelleux sans gluten.",
-      price: 4.5,
-      category: "Bread",
-      imageUrl: "https://example.com/pain.jpg",
-      stock: 25,
-      isGlutenFree: true,
-    })
-    .expect(201);
+    ctx.adminToken = adminLogin.body.data.token;
+  });
+});
 
-  assert.equal(createdProduct.body.success, true);
-  assert.equal(createdProduct.body.data.createdBy, adminLogin.body.data.user._id);
-
-  const productId = createdProduct.body.data._id;
-
-  const products = await request(app)
-    .get("/api/products?category=Bread&search=pain")
-    .expect(200);
-
-  assert.equal(products.body.data.length, 1);
-  assert.equal(products.body.data[0]._id, productId);
-
-  const productDetail = await request(app)
-    .get(`/api/products/${productId}`)
-    .expect(200);
-
-  assert.equal(productDetail.body.data.name, "Pain sans gluten");
-
-  const updatedProduct = await request(app)
-    .put(`/api/products/${productId}`)
-    .set("Authorization", `Bearer ${adminToken}`)
-    .send({ stock: 20 })
-    .expect(200);
-
-  assert.equal(updatedProduct.body.data.stock, 20);
-
-  const uploadedImage = await request(app)
-    .put(`/api/products/${productId}/image`)
-    .set("Authorization", `Bearer ${adminToken}`)
-    .attach("image", Buffer.from("glutenia-image"), {
-      filename: "product.png",
-      contentType: "image/png",
-    })
-    .expect(200);
-
-  assert.match(uploadedImage.body.data.imageUrl, /^data:image\/png;base64,/);
-
-  await Cart.create({
-    user: customerId,
-    items: [
-      {
-        product: productId,
+describe("Products", () => {
+  test("lets an admin create, update and search for products", async () => {
+    const createdProduct = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .send({
         name: "Pain sans gluten",
-        qty: 1,
+        description: "Pain moelleux sans gluten.",
         price: 4.5,
+        category: "Bread",
         imageUrl: "https://example.com/pain.jpg",
-      },
-    ],
+        stock: 25,
+        isGlutenFree: true,
+      })
+      .expect(201);
+
+    assert.equal(createdProduct.body.success, true);
+    assert.equal(createdProduct.body.data.createdBy, ctx.adminId);
+
+    ctx.productId = createdProduct.body.data._id;
+
+    const products = await request(app)
+      .get("/api/products?category=Bread&search=pain")
+      .expect(200);
+
+    assert.equal(products.body.data.length, 1);
+    assert.equal(products.body.data[0]._id, ctx.productId);
+
+    const productDetail = await request(app)
+      .get(`/api/products/${ctx.productId}`)
+      .expect(200);
+
+    assert.equal(productDetail.body.data.name, "Pain sans gluten");
+
+    const updatedProduct = await request(app)
+      .put(`/api/products/${ctx.productId}`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .send({ stock: 20 })
+      .expect(200);
+
+    assert.equal(updatedProduct.body.data.stock, 20);
+
+    const uploadedImage = await request(app)
+      .put(`/api/products/${ctx.productId}/image`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .attach("image", Buffer.from("glutenia-image"), {
+        filename: "product.png",
+        contentType: "image/png",
+      })
+      .expect(200);
+
+    assert.match(uploadedImage.body.data.imageUrl, /^data:image\/png;base64,/);
   });
 
-  const order = await request(app)
-    .post("/api/orders")
-    .set("Authorization", `Bearer ${customerToken}`)
-    .send({
+  test("blocks non-admin users from creating products", async () => {
+    await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .send({
+        name: "Blocked Product",
+        price: 1,
+        category: "Snacks",
+      })
+      .expect(403);
+  });
+});
+
+describe("Barcode", () => {
+  test("finds a product by its barcode", async () => {
+    await Product.findByIdAndUpdate(ctx.productId, {
+      barcode: "3017620422003",
+    });
+
+    const found = await request(app)
+      .get("/api/products/barcode/3017620422003")
+      .expect(200);
+
+    assert.equal(found.body.data._id, ctx.productId);
+    assert.equal(found.body.data.name, "Pain sans gluten");
+  });
+
+  test("returns 404 for an unknown barcode", async () => {
+    const missing = await request(app)
+      .get("/api/products/barcode/0000000000000")
+      .expect(404);
+
+    assert.equal(missing.body.success, false);
+  });
+});
+
+describe("Orders", () => {
+  test("lets a customer place an order and clears their cart", async () => {
+    await Cart.create({
+      user: ctx.customerId,
       items: [
         {
-          productId,
-          name: "Client supplied name ignored",
-          qty: 2,
-          price: 999,
+          product: ctx.productId,
+          name: "Pain sans gluten",
+          qty: 1,
+          price: 4.5,
+          imageUrl: "https://example.com/pain.jpg",
         },
       ],
-      address: {
-        fullName: "Customer One",
-        addressLine: "12 Gluten Free Street",
-        city: "Tunis",
-        phone: "+21600000000",
-      },
-    })
-    .expect(201);
+    });
 
-  assert.equal(order.body.success, true);
-  assert.equal(order.body.data.total, 9);
-  assert.equal(order.body.data.items[0].name, "Pain sans gluten");
-  assert.equal(order.body.data.items[0].price, 4.5);
-  assert.equal(order.body.data.status, "confirmed");
+    const order = await request(app)
+      .post("/api/orders")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .send({
+        items: [
+          {
+            productId: ctx.productId,
+            name: "Client supplied name ignored",
+            qty: 2,
+            price: 999,
+          },
+        ],
+        address: {
+          fullName: "Customer One",
+          addressLine: "12 Gluten Free Street",
+          city: "Tunis",
+          phone: "+21600000000",
+        },
+      })
+      .expect(201);
 
-  const emptiedCart = await Cart.findOne({ user: customerId });
-  assert.equal(emptiedCart.items.length, 0);
+    assert.equal(order.body.success, true);
+    assert.equal(order.body.data.total, 9);
+    assert.equal(order.body.data.items[0].name, "Pain sans gluten");
+    assert.equal(order.body.data.items[0].price, 4.5);
+    assert.equal(order.body.data.status, "confirmed");
 
-  const myOrders = await request(app)
-    .get("/api/orders/my")
-    .set("Authorization", `Bearer ${customerToken}`)
-    .expect(200);
+    ctx.orderId = order.body.data._id;
 
-  assert.equal(myOrders.body.data.length, 1);
+    const emptiedCart = await Cart.findOne({ user: ctx.customerId });
+    assert.equal(emptiedCart.items.length, 0);
 
-  const adminOrders = await request(app)
-    .get("/api/orders")
-    .set("Authorization", `Bearer ${adminToken}`)
-    .expect(200);
+    const myOrders = await request(app)
+      .get("/api/orders/my")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .expect(200);
 
-  assert.equal(adminOrders.body.data.length, 1);
-  assert.equal(adminOrders.body.data[0].user.email, "customer@glutenia.test");
+    assert.equal(myOrders.body.data.length, 1);
 
-  const orderDetail = await request(app)
-    .get(`/api/orders/${order.body.data._id}`)
-    .set("Authorization", `Bearer ${customerToken}`)
-    .expect(200);
+    const adminOrders = await request(app)
+      .get("/api/orders")
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .expect(200);
 
-  assert.equal(orderDetail.body.data.total, 9);
+    assert.equal(adminOrders.body.data.length, 1);
+    assert.equal(adminOrders.body.data[0].user.email, "customer@glutenia.test");
+  });
 
-  const secondCustomer = await request(app)
-    .post("/api/auth/register")
-    .send({
+  test("restricts order details to the owner or an admin", async () => {
+    const orderDetail = await request(app)
+      .get(`/api/orders/${ctx.orderId}`)
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .expect(200);
+
+    assert.equal(orderDetail.body.data.total, 9);
+
+    const secondCustomer = await registerAndVerify({
       name: "Customer Two",
       email: "customer2@glutenia.test",
       password: "secret123",
-    })
-    .expect(201);
+    });
 
-  await request(app)
-    .get(`/api/orders/${order.body.data._id}`)
-    .set("Authorization", `Bearer ${secondCustomer.body.data.token}`)
-    .expect(403);
+    await request(app)
+      .get(`/api/orders/${ctx.orderId}`)
+      .set("Authorization", `Bearer ${secondCustomer.token}`)
+      .expect(403);
 
-  const users = await request(app)
-    .get("/api/users")
-    .set("Authorization", `Bearer ${adminToken}`)
-    .expect(200);
+    const users = await request(app)
+      .get("/api/users")
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .expect(200);
 
-  assert.equal(users.body.data.length, 3);
-  assert.equal(users.body.data.some((user) => user.password), false);
+    assert.equal(users.body.data.length, 3);
+    assert.equal(users.body.data.some((user) => user.password), false);
 
-  const userOrders = await request(app)
-    .get(`/api/users/${customerId}/orders`)
-    .set("Authorization", `Bearer ${adminToken}`)
-    .expect(200);
+    const userOrders = await request(app)
+      .get(`/api/users/${ctx.customerId}/orders`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .expect(200);
 
-  assert.equal(userOrders.body.data.length, 1);
+    assert.equal(userOrders.body.data.length, 1);
 
-  const deletedProduct = await request(app)
-    .delete(`/api/products/${productId}`)
-    .set("Authorization", `Bearer ${adminToken}`)
-    .expect(200);
+    const deletedProduct = await request(app)
+      .delete(`/api/products/${ctx.productId}`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .expect(200);
 
-  assert.equal(deletedProduct.body.data._id, productId);
+    assert.equal(deletedProduct.body.data._id, ctx.productId);
+  });
+});
+
+describe("Email verification", () => {
+  test("blocks login until the email is verified, then unblocks it after the correct code", async () => {
+    await request(app)
+      .post("/api/auth/register")
+      .send({
+        name: "Pending Verifier",
+        email: "verify-me@glutenia.test",
+        password: "secret123",
+      })
+      .expect(201);
+
+    const blocked = await request(app)
+      .post("/api/auth/login")
+      .send({ email: "verify-me@glutenia.test", password: "secret123" })
+      .expect(403);
+
+    assert.equal(blocked.body.data.needsVerification, true);
+
+    const wrongCode = await request(app)
+      .post("/api/auth/verify-email")
+      .send({ email: "verify-me@glutenia.test", code: "000000" })
+      .expect(400);
+
+    assert.equal(wrongCode.body.success, false);
+
+    const stored = await User.findOne({ email: "verify-me@glutenia.test" }).select(
+      "+emailVerificationCode"
+    );
+
+    const verified = await request(app)
+      .post("/api/auth/verify-email")
+      .send({ email: "verify-me@glutenia.test", code: stored.emailVerificationCode })
+      .expect(200);
+
+    assert.ok(verified.body.data.token);
+
+    const login = await request(app)
+      .post("/api/auth/login")
+      .send({ email: "verify-me@glutenia.test", password: "secret123" })
+      .expect(200);
+
+    assert.ok(login.body.data.token);
+  });
+
+  test("enforces a resend cooldown", async () => {
+    await request(app)
+      .post("/api/auth/register")
+      .send({
+        name: "Resend Tester",
+        email: "resend-me@glutenia.test",
+        password: "secret123",
+      })
+      .expect(201);
+
+    const resend = await request(app)
+      .post("/api/auth/resend-code")
+      .send({ email: "resend-me@glutenia.test" })
+      .expect(429);
+
+    assert.ok(resend.body.data.secondsRemaining > 0);
+  });
+});
+
+describe("AI endpoint", () => {
+  test("rejects a scan request without an image", async () => {
+    const response = await request(app)
+      .post("/api/scan/label")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .send({})
+      .expect(400);
+
+    assert.equal(response.body.success, false);
+    assert.equal(response.body.message, "No image provided");
+  });
+
+  test("rejects a scan request without authentication", async () => {
+    await request(app)
+      .post("/api/scan/label")
+      .send({ imageBase64: "not-a-real-image" })
+      .expect(401);
+  });
+});
+
+describe("Notifications", () => {
+  test("notifies a customer when they RSVP to an event, and lets them read it", async () => {
+    const event = await Event.create({
+      title: "Gluten-Free Market",
+      date: "2026-08-01",
+      location: "Tunis",
+      category: "Markets",
+      createdBy: ctx.adminId,
+    });
+
+    const rsvp = await request(app)
+      .post(`/api/events/${event._id}/rsvp`)
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .expect(200);
+
+    assert.equal(rsvp.body.data.isGoing, true);
+
+    const afterJoin = await request(app)
+      .get("/api/notifications")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .expect(200);
+
+    const joinNotification = afterJoin.body.data.find((n) => n.type === "event_join");
+    assert.ok(joinNotification, "expected an event_join notification");
+    assert.equal(joinNotification.read, false);
+
+    await request(app)
+      .post(`/api/events/${event._id}/rsvp`)
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .expect(200);
+
+    const afterLeave = await request(app)
+      .get("/api/notifications")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .expect(200);
+
+    assert.ok(afterLeave.body.data.some((n) => n.type === "event_leave"));
+
+    const markedRead = await request(app)
+      .put(`/api/notifications/${joinNotification._id}/read`)
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .expect(200);
+
+    assert.equal(markedRead.body.data.read, true);
+
+    await request(app)
+      .put("/api/notifications/read-all")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .expect(200);
+
+    const afterReadAll = await request(app)
+      .get("/api/notifications")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .expect(200);
+
+    assert.equal(
+      afterReadAll.body.data.every((n) => n.read),
+      true
+    );
+  });
+
+  test("notifies a customer when their order is marked shipped, and blocks professionals who don't own it", async () => {
+    const outsiderPassword = await bcrypt.hash("secret123", 12);
+    await User.create({
+      name: "Unrelated Professional",
+      email: "outsider@glutenia.test",
+      password: outsiderPassword,
+      role: "professional",
+      professionalStatus: "approved",
+    });
+
+    const outsiderLogin = await request(app)
+      .post("/api/auth/login")
+      .send({ email: "outsider@glutenia.test", password: "secret123" })
+      .expect(200);
+
+    await request(app)
+      .put(`/api/orders/${ctx.orderId}/status`)
+      .set("Authorization", `Bearer ${outsiderLogin.body.data.token}`)
+      .send({ status: "shipped" })
+      .expect(403);
+
+    const updated = await request(app)
+      .put(`/api/orders/${ctx.orderId}/status`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .send({ status: "shipped" })
+      .expect(200);
+
+    assert.equal(updated.body.data.status, "shipped");
+
+    const notifications = await request(app)
+      .get("/api/notifications")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .expect(200);
+
+    const shippedNotification = notifications.body.data.find(
+      (n) => n.type === "order_status"
+    );
+    assert.ok(shippedNotification, "expected an order_status notification");
+    assert.match(shippedNotification.body, /on its way/i);
+  });
 });

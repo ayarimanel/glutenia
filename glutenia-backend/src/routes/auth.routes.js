@@ -39,6 +39,27 @@ router.post(
   authController.login
 );
 
+router.post(
+  "/verify-email",
+  [
+    body("email").isEmail().withMessage("A valid email is required").normalizeEmail(),
+    body("code")
+      .isLength({ min: 6, max: 6 })
+      .withMessage("Code must be 6 digits")
+      .isNumeric()
+      .withMessage("Code must be numeric"),
+  ],
+  validateRequest,
+  authController.verifyEmail
+);
+
+router.post(
+  "/resend-code",
+  [body("email").isEmail().withMessage("A valid email is required").normalizeEmail()],
+  validateRequest,
+  authController.resendVerificationCode
+);
+
 router.get("/me", verifyToken, authController.getMe);
 
 module.exports = router;

@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import Field from "../../components/Field";
+import TimePickerModal from "../../components/TimePickerModal";
 import AppIcon from "../../components/AppIcon";
 import { IconButton, PrimaryButton, SecondaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
@@ -15,6 +16,22 @@ import { Colors, Radius, Spacing } from "../../theme/colors";
 const categories = ["Supermarket", "Restaurant", "Health Store", "Bakery", "Pharmacy", "Other"];
 const MAX_IMAGE_DATA_URL_LENGTH = 5500000;
 const DEFAULT_CENTER = { latitude: 36.82, longitude: 10.2 };
+const HOURS_PATTERN = /^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})$/;
+const DEFAULT_OPEN_TIME = { hour: "08", minute: "00" };
+const DEFAULT_CLOSE_TIME = { hour: "19", minute: "00" };
+
+function parseHoursString(value) {
+  const match = HOURS_PATTERN.exec((value || "").trim());
+  if (!match) {
+    return { open: DEFAULT_OPEN_TIME, close: DEFAULT_CLOSE_TIME };
+  }
+
+  const [, openHour, openMinute, closeHour, closeMinute] = match;
+  return {
+    open: { hour: openHour.padStart(2, "0"), minute: openMinute },
+    close: { hour: closeHour.padStart(2, "0"), minute: closeMinute },
+  };
+}
 
 const readUriAsDataUrl = async (uri, mimeType) => {
   const response = await fetch(uri);
@@ -104,7 +121,9 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
-  const [hours, setHours] = useState("");
+  const [openTime, setOpenTime] = useState(DEFAULT_OPEN_TIME);
+  const [closeTime, setCloseTime] = useState(DEFAULT_CLOSE_TIME);
+  const [activeTimePicker, setActiveTimePicker] = useState(null);
   const [coverImageUrl, setCoverImageUrl] = useState("");
   const [imageStatus, setImageStatus] = useState("");
   const [removeImage, setRemoveImage] = useState(false);
@@ -134,7 +153,9 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
           setDescription(establishment.description || "");
           setAddress(establishment.address || "");
           setPhone(establishment.phone || "");
-          setHours(establishment.hours || "");
+          const parsedHours = parseHoursString(establishment.hours);
+          setOpenTime(parsedHours.open);
+          setCloseTime(parsedHours.close);
           setCoverImageUrl(establishment.coverImageUrl || "");
           setImageStatus(establishment.coverImageUrl ? t("admin.form.currentImage") : "");
           if (establishment.coordinates?.latitude != null && establishment.coordinates?.longitude != null) {
@@ -160,6 +181,7 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
       if (msg.type === "locationPicked") {
         setLatitude(msg.lat);
         setLongitude(msg.lng);
+        setErrors((current) => ({ ...current, location: "" }));
       }
     } catch (_) {}
   };
@@ -230,6 +252,9 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
     if (!name.trim()) {
       nextErrors.name = t("seller.form.errors.nameRequired");
     }
+    if (latitude == null || longitude == null) {
+      nextErrors.location = t("seller.form.errors.locationRequired");
+    }
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) {
       return;
@@ -242,6 +267,7 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
       }
 
       setLoading(true);
+      const hours = `${openTime.hour}:${openTime.minute} - ${closeTime.hour}:${closeTime.minute}`;
       const body = {
         name: name.trim(),
         category,
@@ -319,21 +345,40 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
           multiline
         />
         <Field label={t("seller.form.address")} value={address} onChangeText={setAddress} />
-        <View style={styles.split}>
-          <Field
-            label={t("seller.form.phone")}
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            style={styles.flex}
-          />
-          <Field
-            label={t("seller.form.hours")}
-            value={hours}
-            onChangeText={setHours}
-            placeholder="08:00 - 19:00"
-            style={styles.flex}
-          />
+        <Field
+          label={t("seller.form.phone")}
+          value={phone}
+          onChangeText={setPhone}
+          keyboardType="phone-pad"
+        />
+        <View style={styles.hoursWrap}>
+          <Text style={styles.label}>{t("seller.form.hours")}</Text>
+          <View style={styles.split}>
+            <Pressable
+              style={styles.timeChip}
+              onPress={() => setActiveTimePicker("open")}
+            >
+              <AppIcon name="clock" size={14} color={Colors.secondary} />
+              <View>
+                <Text style={styles.timeChipLabel}>{t("seller.form.openTime")}</Text>
+                <Text style={styles.timeChipValue}>
+                  {openTime.hour}:{openTime.minute}
+                </Text>
+              </View>
+            </Pressable>
+            <Pressable
+              style={styles.timeChip}
+              onPress={() => setActiveTimePicker("close")}
+            >
+              <AppIcon name="clock" size={14} color={Colors.secondary} />
+              <View>
+                <Text style={styles.timeChipLabel}>{t("seller.form.closeTime")}</Text>
+                <Text style={styles.timeChipValue}>
+                  {closeTime.hour}:{closeTime.minute}
+                </Text>
+              </View>
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.imageSection}>
@@ -377,7 +422,7 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
         <View style={styles.locationSection}>
           <Text style={styles.label}>{t("seller.form.location")}</Text>
           <Text style={styles.locationHint}>{t("seller.form.locationHint")}</Text>
-          <View style={styles.mapBox}>
+          <View style={[styles.mapBox, errors.location && styles.mapBoxError]}>
             {mapReady ? (
               <WebView
                 style={StyleSheet.absoluteFillObject}
@@ -397,6 +442,7 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
                 : t("seller.form.noLocation")}
             </Text>
           </View>
+          {errors.location ? <Text style={styles.error}>{errors.location}</Text> : null}
         </View>
 
         <PrimaryButton
@@ -407,6 +453,25 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
           onPress={save}
         />
       </ScrollView>
+      <TimePickerModal
+        visible={activeTimePicker != null}
+        title={
+          activeTimePicker === "open" ? t("seller.form.openTime") : t("seller.form.closeTime")
+        }
+        hour={activeTimePicker === "open" ? openTime.hour : closeTime.hour}
+        minute={activeTimePicker === "open" ? openTime.minute : closeTime.minute}
+        doneLabel={t("seller.form.done")}
+        cancelLabel={t("seller.form.cancel")}
+        onCancel={() => setActiveTimePicker(null)}
+        onConfirm={(hour, minute) => {
+          if (activeTimePicker === "open") {
+            setOpenTime({ hour, minute });
+          } else if (activeTimePicker === "close") {
+            setCloseTime({ hour, minute });
+          }
+          setActiveTimePicker(null);
+        }}
+      />
     </Screen>
   );
 }
@@ -426,6 +491,36 @@ const styles = StyleSheet.create({
   label: {
     color: Colors.textDark,
     fontSize: 13,
+    fontWeight: "700",
+  },
+  hoursWrap: {
+    gap: 8,
+  },
+  timeChip: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.surface,
+    paddingHorizontal: 14,
+  },
+  timeChipLabel: {
+    color: Colors.textMuted,
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  timeChipValue: {
+    color: Colors.textDark,
+    fontSize: 15,
+    fontWeight: "800",
+  },
+  error: {
+    color: Colors.danger,
+    fontSize: 12,
     fontWeight: "700",
   },
   categoryWrap: {
@@ -495,6 +590,11 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     overflow: "hidden",
     backgroundColor: Colors.divider,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  mapBoxError: {
+    borderColor: Colors.danger,
   },
   coordsRow: {
     flexDirection: "row",

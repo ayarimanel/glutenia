@@ -32,6 +32,25 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  isEmailVerified: {
+    type: Boolean,
+    default: true,
+  },
+  emailVerificationCode: {
+    type: String,
+    default: null,
+    select: false,
+  },
+  emailVerificationCodeExpires: {
+    type: Date,
+    default: null,
+    select: false,
+  },
+  emailVerificationLastSentAt: {
+    type: Date,
+    default: null,
+    select: false,
+  },
   role_type: {
     type: String,
     enum: ["warrior", "supporter"],
@@ -83,6 +102,9 @@ const userSchema = new mongoose.Schema({
 userSchema.set("toJSON", {
   transform(doc, ret) {
     delete ret.password;
+    delete ret.emailVerificationCode;
+    delete ret.emailVerificationCodeExpires;
+    delete ret.emailVerificationLastSentAt;
     return ret;
   },
 });
