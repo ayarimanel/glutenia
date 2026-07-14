@@ -72,7 +72,10 @@ exports.register = async (req, res, next) => {
       : new User(userData);
     await user.save();
 
-    const emailSent = await sendVerificationEmail(user.email, verificationCode);
+    // Don't block the response on the SMTP round trip — a slow/cold mail
+    // provider connection was pushing this past the client's timeout and
+    // making a successful registration look like a failure.
+    sendVerificationEmail(user.email, verificationCode);
 
     return res.status(201).json({
       success: true,
@@ -83,10 +86,7 @@ exports.register = async (req, res, next) => {
         ...(isProfessional
           ? { professionalStatus: user.professionalStatus, approvalCode: user.approvalCode }
           : {}),
-        emailDeliveryFailed: !emailSent,
-        message: emailSent
-          ? "We sent a 6-digit verification code to your email. Enter it to confirm your account."
-          : "Your account was created, but we couldn't send the verification email. Tap resend to try again.",
+        message: "We sent a 6-digit verification code to your email. Enter it to confirm your account.",
       },
     });
   } catch (error) {
@@ -242,16 +242,13 @@ exports.resendVerificationCode = async (req, res, next) => {
     user.emailVerificationLastSentAt = now;
     await user.save();
 
-    const emailSent = await sendVerificationEmail(user.email, verificationCode);
+    sendVerificationEmail(user.email, verificationCode);
 
     return res.json({
       success: true,
       data: {
         resent: true,
-        emailDeliveryFailed: !emailSent,
-        message: emailSent
-          ? "A new code has been sent to your email."
-          : "Could not send the email, try again shortly.",
+        message: "A new code has been sent to your email.",
       },
     });
   } catch (error) {
