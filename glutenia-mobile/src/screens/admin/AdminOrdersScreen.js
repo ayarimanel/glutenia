@@ -1,4 +1,4 @@
-import { Alert, FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
@@ -9,7 +9,7 @@ import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
-export default function AdminOrdersScreen() {
+export default function AdminOrdersScreen({ navigation }) {
   const { token, logout } = useAuth();
   const { t } = useTranslation();
   const [orders, setOrders] = useState([]);
@@ -53,7 +53,10 @@ export default function AdminOrdersScreen() {
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={<EmptyState icon="receipt" title={t("admin.orders.empty")} body={t("admin.orders.emptyBody")} />}
           renderItem={({ item }) => (
-            <View style={styles.card}>
+            <Pressable
+              style={styles.card}
+              onPress={() => navigation.navigate("AdminOrderDetail", { order: item })}
+            >
               <View style={styles.top}>
                 <Text style={styles.id}>#{item._id.slice(-6).toUpperCase()}</Text>
                 <Text style={styles.status}>{item.status}</Text>
@@ -65,7 +68,7 @@ export default function AdminOrdersScreen() {
                 {item.items.length} {t("admin.orders.itemsSuffix")} {item.address.city}
               </Text>
               <Text style={styles.total}>{item.total.toFixed(2)} TND</Text>
-            </View>
+            </Pressable>
           )}
         />
       </View>

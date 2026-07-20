@@ -610,7 +610,13 @@ export default function MapScreen({ navigation }) {
           text: t("map.call"),
           onPress: () => Linking.openURL(`tel:${selectedSpot.phone || "+21671000000"}`),
         },
-        { text: t("map.whatsapp"), onPress: () => {} },
+        {
+          text: t("map.whatsapp"),
+          onPress: () => {
+            const digits = (selectedSpot.phone || "+21671000000").replace(/[^\d]/g, "");
+            Linking.openURL(`https://wa.me/${digits}`);
+          },
+        },
         { text: t("map.cancel"), style: "cancel" },
       ]
     );

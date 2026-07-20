@@ -18,6 +18,13 @@ const NORMALIZE_EMAIL_OPTIONS = {
   icloud_remove_subaddress: false,
 };
 
+const PHONE_REGEX = /^\+?[0-9][0-9\s-]{5,17}$/;
+const phoneValidator = (field) =>
+  body(field)
+    .optional({ checkFalsy: true })
+    .matches(PHONE_REGEX)
+    .withMessage("Enter a valid phone number");
+
 router.post(
   "/register",
   [
@@ -33,6 +40,7 @@ router.post(
       .optional()
       .isIn(["customer", "professional"])
       .withMessage("Role must be customer or professional"),
+    phoneValidator("phone"),
   ],
   validateRequest,
   authController.register
@@ -59,10 +67,26 @@ router.put(
   [
     body("name").optional().trim().notEmpty().withMessage("Name cannot be empty"),
     body("avatar").optional({ checkFalsy: true }).isString(),
+    body("pushNotificationsEnabled").optional().isBoolean(),
+    body("notifyOrders").optional().isBoolean(),
+    body("notifyEvents").optional().isBoolean(),
+    body("theme_preference").optional().isIn(["light", "dark"]),
+    body("language").optional().isIn(["en", "fr", "ar"]),
+    phoneValidator("phone"),
   ],
   validateRequest,
   authController.updateProfile
 );
+
+router.post(
+  "/push-token",
+  verifyToken,
+  [body("token").notEmpty().withMessage("Push token is required")],
+  validateRequest,
+  authController.registerPushToken
+);
+
+router.delete("/push-token", verifyToken, authController.unregisterPushToken);
 
 router.put(
   "/change-password",
@@ -75,6 +99,14 @@ router.put(
   ],
   validateRequest,
   authController.changePassword
+);
+
+router.delete(
+  "/me",
+  verifyToken,
+  [body("password").notEmpty().withMessage("Password is required")],
+  validateRequest,
+  authController.deleteAccount
 );
 
 module.exports = router;

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -26,6 +27,7 @@ const RESOURCES = [
   {
     id: "1",
     resourceKey: "r1",
+    category: "diet",
     title: "Starting a Gluten-Free Diet",
     description: "Learn which foods to avoid, how to read ingredient labels, and how to set up a safe gluten-free kitchen from day one.",
     readTime: "5 min",
@@ -57,6 +59,7 @@ In the first weeks, stick to naturally gluten-free whole foods (meat, fish, eggs
   {
     id: "2",
     resourceKey: "r2",
+    category: "safe",
     title: "Hidden Sources of Gluten",
     description: "Gluten hides in soy sauce, salad dressings, medications, and more. Discover the unexpected products to watch out for.",
     readTime: "4 min",
@@ -98,6 +101,7 @@ When in doubt, contact the manufacturer directly or choose products with a certi
   {
     id: "3",
     resourceKey: "r3",
+    category: "celiac",
     title: "Nutritional Deficiencies in Celiac Patients",
     description: "Celiac disease often causes low levels of iron, calcium, vitamin D, and B12. Learn how to identify and correct them.",
     readTime: "6 min",
@@ -129,6 +133,7 @@ Ask your doctor for a full blood panel at diagnosis and again at 6 and 12 months
   {
     id: "4",
     resourceKey: "r4",
+    category: "lifestyle",
     title: "Dining Out Safely",
     description: "Tips for eating at restaurants with confidence — how to communicate with staff and spot hidden gluten on any menu.",
     readTime: "4 min",
@@ -191,6 +196,10 @@ const VIDEOS = [
 
 export default function PatientResourcesScreen({ navigation }) {
   const { t } = useTranslation();
+  const [activeCategory, setActiveCategory] = useState(null);
+  const visibleResources = activeCategory
+    ? RESOURCES.filter((item) => item.category === activeCategory)
+    : RESOURCES;
   const openVideo = (video) => {
     navigation.navigate("VideoPlayer", {
       youtubeId: video.youtubeId,
@@ -217,14 +226,31 @@ export default function PatientResourcesScreen({ navigation }) {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.catRow}
         >
-          {CATEGORIES.map((cat) => (
-            <Pressable key={cat.key} style={styles.catCard}>
-              <View style={[styles.catIconWrap, { backgroundColor: cat.bg }]}>
-                <AppIcon name={cat.icon} size={22} color={cat.color} />
-              </View>
-              <Text style={styles.catLabel}>{t(`patientResources.categoryLabels.${cat.key}`)}</Text>
-            </Pressable>
-          ))}
+          {CATEGORIES.map((cat) => {
+            const active = activeCategory === cat.key;
+            return (
+              <Pressable
+                key={cat.key}
+                style={styles.catCard}
+                onPress={() =>
+                  setActiveCategory((current) => (current === cat.key ? null : cat.key))
+                }
+              >
+                <View
+                  style={[
+                    styles.catIconWrap,
+                    { backgroundColor: cat.bg },
+                    active && { borderWidth: 2, borderColor: cat.color },
+                  ]}
+                >
+                  <AppIcon name={cat.icon} size={22} color={cat.color} />
+                </View>
+                <Text style={[styles.catLabel, active && { color: cat.color }]}>
+                  {t(`patientResources.categoryLabels.${cat.key}`)}
+                </Text>
+              </Pressable>
+            );
+          })}
         </ScrollView>
 
         {/* ── Featured ── */}
@@ -283,7 +309,7 @@ With the right knowledge, celiac disease is entirely manageable. Most people lea
         {/* ── All resources ── */}
         <Text style={styles.sectionMeta}>{t("patientResources.allResources")}</Text>
         <View style={styles.resourceList}>
-          {RESOURCES.map((item) => (
+          {visibleResources.map((item) => (
             <Pressable
               key={item.id}
               style={styles.resourceCard}
@@ -312,10 +338,6 @@ With the right knowledge, celiac disease is entirely manageable. Most people lea
         {/* ── Videos & Sessions ── */}
         <View style={styles.videosSectionRow}>
           <Text style={styles.videosSectionTitle}>{t("patientResources.videosSection")}</Text>
-          <Pressable style={styles.seeAll}>
-            <Text style={styles.seeAllText}>{t("patientResources.seeAll")}</Text>
-            <AppIcon name="chevron-right" size={14} color={Colors.secondary} />
-          </Pressable>
         </View>
         <ScrollView
           horizontal

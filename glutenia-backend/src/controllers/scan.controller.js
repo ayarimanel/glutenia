@@ -1,4 +1,6 @@
 const Groq = require("groq-sdk");
+const ScanHistory = require("../models/ScanHistory");
+const { recordScanEvent } = require("../services/scanService");
 
 const PROMPT = `You are a celiac disease specialist. Analyze the ingredient list in this food label image.
 
@@ -90,11 +92,29 @@ exports.scanLabel = async (req, res, next) => {
       error: parsed.error ?? null,
     };
 
-    return res.json({ success: true, data: safe });
+    const { gamification } = await recordScanEvent(req.user.id, "label", {
+      verdict: safe.verdict,
+      summary: safe.flagged[0]?.ingredient || "",
+    });
+
+    return res.json({ success: true, data: { ...safe, gamification } });
   } catch (error) {
     return res.status(500).json({
       success: false,
       message: error?.message || String(error),
     });
+  }
+};
+
+exports.getScanHistory = async (req, res, next) => {
+  try {
+    const history = await ScanHistory.find({ userId: req.user.id })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .populate("product", "name imageUrl");
+
+    return res.json({ success: true, data: history });
+  } catch (error) {
+    return next(error);
   }
 };

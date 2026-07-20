@@ -13,9 +13,11 @@ const badgeIdValidator = [
 // Profile summary (before /me/* to avoid shadowing)
 router.get("/profile", verifyToken, gamificationController.getProfileGamification);
 
-// Catalogs (must come before /me to avoid route shadowing)
+// Lightweight payload for surfaces that load on every app open (Home strip)
+router.get("/home", verifyToken, gamificationController.getHomeGamification);
+
+// Catalog (must come before /me to avoid route shadowing)
 router.get("/badges", verifyToken, gamificationController.getBadgeCatalog);
-router.get("/achievements", verifyToken, gamificationController.getAchievementCatalog);
 
 // Badge pin with explicit boolean + 3-pin cap
 router.put(
@@ -39,6 +41,4 @@ router.patch(
   validateRequest,
   gamificationController.pinBadge
 );
-router.get("/me/achievements", verifyToken, gamificationController.getMyAchievements);
-
 module.exports = router;

@@ -1,4 +1,5 @@
 const Product = require("../models/Product");
+const { recordScanEvent } = require("../services/scanService");
 
 const allowedProductFields = [
   "name",
@@ -37,9 +38,14 @@ exports.getProductByBarcode = async (req, res, next) => {
       });
     }
 
+    const { gamification } = await recordScanEvent(req.user.id, "barcode", {
+      summary: product.name,
+      product: product._id,
+    });
+
     return res.json({
       success: true,
-      data: product,
+      data: { ...product.toObject(), gamification },
     });
   } catch (error) {
     return next(error);

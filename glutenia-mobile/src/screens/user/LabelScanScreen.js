@@ -16,6 +16,7 @@ import AppHeader from "../../components/AppHeader";
 import AppIcon from "../../components/AppIcon";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
+import { notifyGamification } from "../../context/GamificationContext";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 const TAB_BAR_HEIGHT = 66;
@@ -55,9 +56,10 @@ export default function LabelScanScreen({ navigation }) {
         { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true }
       );
 
-      const data = await api.scanLabel(compressed.base64, token);
+      const { gamification, ...data } = await api.scanLabel(compressed.base64, token);
       setResult(data);
       setScreenState(RESULT);
+      notifyGamification(gamification);
     } catch (err) {
       setScreenState(IDLE);
       Alert.alert(t("labelScan.error"), err.message ?? String(err));

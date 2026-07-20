@@ -2,6 +2,9 @@ const Cart = require("../models/Cart");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const { notify } = require("../services/notificationService");
+const gamificationService = require("../services/gamificationService");
+
+const DELIVERY_FEE = 7;
 
 const STATUS_NOTIFICATIONS = {
   pending: "Your order is pending.",
@@ -62,15 +65,17 @@ const buildOrderItems = async (requestItems) => {
 exports.createOrder = async (req, res, next) => {
   try {
     const orderItems = await buildOrderItems(req.body.items);
-    const total = orderItems.reduce(
+    const subtotal = orderItems.reduce(
       (sum, item) => sum + item.qty * item.price,
       0
     );
+    const total = subtotal + DELIVERY_FEE;
 
     const order = await Order.create({
       user: req.user.id,
       items: orderItems,
       total,
+      deliveryFee: DELIVERY_FEE,
       address: req.body.address,
       status: "confirmed",
     });
@@ -80,9 +85,13 @@ exports.createOrder = async (req, res, next) => {
       { items: [], updatedAt: new Date() }
     );
 
+    const gamification = await gamificationService.recordAction(req.user.id, "order_placed", {
+      sourceId: order._id.toString(),
+    });
+
     return res.status(201).json({
       success: true,
-      data: order,
+      data: { ...order.toObject(), gamification },
     });
   } catch (error) {
     return next(error);

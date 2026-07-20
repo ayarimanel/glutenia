@@ -8,7 +8,7 @@ const badgeSchema = new mongoose.Schema(
     iconUrl: { type: String, default: null },
     category: {
       type: String,
-      enum: ["journey", "scanner", "community", "safety", "discovery", "supporter", "secret"],
+      enum: ["scanner", "safety", "community", "shopper", "streak", "journey"],
       required: true,
     },
     track: {
@@ -16,7 +16,9 @@ const badgeSchema = new mongoose.Schema(
       enum: ["warrior", "supporter", "both"],
       default: "both",
     },
-    isSecret: { type: Boolean, default: false },
+    targetMetric: { type: String, required: true },
+    targetValue: { type: Number, required: true },
+    xpReward: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

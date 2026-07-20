@@ -1,6 +1,4 @@
-const Achievement = require("../models/Achievement");
 const Badge = require("../models/Badge");
-const UserAchievement = require("../models/UserAchievement");
 const UserBadge = require("../models/UserBadge");
 const UserGamification = require("../models/UserGamification");
 const gamificationService = require("../services/gamificationService");
@@ -17,6 +15,21 @@ exports.getMyGamification = async (req, res, next) => {
     }
 
     return res.json({ success: true, data: gamification });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.getHomeGamification = async (req, res, next) => {
+  try {
+    const data = await gamificationService.getHomeGamificationData(req.user.id);
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        message: "Gamification record not found. Complete onboarding first.",
+      });
+    }
+    return res.json({ success: true, data });
   } catch (error) {
     return next(error);
   }
@@ -95,18 +108,6 @@ exports.updateBadgePin = async (req, res, next) => {
   }
 };
 
-exports.getMyAchievements = async (req, res, next) => {
-  try {
-    const userAchievements = await UserAchievement.find({ userId: req.user.id })
-      .populate("achievementId")
-      .sort({ completedAt: -1, currentProgress: -1 });
-
-    return res.json({ success: true, data: userAchievements });
-  } catch (error) {
-    return next(error);
-  }
-};
-
 exports.getProfileGamification = async (req, res, next) => {
   try {
     const result = await gamificationService.getProfileGamificationData(req.user.id);
@@ -124,17 +125,8 @@ exports.getProfileGamification = async (req, res, next) => {
 
 exports.getBadgeCatalog = async (req, res, next) => {
   try {
-    const badges = await Badge.find({ isSecret: false }).sort({ category: 1, name: 1 });
+    const badges = await Badge.find().sort({ category: 1, targetValue: 1 });
     return res.json({ success: true, data: badges });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-exports.getAchievementCatalog = async (req, res, next) => {
-  try {
-    const achievements = await Achievement.find().sort({ targetMetric: 1, targetValue: 1 });
-    return res.json({ success: true, data: achievements });
   } catch (error) {
     return next(error);
   }

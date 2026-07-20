@@ -4,8 +4,11 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { ActivityIndicator, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import * as Notifications from "expo-notifications";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { navigationRef, navigate } from "./navigationRef";
+import i18n from "../i18n";
 import SplashScreen from "../screens/SplashScreen";
 import CustomTabBar from "../components/CustomTabBar";
 import LoginScreen from "../screens/auth/LoginScreen";
@@ -29,6 +32,8 @@ import AdminEventsScreen from "../screens/admin/AdminEventsScreen";
 import AdminProductsScreen from "../screens/admin/AdminProductsScreen";
 import AdminProductFormScreen from "../screens/admin/AdminProductFormScreen";
 import AdminOrdersScreen from "../screens/admin/AdminOrdersScreen";
+import AdminOrderDetailScreen from "../screens/admin/AdminOrderDetailScreen";
+import AdminAnalyticsScreen from "../screens/admin/AdminAnalyticsScreen";
 import AdminProfessionalRequestsScreen from "../screens/admin/AdminProfessionalRequestsScreen";
 import AdminRecipesScreen from "../screens/admin/AdminRecipesScreen";
 import AdminRecipeFormScreen from "../screens/admin/AdminRecipeFormScreen";
@@ -54,6 +59,9 @@ import SellerVisibilityScreen from "../screens/user/SellerVisibilityScreen";
 import SellerOrdersScreen from "../screens/user/SellerOrdersScreen";
 import SellerEstablishmentScreen from "../screens/user/SellerEstablishmentScreen";
 import SellerEstablishmentFormScreen from "../screens/user/SellerEstablishmentFormScreen";
+import LegalScreen from "../screens/user/LegalScreen";
+import DeleteAccountScreen from "../screens/user/DeleteAccountScreen";
+import EditJourneyScreen from "../screens/user/EditJourneyScreen";
 
 const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
@@ -112,6 +120,9 @@ function UserStack({ bg }) {
       <Stack.Screen name="SellerOrders" component={SellerOrdersScreen} />
       <Stack.Screen name="SellerEstablishment" component={SellerEstablishmentScreen} />
       <Stack.Screen name="SellerEstablishmentForm" component={SellerEstablishmentFormScreen} />
+      <Stack.Screen name="Legal" component={LegalScreen} />
+      <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
+      <Stack.Screen name="EditJourney" component={EditJourneyScreen} />
     </Stack.Navigator>
   );
 }
@@ -138,6 +149,8 @@ function AdminStack({ bg }) {
       <Stack.Screen name="AdminProductForm" component={AdminProductFormScreen} />
       <Stack.Screen name="AdminEvents" component={AdminEventsScreen} />
       <Stack.Screen name="AdminProfessionalRequests" component={AdminProfessionalRequestsScreen} />
+      <Stack.Screen name="AdminOrderDetail" component={AdminOrderDetailScreen} />
+      <Stack.Screen name="AdminAnalytics" component={AdminAnalyticsScreen} />
       <Stack.Screen name="AdminRecipes" component={AdminRecipesScreen} />
       <Stack.Screen name="AdminRecipeForm" component={AdminRecipeFormScreen} />
       <Stack.Screen name="CreateEvent" component={CreateEventScreen} />
@@ -167,12 +180,36 @@ function ProfileOnboardingStack() {
 
 export default function RootNavigator() {
   const { user, loading, hasSeenOnboarding, profileOnboardingDone } = useAuth();
-  const { isDark, colors } = useTheme();
+  const { isDark, colors, setTheme } = useTheme();
   const [splashVisible, setSplashVisible] = useState(true);
+
+  // Follow the account's saved theme/language preference (if any) whenever a
+  // user session becomes active, so preferences travel across devices/reinstalls.
+  useEffect(() => {
+    if (!user) return;
+    if (user.theme_preference && (user.theme_preference === "dark") !== isDark) {
+      setTheme(user.theme_preference === "dark");
+    }
+    if (user.language && i18n.language !== user.language) {
+      i18n.changeLanguage(user.language);
+    }
+  }, [user?._id]);
 
   useEffect(() => {
     const timer = setTimeout(() => setSplashVisible(false), 2500);
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const type = response.notification.request.content.data?.type;
+      if (type === "order_status") {
+        navigate("Orders");
+      } else if (type === "event_join" || type === "event_leave" || type === "event_new") {
+        navigate("UserTabs", { screen: "Events" });
+      }
+    });
+    return () => subscription.remove();
   }, []);
 
   if (splashVisible) return <SplashScreen />;
@@ -186,7 +223,7 @@ export default function RootNavigator() {
   }
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <StatusBar style={isDark ? "light" : "dark"} />
       {!hasSeenOnboarding
         ? <OnboardingStack />

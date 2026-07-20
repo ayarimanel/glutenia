@@ -69,6 +69,12 @@ exports.completeProfileOnboarding = async (req, res, next) => {
       confidenceIdentifyingGf,
     } = req.body;
 
+    const existingUser = await User.findById(req.user.id);
+    if (!existingUser) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    const isFirstCompletion = !existingUser.role_type;
+
     const update = { role_type: roleType, gluten_free_since: glutenFreeSince || null };
     if (experienceLevel) update.experience_level = experienceLevel;
     if (primaryGoal) update.primary_goal = primaryGoal;
@@ -80,18 +86,18 @@ exports.completeProfileOnboarding = async (req, res, next) => {
       runValidators: true,
     });
 
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
     const currentTitle = (TITLE_MAP[roleType] || {})[experienceLevel] || "Newcomer";
 
-    await gamificationService.awardXP(user._id, 50, "onboarding_complete");
+    // The 50 XP onboarding bonus is a one-time reward — only grant it the first
+    // time this user completes the journey survey, not on every later edit.
+    if (isFirstCompletion) {
+      await gamificationService.awardXP(user._id, 50, "onboarding_complete");
+    }
 
     const gamification = await UserGamification.findOneAndUpdate(
       { userId: user._id },
       { currentTitle },
-      { new: true }
+      { new: true, upsert: true }
     );
 
     return res.json({ success: true, data: { user, gamification } });

@@ -8,17 +8,22 @@ import { IconButton, PrimaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { api } from "../../api/client";
+import { notifyGamification } from "../../context/GamificationContext";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+
+const DELIVERY_FEE = 7;
 
 export default function CheckoutScreen({ navigation }) {
   const { t } = useTranslation();
-  const { token, user } = useAuth();
+  const { token, user, updateUser } = useAuth();
   const { items, total, clearCart } = useCart();
   const [fullName, setFullName] = useState(user?.name || "");
   const [addressLine, setAddressLine] = useState("");
   const [city, setCity] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState(user?.phone || "");
   const [loading, setLoading] = useState(false);
+
+  const grandTotal = total + DELIVERY_FEE;
 
   const placeOrder = async () => {
     if (!items.length) {
@@ -32,6 +37,7 @@ export default function CheckoutScreen({ navigation }) {
 
     try {
       setLoading(true);
+      const trimmedPhone = phone.trim();
       const order = await api.createOrder(token, {
         items: items.map((item) => ({
           productId: item.productId,
@@ -39,9 +45,18 @@ export default function CheckoutScreen({ navigation }) {
           qty: item.qty,
           price: item.price,
         })),
-        address: { fullName, addressLine, city, phone },
+        address: { fullName, addressLine, city, phone: trimmedPhone },
       });
+
+      if (trimmedPhone !== (user?.phone || "")) {
+        try {
+          const updated = await api.updateProfile(token, { phone: trimmedPhone });
+          await updateUser(updated);
+        } catch (_) {}
+      }
+
       clearCart();
+      notifyGamification(order.gamification);
       navigation.replace("OrderSuccess", { order });
     } catch (error) {
       Alert.alert(t("checkout.failed"), error.message);
@@ -73,9 +88,17 @@ export default function CheckoutScreen({ navigation }) {
                 </Text>
               </View>
             ))}
+            <View style={styles.line}>
+              <Text style={styles.lineName}>{t("checkout.subtotal")}</Text>
+              <Text style={styles.linePrice}>{total.toFixed(2)} TND</Text>
+            </View>
+            <View style={styles.line}>
+              <Text style={styles.lineName}>{t("checkout.deliveryFee")}</Text>
+              <Text style={styles.linePrice}>{DELIVERY_FEE.toFixed(2)} TND</Text>
+            </View>
             <View style={styles.totalLine}>
               <Text style={styles.totalLabel}>{t("checkout.total")}</Text>
-              <Text style={styles.total}>{total.toFixed(2)} TND</Text>
+              <Text style={styles.total}>{grandTotal.toFixed(2)} TND</Text>
             </View>
           </View>
           <Field label={t("checkout.fullName")} value={fullName} onChangeText={setFullName} />

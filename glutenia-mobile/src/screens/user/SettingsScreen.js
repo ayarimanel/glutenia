@@ -6,13 +6,16 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  Linking,
 } from "react-native";
+import Constants from "expo-constants";
 import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
 import LanguageSelector from "../../components/LanguageSelector";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { api } from "../../api/client";
 import { Radius, Spacing } from "../../theme/colors";
 
 function SectionLabel({ text, colors }) {
@@ -77,13 +80,73 @@ function Divider({ colors }) {
 }
 
 export default function SettingsScreen({ navigation }) {
-  const { logout } = useAuth();
+  const { logout, user, token, updateUser } = useAuth();
   const { t } = useTranslation();
   const { isDark, toggleTheme, colors } = useTheme();
 
-  const [pushNotifs, setPushNotifs] = useState(true);
-  const [emailUpdates, setEmailUpdates] = useState(true);
+  const [pushNotifs, setPushNotifs] = useState(user?.pushNotificationsEnabled ?? true);
+  const [savingPushNotifs, setSavingPushNotifs] = useState(false);
+  const [notifyOrders, setNotifyOrders] = useState(user?.notifyOrders ?? true);
+  const [savingNotifyOrders, setSavingNotifyOrders] = useState(false);
+  const [notifyEvents, setNotifyEvents] = useState(user?.notifyEvents ?? true);
+  const [savingNotifyEvents, setSavingNotifyEvents] = useState(false);
   const [langVisible, setLangVisible] = useState(false);
+
+  const togglePushNotifs = async (value) => {
+    setPushNotifs(value);
+    setSavingPushNotifs(true);
+    try {
+      const updated = await api.updateProfile(token, { pushNotificationsEnabled: value });
+      await updateUser(updated);
+    } catch (error) {
+      setPushNotifs(!value);
+    } finally {
+      setSavingPushNotifs(false);
+    }
+  };
+
+  const toggleNotifyOrders = async (value) => {
+    setNotifyOrders(value);
+    setSavingNotifyOrders(true);
+    try {
+      const updated = await api.updateProfile(token, { notifyOrders: value });
+      await updateUser(updated);
+    } catch (error) {
+      setNotifyOrders(!value);
+    } finally {
+      setSavingNotifyOrders(false);
+    }
+  };
+
+  const toggleNotifyEvents = async (value) => {
+    setNotifyEvents(value);
+    setSavingNotifyEvents(true);
+    try {
+      const updated = await api.updateProfile(token, { notifyEvents: value });
+      await updateUser(updated);
+    } catch (error) {
+      setNotifyEvents(!value);
+    } finally {
+      setSavingNotifyEvents(false);
+    }
+  };
+
+  const handleToggleTheme = async () => {
+    const nextIsDark = !isDark;
+    await toggleTheme();
+    if (token) {
+      api
+        .updateProfile(token, { theme_preference: nextIsDark ? "dark" : "light" })
+        .then(updateUser)
+        .catch(() => {});
+    }
+  };
+
+  const handleLanguageSelect = (code) => {
+    if (token) {
+      api.updateProfile(token, { language: code }).then(updateUser).catch(() => {});
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(t("settings.logout"), t("settings.logoutMsg"), [
@@ -96,9 +159,24 @@ export default function SettingsScreen({ navigation }) {
     Alert.alert(t("settings.comingSoon"), t("settings.comingSoonMsg", { feature }));
   };
 
+  const appVersion = Constants.expoConfig?.version || "1.0.0";
+
+  const reportBug = () => {
+    const subject = encodeURIComponent(`Glutenia bug report (v${appVersion})`);
+    Linking.openURL(`mailto:support@glutenia.tn?subject=${subject}`).catch(() => {
+      Alert.alert(t("settings.reportBug"), t("settings.reportBugMsg"), [
+        { text: t("settings.ok") },
+      ]);
+    });
+  };
+
   return (
     <Screen>
-      <LanguageSelector visible={langVisible} onClose={() => setLangVisible(false)} />
+      <LanguageSelector
+        visible={langVisible}
+        onClose={() => setLangVisible(false)}
+        onSelect={handleLanguageSelect}
+      />
 
       <View
         style={{
@@ -149,11 +227,24 @@ export default function SettingsScreen({ navigation }) {
           <SettingRow
             icon="shield"
             label={t("settings.changePassword")}
-            isLast
+            isLast={user?.role === "professional"}
             colors={colors}
             onPress={() => navigation.navigate("ChangePassword")}
             right={<AppIcon name="chevron-right" size={18} color={colors.textMuted} />}
           />
+          {user?.role !== "professional" && (
+            <>
+              <Divider colors={colors} />
+              <SettingRow
+                icon="compass"
+                label={t("settings.editJourney")}
+                isLast
+                colors={colors}
+                onPress={() => navigation.navigate("EditJourney")}
+                right={<AppIcon name="chevron-right" size={18} color={colors.textMuted} />}
+              />
+            </>
+          )}
         </View>
 
         {/* NOTIFICATIONS */}
@@ -167,7 +258,8 @@ export default function SettingsScreen({ navigation }) {
             right={
               <Switch
                 value={pushNotifs}
-                onValueChange={setPushNotifs}
+                onValueChange={togglePushNotifs}
+                disabled={savingPushNotifs}
                 trackColor={{ false: colors.divider, true: colors.primary }}
                 thumbColor={colors.surface}
               />
@@ -175,14 +267,30 @@ export default function SettingsScreen({ navigation }) {
           />
           <Divider colors={colors} />
           <SettingRow
-            icon="info"
-            label={t("settings.emailUpdates")}
+            icon="receipt"
+            label={t("settings.notifyOrders")}
+            colors={colors}
+            right={
+              <Switch
+                value={notifyOrders}
+                onValueChange={toggleNotifyOrders}
+                disabled={!pushNotifs || savingNotifyOrders}
+                trackColor={{ false: colors.divider, true: colors.primary }}
+                thumbColor={colors.surface}
+              />
+            }
+          />
+          <Divider colors={colors} />
+          <SettingRow
+            icon="calendar"
+            label={t("settings.notifyEvents")}
             isLast
             colors={colors}
             right={
               <Switch
-                value={emailUpdates}
-                onValueChange={setEmailUpdates}
+                value={notifyEvents}
+                onValueChange={toggleNotifyEvents}
+                disabled={!pushNotifs || savingNotifyEvents}
                 trackColor={{ false: colors.divider, true: colors.primary }}
                 thumbColor={colors.surface}
               />
@@ -201,7 +309,7 @@ export default function SettingsScreen({ navigation }) {
             right={
               <Switch
                 value={isDark}
-                onValueChange={toggleTheme}
+                onValueChange={handleToggleTheme}
                 trackColor={{ false: colors.divider, true: colors.primary }}
                 thumbColor={colors.surface}
               />
@@ -242,14 +350,58 @@ export default function SettingsScreen({ navigation }) {
             label={t("settings.reportBug")}
             isLast
             colors={colors}
-            onPress={() =>
-              Alert.alert(t("settings.reportBug"), t("settings.reportBugMsg"), [
-                { text: t("settings.ok") },
-              ])
-            }
+            onPress={reportBug}
             right={<AppIcon name="chevron-right" size={18} color={colors.textMuted} />}
           />
         </View>
+
+        {/* ABOUT */}
+        <SectionLabel text={t("settings.about")} colors={colors} />
+        <View style={{ backgroundColor: colors.surface, borderRadius: Radius.lg, overflow: "hidden" }}>
+          <SettingRow
+            icon="info"
+            label={t("settings.version")}
+            isFirst
+            colors={colors}
+            right={
+              <Text style={{ fontSize: 14, color: colors.textMuted, fontWeight: "500" }}>
+                {appVersion}
+              </Text>
+            }
+          />
+          <Divider colors={colors} />
+          <SettingRow
+            icon="list"
+            label={t("settings.terms")}
+            colors={colors}
+            onPress={() => navigation.navigate("Legal", { section: "terms" })}
+            right={<AppIcon name="chevron-right" size={18} color={colors.textMuted} />}
+          />
+          <Divider colors={colors} />
+          <SettingRow
+            icon="shield-check"
+            label={t("settings.privacyPolicy")}
+            isLast
+            colors={colors}
+            onPress={() => navigation.navigate("Legal", { section: "privacy" })}
+            right={<AppIcon name="chevron-right" size={18} color={colors.textMuted} />}
+          />
+        </View>
+
+        {/* DELETE ACCOUNT */}
+        <TouchableOpacity
+          style={{
+            alignItems: "center",
+            paddingVertical: Spacing.md,
+            marginTop: Spacing.lg,
+          }}
+          onPress={() => navigation.navigate("DeleteAccount")}
+          activeOpacity={0.7}
+        >
+          <Text style={{ fontSize: 14, fontWeight: "700", color: colors.danger }}>
+            {t("settings.deleteAccount")}
+          </Text>
+        </TouchableOpacity>
 
         {/* LOG OUT */}
         <TouchableOpacity

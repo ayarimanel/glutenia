@@ -5,6 +5,7 @@ import Screen from "../../components/Screen";
 import Field from "../../components/Field";
 import { PrimaryButton, SecondaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
+import { isValidPhone } from "../../utils/validation";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 export default function RegisterScreen({ navigation }) {
@@ -13,6 +14,7 @@ export default function RegisterScreen({ navigation }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
   const [role, setRole] = useState("customer");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -35,6 +37,10 @@ export default function RegisterScreen({ navigation }) {
       nextErrors.password = t("auth.errors.passwordLength");
     }
 
+    if (!isValidPhone(phone)) {
+      nextErrors.phone = t("auth.errors.phoneInvalid");
+    }
+
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) {
       return;
@@ -42,7 +48,13 @@ export default function RegisterScreen({ navigation }) {
 
     try {
       setLoading(true);
-      const result = await register({ name: name.trim(), email: trimmedEmail, password, role });
+      const result = await register({
+        name: name.trim(),
+        email: trimmedEmail,
+        password,
+        role,
+        phone: phone.trim(),
+      });
       if (result?.pending) {
         navigation.replace("ProfessionalPending", {
           approvalCode: result.approvalCode,
@@ -102,6 +114,16 @@ export default function RegisterScreen({ navigation }) {
                 setErrors((current) => ({ ...current, password: "" }));
               }}
               secureTextEntry
+            />
+            <Field
+              label={t("auth.phoneOptional")}
+              value={phone}
+              error={errors.phone}
+              onChangeText={(value) => {
+                setPhone(value);
+                setErrors((current) => ({ ...current, phone: "" }));
+              }}
+              keyboardType="phone-pad"
             />
             <View style={styles.roleWrap}>
               <Text style={styles.roleLabel}>{t("register.role")}</Text>

@@ -17,7 +17,7 @@ const LANGUAGES = [
   { code: "en", label: "English", flag: "🇬🇧" },
 ];
 
-export default function LanguageSelector({ visible: externalVisible, onClose }) {
+export default function LanguageSelector({ visible: externalVisible, onClose, onSelect }) {
   const { t, i18n } = useTranslation();
   const [internalVisible, setInternalVisible] = useState(false);
 
@@ -57,6 +57,7 @@ export default function LanguageSelector({ visible: externalVisible, onClose }) 
                   style={[styles.row, active && styles.rowActive]}
                   onPress={() => {
                     i18n.changeLanguage(lang.code);
+                    onSelect?.(lang.code);
                     close();
                   }}
                   activeOpacity={0.7}

@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { api } from "../api/client";
+import { registerForPushNotificationsAsync } from "../services/pushNotifications";
 
 const STORAGE_KEY = "glutenia.session";
 const ONBOARDING_PROFILE_KEY = "onboarding_complete";
@@ -12,6 +13,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
   const [profileOnboardingDone, setProfileOnboardingDone] = useState(false);
+  const [pushToken, setPushToken] = useState(null);
 
   useEffect(() => {
     const restore = async () => {
@@ -40,6 +42,21 @@ export const AuthProvider = ({ children }) => {
 
     restore();
   }, []);
+
+  useEffect(() => {
+    if (!token || !user) return;
+    let cancelled = false;
+
+    registerForPushNotificationsAsync().then((expoPushToken) => {
+      if (cancelled || !expoPushToken) return;
+      setPushToken(expoPushToken);
+      api.registerPushToken(token, expoPushToken).catch(() => {});
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, user?._id]);
 
   const completeOnboarding = () => {
     setHasSeenOnboarding(true);
@@ -78,9 +95,9 @@ export const AuthProvider = ({ children }) => {
     return session.user;
   };
 
-  const register = async ({ name, email, password, role }) => {
+  const register = async ({ name, email, password, role, phone }) => {
     await AsyncStorage.removeItem(ONBOARDING_PROFILE_KEY);
-    const data = await api.register({ name, email, password, role });
+    const data = await api.register({ name, email, password, role, phone });
     if (data.pending) {
       return data;
     }
@@ -89,8 +106,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    if (token && pushToken) {
+      api.unregisterPushToken(token, pushToken).catch(() => {});
+    }
     setUser(null);
     setToken(null);
+    setPushToken(null);
     setProfileOnboardingDone(false);
     await AsyncStorage.multiRemove([STORAGE_KEY, ONBOARDING_PROFILE_KEY]);
   };
@@ -109,7 +130,7 @@ export const AuthProvider = ({ children }) => {
       markProfileOnboardingComplete,
       updateUser,
     }),
-    [user, token, loading, hasSeenOnboarding, profileOnboardingDone]
+    [user, token, loading, hasSeenOnboarding, profileOnboardingDone, pushToken]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

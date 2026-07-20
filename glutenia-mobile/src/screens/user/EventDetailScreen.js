@@ -12,6 +12,7 @@ import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
+import { notifyGamification } from "../../context/GamificationContext";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 export default function EventDetailScreen({ route, navigation }) {
@@ -32,6 +33,7 @@ export default function EventDetailScreen({ route, navigation }) {
       const result = await api.rsvpEvent(token, event._id);
       setGoing(result.isGoing);
       setAttendeeCount(result.attendeeCount);
+      notifyGamification(result.gamification);
     } catch (error) {
       Alert.alert(t("eventDetail.rsvpError"), error.message);
     } finally {

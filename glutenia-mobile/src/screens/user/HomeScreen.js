@@ -34,15 +34,38 @@ export default function HomeScreen({ navigation }) {
     description: t(`homeEvents.${e.key}.description`),
     category: t(`events.${e.categoryKey}`),
   }));
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { addItem } = useCart();
   const [products, setProducts] = useState([]);
+  const [scanHistory, setScanHistory] = useState([]);
+  const [homeGamification, setHomeGamification] = useState(null);
+  const isProfessional = user?.role === "professional";
 
   useEffect(() => {
     api.products({})
       .then((data) => setProducts(data.slice(0, 8)))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    api.scanHistory(token)
+      .then(setScanHistory)
+      .catch(() => {});
+  }, [token]);
+
+  useEffect(() => {
+    if (isProfessional) return;
+    api.getHomeGamification(token)
+      .then(setHomeGamification)
+      .catch(() => {});
+  }, [token, isProfessional]);
+
+  const VERDICT_META = {
+    safe: { icon: "checkmark-circle", color: Colors.primary },
+    caution: { icon: "info", color: "#F59E0B" },
+    unsafe: { icon: "close-circle", color: Colors.danger },
+    error: { icon: "info", color: Colors.textMuted },
+  };
 
   return (
     <Screen>
@@ -51,6 +74,29 @@ export default function HomeScreen({ navigation }) {
         onCartPress={() => navigation.navigate("CartPage")}
       />
       <ScrollView showsVerticalScrollIndicator={false}>
+
+        {/* ── Gamification strip ── */}
+        {homeGamification && (
+          <Pressable
+            style={styles.gamStrip}
+            onPress={() => navigation.navigate("Profile")}
+          >
+            <Text style={styles.gamLevelText}>
+              {t("home.level", { level: homeGamification.currentLevel })}
+            </Text>
+            <View style={styles.gamBarTrack}>
+              <View
+                style={[
+                  styles.gamBarFill,
+                  { width: `${Math.round(homeGamification.progressRatio * 100)}%` },
+                ]}
+              />
+            </View>
+            <View style={styles.gamStreakWrap}>
+              <Text style={styles.gamStreakText}>🔥 {homeGamification.currentStreak}</Text>
+            </View>
+          </Pressable>
+        )}
 
         {/* ── QR Scanner hero ── */}
         <Pressable
@@ -65,6 +111,44 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.heroBtnText}>{t("home.tapToScan")}</Text>
           </View>
         </Pressable>
+
+        {/* ── Recently Scanned ── */}
+        {scanHistory.length > 0 && (
+          <>
+            <Text style={styles.sectionLabel}>{t("home.recentlyScanned")}</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.hList}
+            >
+              {scanHistory.map((item) => {
+                const meta = VERDICT_META[item.verdict] || {
+                  icon: "scan",
+                  color: Colors.secondary,
+                };
+                const isBarcodeWithProduct = item.scanType === "barcode" && item.product;
+                return (
+                  <Pressable
+                    key={item._id}
+                    style={styles.scanCard}
+                    disabled={!isBarcodeWithProduct}
+                    onPress={() =>
+                      isBarcodeWithProduct &&
+                      navigation.navigate("ProductDetail", { productId: item.product._id })
+                    }
+                  >
+                    <View style={[styles.scanIconWrap, { backgroundColor: `${meta.color}22` }]}>
+                      <AppIcon name={meta.icon} size={20} color={meta.color} />
+                    </View>
+                    <Text style={styles.scanSummary} numberOfLines={2}>
+                      {item.summary || (item.verdict ? t(`labelScan.${item.verdict}`) : "")}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </>
+        )}
 
         {/* ── Quick Access ── */}
         <Text style={styles.sectionLabel}>{t("home.quickAccess")}</Text>
@@ -85,7 +169,7 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.quickIcon}>
               <AppIcon name="people" size={26} color={Colors.secondary} />
             </View>
-            <Text style={styles.quickLabel}>{t("home.community")}</Text>
+            <Text style={styles.quickLabel}>{t("events.title")}</Text>
           </Pressable>
           <Pressable
             style={styles.quickCard}
@@ -193,6 +277,45 @@ export default function HomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  // ── Gamification strip ──
+  gamStrip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginHorizontal: Spacing.md,
+    marginTop: Spacing.sm,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.pill,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    ...Shadow,
+  },
+  gamLevelText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: Colors.textDark,
+  },
+  gamBarTrack: {
+    flex: 1,
+    height: 6,
+    backgroundColor: Colors.divider,
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  gamBarFill: {
+    height: "100%",
+    backgroundColor: Colors.primary,
+    borderRadius: 3,
+  },
+  gamStreakWrap: {
+    flexShrink: 0,
+  },
+  gamStreakText: {
+    fontSize: 12,
+    fontWeight: "800",
+    color: Colors.textDark,
+  },
+
   // ── Hero ──
   hero: {
     marginHorizontal: Spacing.md,
@@ -297,6 +420,29 @@ const styles = StyleSheet.create({
   // ── Product cards (horizontal preview) ──
   productWrap: {
     width: 160,
+  },
+
+  // ── Recently scanned ──
+  scanCard: {
+    width: 130,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
+    padding: Spacing.sm,
+    gap: 8,
+    ...Shadow,
+  },
+  scanIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  scanSummary: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: Colors.textDark,
+    lineHeight: 16,
   },
 
   // ── Event cards ──

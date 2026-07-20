@@ -13,23 +13,9 @@ import {
 import Screen from "../components/Screen";
 import AppIcon from "../components/AppIcon";
 import { useAuth } from "../context/AuthContext";
-import { useEvents } from "../context/EventsContext";
 import { api } from "../api/client";
 import { Colors, Radius, Shadow, Spacing } from "../theme/colors";
 import { useTranslation } from "react-i18next";
-
-// Thresholds: index i → minimum XP for level (i+1), levels 1–10
-const LEVEL_THRESHOLDS = [0, 150, 350, 600, 800, 1200, 1800, 2200, 2700, 3500];
-
-function getLevelProgress(level, totalXp) {
-  const currentMin =
-    level <= 10 ? LEVEL_THRESHOLDS[level - 1] : 3500 + (level - 10) * 800;
-  const nextMin =
-    level < 10 ? LEVEL_THRESHOLDS[level] : 3500 + (level - 9) * 800;
-  const range = nextMin - currentMin;
-  const progress = range > 0 ? Math.min(1, (totalXp - currentMin) / range) : 1;
-  return { nextMin, progress };
-}
 
 function formatTimeAgo(dateString) {
   if (!dateString) return null;
@@ -84,13 +70,18 @@ export default function AccountScreen({ navigation }) {
       icon: "basket",
       desc: t("account.roles.professional.desc"),
     },
+    unset: {
+      label: t("account.roles.unset.label"),
+      icon: "info",
+      desc: t("account.roles.unset.desc"),
+    },
   };
 
   const { user, token, logout } = useAuth();
-  const { participatingEvents } = useEvents();
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [events, setEvents] = useState([]);
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
@@ -109,11 +100,28 @@ export default function AccountScreen({ navigation }) {
     fetchProfile();
   }, [fetchProfile]);
 
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .events(token)
+      .then((data) => {
+        if (!cancelled) setEvents(data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
   const handleLogout = () => {
     Alert.alert(t("account.logoutTitle"), t("account.logoutMsg"), [
       { text: t("account.cancel"), style: "cancel" },
       { text: t("account.logout"), style: "destructive", onPress: logout },
     ]);
+  };
+
+  const handlePrivacySecurity = () => {
+    navigation.navigate("Legal", { section: "privacy" });
   };
 
   if (loading) {
@@ -139,12 +147,14 @@ export default function AccountScreen({ navigation }) {
     gamification,
     earnedBadges = [],
     pinnedBadges = [],
-    topAchievements = [],
+    inProgressBadges = [],
   } = profileData || {};
+
+  const attendingEvents = events.filter((ev) => ev.isGoing);
 
   const isProfessional = user?.role === "professional";
   const roleType = user?.role_type;
-  const roleMeta = isProfessional ? ROLE_META.professional : ROLE_META[roleType] || ROLE_META.warrior;
+  const roleMeta = isProfessional ? ROLE_META.professional : ROLE_META[roleType] || ROLE_META.unset;
   const accentColor = isProfessional ? Colors.secondary : Colors.primary;
   const accentPale = isProfessional ? Colors.secondaryPale : Colors.primaryPale;
   const currentTitle = gamification?.currentTitle || t("account.newcomer");
@@ -152,7 +162,8 @@ export default function AccountScreen({ navigation }) {
   const totalXp = gamification?.totalXp ?? 0;
   const currentStreak = gamification?.currentStreak ?? 0;
   const longestStreak = gamification?.longestStreak ?? 0;
-  const { nextMin, progress: xpProgress } = getLevelProgress(level, totalXp);
+  const nextMin = gamification?.nextLevelXp ?? totalXp;
+  const xpProgress = gamification?.progressRatio ?? 0;
   const timeAgo = formatTimeAgo(user?.gluten_free_since);
   const activeStep = EXPERIENCE_TO_STEP[user?.experience_level] ?? 0;
   const daysOnGlutenia = daysSince(user?.createdAt);
@@ -194,47 +205,51 @@ export default function AccountScreen({ navigation }) {
           ) : null}
         </View>
 
-        {/* ── B. XP / Level card ─────────────────────────────────────────── */}
-        <View style={styles.xpCard}>
-          <View style={styles.xpRow}>
-            <View>
-              <Text style={styles.xpLevelNum}>{t("account.level", { level })}</Text>
-              <Text style={styles.xpTitleSub}>{currentTitle}</Text>
+        {/* ── B. XP / Level card (not applicable to professional/seller accounts) ── */}
+        {!isProfessional && (
+          <View style={styles.xpCard}>
+            <View style={styles.xpRow}>
+              <View>
+                <Text style={styles.xpLevelNum}>{t("account.level", { level })}</Text>
+                <Text style={styles.xpTitleSub}>{currentTitle}</Text>
+              </View>
+              <View style={styles.xpChip}>
+                <Text style={styles.xpChipText}>{totalXp} {t("account.xp")}</Text>
+              </View>
             </View>
-            <View style={styles.xpChip}>
-              <Text style={styles.xpChipText}>{totalXp} {t("account.xp")}</Text>
+            <View style={styles.xpTrack}>
+              <View
+                style={[
+                  styles.xpFill,
+                  { width: `${Math.round(xpProgress * 100)}%` },
+                ]}
+              />
             </View>
+            <Text style={styles.xpHint}>
+              {t("account.xpHint", { current: totalXp, next: nextMin, nextLevel: level + 1 })}
+            </Text>
           </View>
-          <View style={styles.xpTrack}>
-            <View
-              style={[
-                styles.xpFill,
-                { width: `${Math.round(xpProgress * 100)}%` },
-              ]}
-            />
-          </View>
-          <Text style={styles.xpHint}>
-            {t("account.xpHint", { current: totalXp, next: nextMin, nextLevel: level + 1 })}
-          </Text>
-        </View>
+        )}
 
-        {/* ── C. Stats row ───────────────────────────────────────────────── */}
-        <View style={styles.statsCard}>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>🔥 {currentStreak}</Text>
-            <Text style={styles.statLabel}>{t("account.streak")}</Text>
+        {/* ── C. Stats row (not applicable to professional/seller accounts) ── */}
+        {!isProfessional && (
+          <View style={styles.statsCard}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>🔥 {currentStreak}</Text>
+              <Text style={styles.statLabel}>{t("account.streak")}</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>⚡ {longestStreak}</Text>
+              <Text style={styles.statLabel}>{t("account.best")}</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>🌱 {daysOnGlutenia}</Text>
+              <Text style={styles.statLabel}>{t("account.daysOnGlutenia")}</Text>
+            </View>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>⚡ {longestStreak}</Text>
-            <Text style={styles.statLabel}>{t("account.best")}</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>🌱 {daysOnGlutenia}</Text>
-            <Text style={styles.statLabel}>{t("account.daysOnGlutenia")}</Text>
-          </View>
-        </View>
+        )}
 
         {/* ── D. Role card ───────────────────────────────────────────────── */}
         <Text style={styles.sectionLabel}>{t("account.yourRole")}</Text>
@@ -391,33 +406,31 @@ export default function AccountScreen({ navigation }) {
           </>
         )}
 
-        {/* ── G. Top achievements ────────────────────────────────────────── */}
-        {topAchievements.length > 0 && (
+        {/* ── G. Badges in progress ────────────────────────────────────────── */}
+        {inProgressBadges.length > 0 && (
           <>
             <Text style={[styles.sectionLabel, styles.mt]}>{t("account.inProgress")}</Text>
             <View style={styles.achCard}>
-              {topAchievements.map((ua, idx) => {
-                const ach = ua.achievementId;
-                if (!ach) return null;
-                const pct = Math.min(1, ua.currentProgress / ach.targetValue);
+              {inProgressBadges.map((entry, idx) => {
+                const { badge, currentProgress, ratio } = entry;
                 return (
                   <View
-                    key={String(ach.slug || idx)}
+                    key={badge.slug}
                     style={[styles.achRow, idx > 0 && styles.achBorder]}
                   >
                     <Text style={styles.achName} numberOfLines={1}>
-                      {ach.name}
+                      {badge.name}
                     </Text>
                     <View style={styles.achTrack}>
                       <View
                         style={[
                           styles.achFill,
-                          { width: `${Math.round(pct * 100)}%` },
+                          { width: `${Math.round(Math.min(1, ratio) * 100)}%` },
                         ]}
                       />
                     </View>
                     <Text style={styles.achCount}>
-                      {ua.currentProgress} / {ach.targetValue}
+                      {currentProgress} / {badge.targetValue}
                     </Text>
                   </View>
                 );
@@ -435,13 +448,13 @@ export default function AccountScreen({ navigation }) {
         </View>
 
         {/* ── I. Events attending ────────────────────────────────────────── */}
-        {participatingEvents.length > 0 && (
+        {attendingEvents.length > 0 && (
           <>
             <Text style={[styles.sectionLabel, styles.mt]}>{t("account.eventsAttending")}</Text>
             <View style={styles.eventsCard}>
-              {participatingEvents.map((ev, idx) => (
+              {attendingEvents.map((ev, idx) => (
                 <View
-                  key={ev.id}
+                  key={ev._id}
                   style={[styles.eventRow, idx > 0 && styles.eventBorder]}
                 >
                   <View style={[styles.eventEmoji, { backgroundColor: ev.color }]}>
@@ -474,6 +487,21 @@ export default function AccountScreen({ navigation }) {
 
           <View style={styles.divider} />
 
+          <Pressable
+            style={styles.settingsRow}
+            onPress={() => navigation.navigate("PatientResources")}
+          >
+            <View style={styles.settingsLeft}>
+              <View style={[styles.iconWrap, { backgroundColor: Colors.primaryPale }]}>
+                <AppIcon name="activity" size={20} color={Colors.primary} />
+              </View>
+              <Text style={styles.settingsLabel}>{t("home.patientResources")}</Text>
+            </View>
+            <AppIcon name="chevron-right" size={20} color={Colors.textMuted} />
+          </Pressable>
+
+          <View style={styles.divider} />
+
           <Pressable style={styles.settingsRow} onPress={() => navigation.navigate("Settings")}>
             <View style={styles.settingsLeft}>
               <View style={[styles.iconWrap, { backgroundColor: Colors.secondaryPale }]}>
@@ -486,7 +514,7 @@ export default function AccountScreen({ navigation }) {
 
           <View style={styles.divider} />
 
-          <Pressable style={styles.settingsRow}>
+          <Pressable style={styles.settingsRow} onPress={handlePrivacySecurity}>
             <View style={styles.settingsLeft}>
               <View style={[styles.iconWrap, { backgroundColor: Colors.secondaryPale }]}>
                 <AppIcon name="shield-check" size={20} color={Colors.secondary} />
@@ -724,7 +752,7 @@ const styles = StyleSheet.create({
   badgeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.primary },
   badgeName: { fontSize: 13, fontWeight: "600", color: Colors.textDark, maxWidth: 140 },
 
-  // ── G. Achievements ───────────────────────────────────────────────────────
+  // ── G. Badges in progress ────────────────────────────────────────────────
   achCard: {
     backgroundColor: Colors.surface,
     borderRadius: Radius.lg,

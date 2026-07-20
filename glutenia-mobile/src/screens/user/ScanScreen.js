@@ -17,6 +17,7 @@ import AppIcon from "../../components/AppIcon";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
+import { notifyGamification } from "../../context/GamificationContext";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTranslation } from "react-i18next";
 
@@ -74,9 +75,10 @@ export default function ScanScreen({ navigation }) {
     setScreenState(LOADING);
 
     try {
-      const found = await api.productByBarcode(data, token);
+      const { gamification, ...found } = await api.productByBarcode(data, token);
       setProduct(found);
       setScreenState(FOUND);
+      notifyGamification(gamification);
     } catch (error) {
       if (error.status === 404) {
         setScreenState(NOT_FOUND);

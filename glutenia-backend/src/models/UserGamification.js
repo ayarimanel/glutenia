@@ -17,10 +17,8 @@ const userGamificationSchema = new mongoose.Schema(
     lastActivityDate: { type: Date, default: null },
     scanCount: { type: Number, default: 0 },
     ingredientCheckCount: { type: Number, default: 0 },
-    communityPostCount: { type: Number, default: 0 },
-    restaurantCheckinCount: { type: Number, default: 0 },
     eventAttendanceCount: { type: Number, default: 0 },
-    helpfulVotesReceived: { type: Number, default: 0 },
+    orderCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

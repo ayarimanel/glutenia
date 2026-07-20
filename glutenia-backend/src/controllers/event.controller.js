@@ -1,5 +1,7 @@
 const Event = require("../models/Event");
-const { notify } = require("../services/notificationService");
+const User = require("../models/User");
+const { notify, notifyBroadcast } = require("../services/notificationService");
+const gamificationService = require("../services/gamificationService");
 
 const ALLOWED_FIELDS = ["title", "description", "date", "location", "category", "price", "emoji", "color"];
 
@@ -49,6 +51,21 @@ exports.createEvent = async (req, res, next) => {
       color: color || "#E8F5E9",
       createdBy: req.user.id,
     });
+
+    User.find({ role: "customer" })
+      .select("_id")
+      .then((recipients) =>
+        notifyBroadcast(
+          recipients.map((recipient) => recipient._id),
+          {
+            type: "event_new",
+            title: "New event posted 🎉",
+            body: `${event.title} was just added — check it out!`,
+          }
+        )
+      )
+      .catch(() => {});
+
     return res.status(201).json({ success: true, data: serialize(event, req.user.id) });
   } catch (error) {
     return next(error);
@@ -105,9 +122,13 @@ exports.rsvp = async (req, res, next) => {
         : `You're no longer attending ${event.title}.`,
     });
 
+    const gamification = isJoining
+      ? await gamificationService.recordAction(userId, "event_rsvp", { sourceId: event._id.toString() })
+      : null;
+
     return res.json({
       success: true,
-      data: { isGoing: isJoining, attendeeCount: event.attendees.length },
+      data: { isGoing: isJoining, attendeeCount: event.attendees.length, gamification },
     });
   } catch (error) {
     return next(error);

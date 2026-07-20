@@ -51,7 +51,9 @@ export default function RecipesScreen({ navigation }) {
   );
 
   const featured = recipes.filter((r) => r.category === activeFilter).slice(0, 2);
-  const popular = recipes.filter((r) => r.popular);
+  const popular = recipes.filter(
+    (r) => r.popular && r.category === activeFilter
+  );
 
   return (
     <Screen>

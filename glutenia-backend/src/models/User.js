@@ -10,6 +10,37 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  phone: {
+    type: String,
+    trim: true,
+    default: "",
+  },
+  pushTokens: {
+    type: [String],
+    default: [],
+  },
+  pushNotificationsEnabled: {
+    type: Boolean,
+    default: true,
+  },
+  notifyOrders: {
+    type: Boolean,
+    default: true,
+  },
+  notifyEvents: {
+    type: Boolean,
+    default: true,
+  },
+  theme_preference: {
+    type: String,
+    enum: ["light", "dark"],
+    default: null,
+  },
+  language: {
+    type: String,
+    enum: ["en", "fr", "ar"],
+    default: null,
+  },
   email: {
     type: String,
     required: true,

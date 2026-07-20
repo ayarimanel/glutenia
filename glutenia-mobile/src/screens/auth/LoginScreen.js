@@ -19,8 +19,8 @@ const MASCOT = require("../../../assets/mascot.png");
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
   const { t } = useTranslation();
-  const [email, setEmail] = useState("admin@glutenia.tn");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 

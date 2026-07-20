@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const { notify } = require("../services/notificationService");
 
 exports.getRequests = async (req, res, next) => {
   try {
@@ -37,6 +38,12 @@ exports.approveRequest = async (req, res, next) => {
     user.professionalStatus = "approved";
     await user.save();
 
+    await notify(user._id, {
+      type: "professional_approved",
+      title: "You're approved!",
+      body: "Your professional account has been approved. Log in to get started.",
+    });
+
     return res.json({
       success: true,
       data: user,
@@ -62,6 +69,12 @@ exports.rejectRequest = async (req, res, next) => {
 
     user.professionalStatus = "rejected";
     await user.save();
+
+    await notify(user._id, {
+      type: "professional_rejected",
+      title: "Account request update",
+      body: "Your professional account request was not approved.",
+    });
 
     return res.json({
       success: true,

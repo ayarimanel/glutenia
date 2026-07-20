@@ -13,7 +13,10 @@ import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 const TYPE_ICONS = {
   event_join: "checkmark-circle",
   event_leave: "close-circle",
+  event_new: "calendar",
   order_status: "receipt",
+  professional_approved: "checkmark-circle",
+  professional_rejected: "close-circle",
 };
 
 export default function NotificationsScreen({ navigation }) {

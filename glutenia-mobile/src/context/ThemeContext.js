@@ -41,6 +41,7 @@ const ThemeContext = createContext({
   isDark: false,
   colors: lightColors,
   toggleTheme: () => {},
+  setTheme: () => {},
 });
 
 export function ThemeProvider({ children }) {
@@ -58,9 +59,14 @@ export function ThemeProvider({ children }) {
     await AsyncStorage.setItem(THEME_KEY, next ? "dark" : "light");
   };
 
+  const setTheme = async (nextIsDark) => {
+    setIsDark(nextIsDark);
+    await AsyncStorage.setItem(THEME_KEY, nextIsDark ? "dark" : "light");
+  };
+
   return (
     <ThemeContext.Provider
-      value={{ isDark, colors: isDark ? darkColors : lightColors, toggleTheme }}
+      value={{ isDark, colors: isDark ? darkColors : lightColors, toggleTheme, setTheme }}
     >
       {children}
     </ThemeContext.Provider>

@@ -6,7 +6,6 @@ const connectDB = require("../config/db");
 const Product = require("../models/Product");
 const User = require("../models/User");
 const Badge = require("../models/Badge");
-const Achievement = require("../models/Achievement");
 
 const products = [
   {
@@ -84,56 +83,29 @@ const seed = async () => {
 
     // --- Gamification seed ---
     await Badge.deleteMany({});
-    await Achievement.deleteMany({});
 
     await Badge.insertMany([
-      // Journey
-      { slug: "first_week", name: "First Week", description: "Active for 7 days", category: "journey", track: "both" },
-      { slug: "one_month", name: "One Month", description: "Active for 30 days", category: "journey", track: "both" },
-      { slug: "three_months", name: "Three Months", description: "Active for 90 days", category: "journey", track: "both" },
-      { slug: "six_months", name: "Six Months", description: "Active for 180 days", category: "journey", track: "both" },
-      { slug: "one_year", name: "One Year", description: "Active for 365 days", category: "journey", track: "both" },
-      { slug: "two_years", name: "Two Years", description: "Active for 730 days", category: "journey", track: "both" },
-      { slug: "three_years", name: "Three Years", description: "Active for 1095 days", category: "journey", track: "both" },
       // Scanner
-      { slug: "first_scan", name: "First Scan", description: "Scanned your first product", category: "scanner", track: "both" },
-      { slug: "ten_scans", name: "10 Scans", description: "Scanned 10 products", category: "scanner", track: "both" },
-      { slug: "fifty_scans", name: "50 Scans", description: "Scanned 50 products", category: "scanner", track: "both" },
-      { slug: "hundred_scans", name: "100 Scans", description: "Scanned 100 products", category: "scanner", track: "both" },
-      { slug: "product_pioneer", name: "Product Pioneer", description: "First to scan a new product", category: "scanner", track: "both" },
-      // Community
-      { slug: "first_post", name: "First Post", description: "Made your first community post", category: "community", track: "both" },
-      { slug: "helpful_voice", name: "Helpful Voice", description: "Received 10 helpful votes", category: "community", track: "both" },
-      { slug: "community_pillar", name: "Community Pillar", description: "Received 50 helpful votes", category: "community", track: "both" },
-      { slug: "event_attendee", name: "Event Attendee", description: "Attended your first event", category: "community", track: "both" },
-      { slug: "event_regular", name: "Event Regular", description: "Attended 5 events", category: "community", track: "both" },
+      { slug: "first_scan", name: "First Scan", description: "Scanned your first product", category: "scanner", targetMetric: "scanCount", targetValue: 1, xpReward: 20 },
+      { slug: "ten_scans", name: "10 Scans", description: "Scanned 10 products", category: "scanner", targetMetric: "scanCount", targetValue: 10, xpReward: 40 },
+      { slug: "fifty_scans", name: "50 Scans", description: "Scanned 50 products", category: "scanner", targetMetric: "scanCount", targetValue: 50, xpReward: 100 },
+      { slug: "hundred_scans", name: "100 Scans", description: "Scanned 100 products", category: "scanner", targetMetric: "scanCount", targetValue: 100, xpReward: 200 },
       // Safety
-      { slug: "reaction_reporter", name: "Reaction Reporter", description: "Logged your first reaction", category: "safety", track: "warrior" },
-      { slug: "safe_streak_30", name: "Safe Streak", description: "30 days of safe eating logged", category: "safety", track: "warrior" },
-      { slug: "label_master", name: "Label Master", description: "Checked ingredients 50 times", category: "safety", track: "both" },
-      // Discovery
-      { slug: "first_checkin", name: "First Check-in", description: "Checked into a GF restaurant", category: "discovery", track: "both" },
-      { slug: "explorer_5", name: "Explorer", description: "Checked into 5 GF places", category: "discovery", track: "both" },
-      { slug: "city_scout_3", name: "City Scout", description: "Checked into places in 3 different cities", category: "discovery", track: "both" },
-      // Secret
-      { slug: "midnight_scanner", name: "Midnight Scanner", description: "Scanned a product between 11pm and 1am", category: "secret", isSecret: true, track: "both" },
-      { slug: "weekend_warrior", name: "Weekend Warrior", description: "Maintained a streak every Saturday for a month", category: "secret", isSecret: true, track: "both" },
-      { slug: "early_bird", name: "Early Bird", description: "Scanned a product before 8am", category: "secret", isSecret: true, track: "both" },
-    ]);
-
-    await Achievement.insertMany([
-      { slug: "scan_10", name: "10 Scans", description: "Scan 10 products", targetMetric: "scanCount", targetValue: 10, xpReward: 50 },
-      { slug: "scan_50", name: "50 Scans", description: "Scan 50 products", targetMetric: "scanCount", targetValue: 50, xpReward: 150 },
-      { slug: "scan_100", name: "100 Scans", description: "Scan 100 products", targetMetric: "scanCount", targetValue: 100, xpReward: 300 },
-      { slug: "ingredient_10", name: "Label Reader", description: "Check ingredients 10 times", targetMetric: "ingredientCheckCount", targetValue: 10, xpReward: 40 },
-      { slug: "ingredient_50", name: "Label Master", description: "Check ingredients 50 times", targetMetric: "ingredientCheckCount", targetValue: 50, xpReward: 120 },
-      { slug: "post_5", name: "Voice in the Community", description: "Make 5 community posts", targetMetric: "communityPostCount", targetValue: 5, xpReward: 60 },
-      { slug: "post_20", name: "Community Regular", description: "Make 20 community posts", targetMetric: "communityPostCount", targetValue: 20, xpReward: 150 },
-      { slug: "votes_10", name: "Helpful Voice", description: "Receive 10 helpful votes", targetMetric: "helpfulVotesReceived", targetValue: 10, xpReward: 80 },
-      { slug: "votes_50", name: "Community Pillar", description: "Receive 50 helpful votes", targetMetric: "helpfulVotesReceived", targetValue: 50, xpReward: 200 },
-      { slug: "streak_7", name: "Week Warrior", description: "Maintain a 7-day streak", targetMetric: "currentStreak", targetValue: 7, xpReward: 30 },
-      { slug: "streak_30", name: "Monthly Dedication", description: "Maintain a 30-day streak", targetMetric: "currentStreak", targetValue: 30, xpReward: 100 },
-      { slug: "streak_100", name: "Century Streak", description: "Maintain a 100-day streak", targetMetric: "currentStreak", targetValue: 100, xpReward: 300 },
+      { slug: "label_master", name: "Label Master", description: "Checked ingredients 50 times", category: "safety", targetMetric: "ingredientCheckCount", targetValue: 50, xpReward: 150 },
+      // Community
+      { slug: "event_attendee", name: "Event Attendee", description: "Attended your first event", category: "community", targetMetric: "eventAttendanceCount", targetValue: 1, xpReward: 30 },
+      { slug: "event_regular", name: "Event Regular", description: "Attended 5 events", category: "community", targetMetric: "eventAttendanceCount", targetValue: 5, xpReward: 80 },
+      // Shopper
+      { slug: "first_order", name: "First Order", description: "Placed your first order", category: "shopper", targetMetric: "orderCount", targetValue: 1, xpReward: 30 },
+      { slug: "five_orders", name: "5 Orders", description: "Placed 5 orders", category: "shopper", targetMetric: "orderCount", targetValue: 5, xpReward: 100 },
+      { slug: "twenty_orders", name: "20 Orders", description: "Placed 20 orders", category: "shopper", targetMetric: "orderCount", targetValue: 20, xpReward: 250 },
+      // Streak
+      { slug: "streak_7", name: "Week Streak", description: "Maintained a 7-day streak", category: "streak", targetMetric: "currentStreak", targetValue: 7, xpReward: 50 },
+      { slug: "streak_30", name: "Monthly Streak", description: "Maintained a 30-day streak", category: "streak", targetMetric: "currentStreak", targetValue: 30, xpReward: 150 },
+      { slug: "streak_100", name: "Century Streak", description: "Maintained a 100-day streak", category: "streak", targetMetric: "currentStreak", targetValue: 100, xpReward: 400 },
+      // Journey (account age — checked lazily, not via recordAction)
+      { slug: "first_month", name: "First Month", description: "One month on Glutenia", category: "journey", targetMetric: "accountAgeDays", targetValue: 30, xpReward: 20 },
+      { slug: "one_year", name: "One Year", description: "One year on Glutenia", category: "journey", targetMetric: "accountAgeDays", targetValue: 365, xpReward: 100 },
     ]);
 
     console.log("Seed completed successfully");

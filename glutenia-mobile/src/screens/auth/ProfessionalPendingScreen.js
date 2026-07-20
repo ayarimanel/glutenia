@@ -1,13 +1,44 @@
-import { StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
-import { SecondaryButton } from "../../components/Buttons";
+import Field from "../../components/Field";
+import { PrimaryButton, SecondaryButton } from "../../components/Buttons";
+import { useAuth } from "../../context/AuthContext";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 export default function ProfessionalPendingScreen({ navigation, route }) {
   const { t } = useTranslation();
+  const { login } = useAuth();
   const { approvalCode, email } = route.params || {};
+
+  const [password, setPassword] = useState("");
+  const [checking, setChecking] = useState(false);
+
+  const handleCheckStatus = async () => {
+    if (!password) {
+      Alert.alert(t("professionalPending.passwordRequired"));
+      return;
+    }
+    try {
+      setChecking(true);
+      await login({ email, password });
+      // AuthContext now holds a valid session — RootNavigator will switch
+      // out of the auth stack automatically.
+    } catch (error) {
+      const status = error.status === 403 ? error.data?.professionalStatus : null;
+      if (status === "rejected") {
+        Alert.alert(t("login.professionalRejectedTitle"), t("login.professionalRejectedMsg"));
+      } else if (status === "pending") {
+        Alert.alert(t("professionalPending.stillPendingTitle"), t("professionalPending.stillPendingMsg"));
+      } else {
+        Alert.alert(t("auth.errors.loginFailed"), error.message);
+      }
+    } finally {
+      setChecking(false);
+    }
+  };
 
   return (
     <Screen>
@@ -25,6 +56,23 @@ export default function ProfessionalPendingScreen({ navigation, route }) {
         </View>
 
         <Text style={styles.hint}>{t("professionalPending.hint")}</Text>
+
+        <View style={{ width: "100%" }}>
+          <Field
+            label={t("auth.password")}
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
+        </View>
+
+        <PrimaryButton
+          title={t("professionalPending.checkStatus")}
+          icon="refresh"
+          loading={checking}
+          onPress={handleCheckStatus}
+          style={{ width: "100%" }}
+        />
 
         <SecondaryButton
           title={t("professionalPending.backToLogin")}

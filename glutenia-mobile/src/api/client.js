@@ -97,8 +97,14 @@ export const api = {
   me: (token, options = {}) => request("/auth/me", { token, ...options }),
   updateProfile: (token, body) =>
     request("/auth/me", { method: "PUT", token, body, timeoutMs: 30000 }),
+  registerPushToken: (token, expoPushToken) =>
+    request("/auth/push-token", { method: "POST", token, body: { token: expoPushToken } }),
+  unregisterPushToken: (token, expoPushToken) =>
+    request("/auth/push-token", { method: "DELETE", token, body: { token: expoPushToken } }),
   changePassword: (token, body) =>
     request("/auth/change-password", { method: "PUT", token, body }),
+  deleteAccount: (token, password) =>
+    request("/auth/me", { method: "DELETE", token, body: { password } }),
   products: (params = {}) => {
     const query = new URLSearchParams(
       Object.entries(params).filter(([, value]) => value)
@@ -154,6 +160,8 @@ export const api = {
     request("/onboarding/profile", { method: "PUT", token, body: data }),
   getGamificationProfile: (token) =>
     request("/gamification/profile", { token }),
+  getHomeGamification: (token) =>
+    request("/gamification/home", { token }),
   getMyBadges: (token) =>
     request("/gamification/me/badges", { token }),
   updateBadgePin: (token, badgeId, isPinned) =>
@@ -169,12 +177,14 @@ export const api = {
       body: { imageBase64, mimeType: "image/jpeg" },
       timeoutMs: 30000,
     }),
+  scanHistory: (token) => request("/scan/history", { token }),
   events: (token) => request("/events", { token }),
   event: (id, token) => request(`/events/${id}`, { token }),
   createEvent: (token, body) => request("/events", { method: "POST", token, body }),
   updateEvent: (token, id, body) => request(`/events/${id}`, { method: "PUT", token, body }),
   deleteEvent: (token, id) => request(`/events/${id}`, { method: "DELETE", token }),
   rsvpEvent: (token, id) => request(`/events/${id}/rsvp`, { method: "POST", token }),
+  userAnalytics: (token) => request("/users/analytics", { token }),
   professionalRequests: (token, status = "pending") =>
     request(`/professionals/requests?status=${status}`, { token }),
   approveProfessional: (token, id) =>

@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, Bookmark, BookmarkCheck } from "lucide-react-native";
+import { ArrowLeft, Bookmark, BookmarkCheck, Lock } from "lucide-react-native";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
@@ -20,9 +20,8 @@ const CATEGORY_COLORS = {
   scanner: Colors.secondary,
   community: "#9C27B0",
   safety: "#FF9800",
-  discovery: "#2196F3",
-  supporter: "#00BCD4",
-  secret: "#607D8B",
+  shopper: "#2196F3",
+  streak: "#E85D2C",
 };
 
 export default function BadgeCollectionScreen({ navigation }) {
@@ -34,11 +33,11 @@ export default function BadgeCollectionScreen({ navigation }) {
     scanner: t("badges.categories.scanner"),
     community: t("badges.categories.community"),
     safety: t("badges.categories.safety"),
-    discovery: t("badges.categories.discovery"),
-    supporter: t("badges.categories.supporter"),
-    secret: t("badges.categories.secret"),
+    shopper: t("badges.categories.shopper"),
+    streak: t("badges.categories.streak"),
   };
   const [badges, setBadges] = useState([]);
+  const [inProgressBadges, setInProgressBadges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [pinningId, setPinningId] = useState(null);
@@ -47,8 +46,9 @@ export default function BadgeCollectionScreen({ navigation }) {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.getMyBadges(token);
-      setBadges(data);
+      const data = await api.getGamificationProfile(token);
+      setBadges(data.earnedBadges || []);
+      setInProgressBadges(data.inProgressBadges || []);
     } catch (err) {
       setError(err.message || t("badges.error"));
     } finally {
@@ -155,7 +155,7 @@ export default function BadgeCollectionScreen({ navigation }) {
         </View>
       </View>
 
-      {badges.length === 0 ? (
+      {badges.length === 0 && inProgressBadges.length === 0 ? (
         <View style={styles.centered}>
           <Text style={styles.emptyTitle}>{t("badges.empty")}</Text>
           <Text style={styles.emptyDesc}>
@@ -236,6 +236,43 @@ export default function BadgeCollectionScreen({ navigation }) {
               </View>
             </View>
           ))}
+
+          {inProgressBadges.length > 0 && (
+            <View>
+              <Text style={styles.categoryHeader}>{t("badges.inProgress")}</Text>
+              <View style={styles.group}>
+                {inProgressBadges.map(({ badge, currentProgress, ratio }, idx) => (
+                  <View
+                    key={badge.slug}
+                    style={[styles.lockedCard, idx > 0 && styles.cardBorder]}
+                  >
+                    <View style={[styles.iconBox, styles.iconBoxLocked]}>
+                      <Lock size={18} color={Colors.textMuted} strokeWidth={2} />
+                    </View>
+                    <View style={styles.info}>
+                      <Text style={styles.badgeName}>{badge.name}</Text>
+                      {badge.description ? (
+                        <Text style={styles.badgeDesc} numberOfLines={2}>
+                          {badge.description}
+                        </Text>
+                      ) : null}
+                      <View style={styles.lockedTrack}>
+                        <View
+                          style={[
+                            styles.lockedFill,
+                            { width: `${Math.round(Math.min(1, ratio) * 100)}%` },
+                          ]}
+                        />
+                      </View>
+                      <Text style={styles.lockedCount}>
+                        {currentProgress} / {badge.targetValue}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
         </ScrollView>
       )}
     </SafeAreaView>
@@ -334,6 +371,33 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
+  },
+
+  // Locked / in-progress badge card
+  lockedCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    padding: Spacing.md,
+    gap: Spacing.md,
+  },
+  iconBoxLocked: { backgroundColor: Colors.divider },
+  lockedTrack: {
+    height: 5,
+    backgroundColor: Colors.divider,
+    borderRadius: 3,
+    overflow: "hidden",
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  lockedFill: {
+    height: "100%",
+    backgroundColor: Colors.primary,
+    borderRadius: 3,
+  },
+  lockedCount: {
+    fontSize: 11,
+    color: Colors.textMuted,
+    fontWeight: "600",
   },
 
   // Empty / error

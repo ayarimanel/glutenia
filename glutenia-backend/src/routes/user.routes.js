@@ -10,6 +10,7 @@ const router = express.Router();
 const idValidator = [param("id").isMongoId().withMessage("Invalid user id")];
 
 router.get("/", verifyToken, isAdmin, userController.getUsers);
+router.get("/analytics", verifyToken, isAdmin, userController.getUserAnalytics);
 router.get(
   "/:id/orders",
   verifyToken,

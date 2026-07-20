@@ -18,6 +18,7 @@ import AppIcon from "../../components/AppIcon";
 import { PrimaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
+import { isValidPhone } from "../../utils/validation";
 import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
 
 const MAX_IMAGE_DATA_URL_LENGTH = 3000000;
@@ -31,11 +32,8 @@ export default function EditProfileScreen({ navigation }) {
   const [nameError, setNameError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Decorative fields — this app doesn't have real backend support for
-  // them, so they're locally editable placeholders rather than persisted.
-  const [bio, setBio] = useState(t("settings.editProfileScreen.bioDefault"));
-  const [phone, setPhone] = useState("+216 12 345 678");
-  const [location, setLocation] = useState(t("settings.editProfileScreen.locationDefault"));
+  const [phone, setPhone] = useState(user?.phone || "");
+  const [phoneError, setPhoneError] = useState("");
 
   const pickAvatar = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -87,9 +85,18 @@ export default function EditProfileScreen({ navigation }) {
     }
     setNameError("");
 
+    if (!isValidPhone(phone)) {
+      setPhoneError(t("settings.editProfileScreen.phoneInvalid"));
+      return;
+    }
+    setPhoneError("");
+
     try {
       setSaving(true);
-      const body = { name: trimmedName };
+      const body = {
+        name: trimmedName,
+        phone: phone.trim(),
+      };
       if (avatar !== user?.avatar) {
         body.avatar = avatar || "";
       }
@@ -162,29 +169,16 @@ export default function EditProfileScreen({ navigation }) {
               style={styles.disabledField}
               inputStyle={styles.disabledInput}
             />
-          </View>
-
-          <Text style={styles.sectionLabel}>{t("settings.editProfileScreen.aboutSection")}</Text>
-          <View style={styles.card}>
-            <Field
-              label={t("settings.editProfileScreen.bioLabel")}
-              value={bio}
-              onChangeText={setBio}
-              placeholder={t("settings.editProfileScreen.bioPlaceholder")}
-              multiline
-            />
             <Field
               label={t("settings.editProfileScreen.phoneLabel")}
               value={phone}
-              onChangeText={setPhone}
+              onChangeText={(value) => {
+                setPhone(value);
+                setPhoneError("");
+              }}
               placeholder={t("settings.editProfileScreen.phonePlaceholder")}
               keyboardType="phone-pad"
-            />
-            <Field
-              label={t("settings.editProfileScreen.locationLabel")}
-              value={location}
-              onChangeText={setLocation}
-              placeholder={t("settings.editProfileScreen.locationPlaceholder")}
+              error={phoneError}
             />
           </View>
 
@@ -255,12 +249,5 @@ const styles = {
   },
   disabledField: { opacity: 0.6 },
   disabledInput: { backgroundColor: Colors.background },
-  sectionLabel: {
-    fontSize: 12,
-    color: Colors.textMuted,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
   saveButton: { marginTop: Spacing.sm },
 };
