@@ -10,6 +10,7 @@ import {
   Image,
 } from "react-native";
 import { WebView } from "react-native-webview";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BottomSheet, {
@@ -266,6 +267,7 @@ const getCategoryVisual = (colors) => ({
 });
 
 const MAP_CENTER = { latitude: 36.82, longitude: 10.2 };
+const FAVORITES_KEY = "glutenia.mapFavorites";
 
 function haversineKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
@@ -505,6 +507,7 @@ export default function MapScreen({ navigation }) {
   const [sheetIndex, setSheetIndex] = useState(-1);
   const [realSpots, setRealSpots] = useState([]);
   const [mapWebViewReady, setMapWebViewReady] = useState(false);
+  const [favoriteIds, setFavoriteIds] = useState([]);
 
   const snapPoints = useMemo(() => ["55%", "90%"], []);
   const leafletHTML = useMemo(() => buildLeafletHTML(SPOTS), [SPOTS]);
@@ -512,6 +515,24 @@ export default function MapScreen({ navigation }) {
   useEffect(() => {
     setMapWebViewReady(false);
   }, [leafletHTML]);
+
+  useEffect(() => {
+    AsyncStorage.getItem(FAVORITES_KEY)
+      .then((raw) => {
+        if (raw) setFavoriteIds(JSON.parse(raw));
+      })
+      .catch(() => {});
+  }, []);
+
+  const toggleFavorite = useCallback((spotId) => {
+    setFavoriteIds((current) => {
+      const next = current.includes(spotId)
+        ? current.filter((id) => id !== spotId)
+        : [...current, spotId];
+      AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(next)).catch(() => {});
+      return next;
+    });
+  }, []);
 
   const allSpots = useMemo(() => [...SPOTS, ...realSpots], [SPOTS, realSpots]);
 
@@ -768,8 +789,18 @@ export default function MapScreen({ navigation }) {
                 <Text style={styles.cardName} numberOfLines={1}>
                   {selectedSpot.name}
                 </Text>
-                <TouchableOpacity style={styles.favoriteBtn} activeOpacity={0.7}>
-                  <AppIcon name="heart" size={16} color="#C8102E" fill="#C8102E" strokeWidth={2.5} />
+                <TouchableOpacity
+                  style={styles.favoriteBtn}
+                  activeOpacity={0.7}
+                  onPress={() => toggleFavorite(selectedSpot.id)}
+                >
+                  <AppIcon
+                    name="heart"
+                    size={16}
+                    color="#C8102E"
+                    fill={favoriteIds.includes(selectedSpot.id) ? "#C8102E" : "none"}
+                    strokeWidth={2.5}
+                  />
                 </TouchableOpacity>
               </View>
 
@@ -789,17 +820,6 @@ export default function MapScreen({ navigation }) {
               </View>
 
               <View style={styles.cardMetaRow}>
-                <View style={styles.metaItem}>
-                  <AppIcon name="star" size={12} color="#F59E0B" fill="#F59E0B" />
-                  <Text style={styles.metaValText}>{selectedSpot.rating}</Text>
-                  <Text style={styles.metaCountText}>({selectedSpot.reviews})</Text>
-                </View>
-                <View style={styles.metaDivider} />
-                <View style={styles.metaItem}>
-                  <AppIcon name="location" size={12} color="#6C757D" />
-                  <Text style={styles.metaValText}>{selectedSpot.distance}</Text>
-                </View>
-                <View style={styles.metaDivider} />
                 <View style={styles.metaItem}>
                   <Text style={styles.metaPriceText}>{selectedSpot.avgPrice}</Text>
                 </View>
@@ -1182,22 +1202,6 @@ const getStyles = (colors) =>
       flexDirection: "row",
       alignItems: "center",
       gap: 4,
-    },
-    metaValText: {
-      fontSize: 12,
-      fontWeight: "700",
-      color: colors.textDark,
-    },
-    metaCountText: {
-      fontSize: 11,
-      color: colors.textMuted,
-    },
-    metaDivider: {
-      width: 4,
-      height: 4,
-      borderRadius: 2,
-      backgroundColor: colors.border,
-      marginHorizontal: 8,
     },
     metaPriceText: {
       fontSize: 12,

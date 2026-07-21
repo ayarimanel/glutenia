@@ -115,6 +115,7 @@ export default function AppIcon({
   size = 18,
   color = "#000",
   strokeWidth = 2.4,
+  fill,
   style,
 }) {
   const Icon = icons[name] || Circle;
@@ -123,6 +124,7 @@ export default function AppIcon({
       color={color}
       size={size}
       strokeWidth={strokeWidth}
+      fill={fill}
       style={style}
     />
   );
