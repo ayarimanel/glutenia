@@ -30,7 +30,7 @@ export default function OnboardingScreen() {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const { width } = useWindowDimensions();
-  const IMAGE_SIZE = width * 0.82;
+  const IMAGE_SIZE = width * 0.72;
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef(null);
 

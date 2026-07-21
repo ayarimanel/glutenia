@@ -2,9 +2,9 @@ import { View, Image, StyleSheet, Text, Dimensions } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../context/ThemeContext";
 
-const LOGO_ASPECT_RATIO = 1043 / 459;
+const LOGO_ASPECT_RATIO = 958 / 378;
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const LOGO_WIDTH = Math.min(SCREEN_WIDTH * 0.92, 560);
+const LOGO_WIDTH = Math.min(SCREEN_WIDTH * 0.96, 640);
 
 export default function SplashScreen() {
   const { t } = useTranslation();
