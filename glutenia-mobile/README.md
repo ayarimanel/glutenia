@@ -7,7 +7,7 @@ Expo React Native mobile app for the Glutenia gluten-free store.
 Start the backend first:
 
 ```powershell
-cd C:\Users\yassi\OneDrive\Desktop\glutenia\glutenia-backend
+cd ..\glutenia-backend
 .\run.ps1 -Seed
 .\run.ps1 -Start
 ```
@@ -15,7 +15,7 @@ cd C:\Users\yassi\OneDrive\Desktop\glutenia\glutenia-backend
 Then start the mobile app:
 
 ```powershell
-cd C:\Users\yassi\OneDrive\Desktop\glutenia\glutenia-mobile
+cd ..\glutenia-mobile
 .\run.ps1 -Start
 ```
 

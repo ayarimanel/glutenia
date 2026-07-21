@@ -33,3 +33,13 @@ glutenia-mobile/android/app/debug.keystore
 Thumbs.db
 .vscode/
 .idea/
+
+# Internal working docs (not for public/professional viewing)
+PROJECT_ANALYSIS.md
+internship-report-tools-analysis.md
+glutenia-antigravity-polish-prompt.md
+glutenia-gamification-report.md
+glutenia-gamification-context.md
+glutenia-gamification-report-prism-prompt.md
+glutenia-gamification-screenshot-guide.md
+glutenia-gamification-images/
