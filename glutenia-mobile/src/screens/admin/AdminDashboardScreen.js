@@ -403,7 +403,10 @@ export default function AdminDashboardScreen({ navigation }) {
                           {customerName}
                         </Text>
                         <Text style={styles.itemMeta}>
-                          {itemCount} {t("admin.orders.itemsSuffix", "item(s)")}
+                          {t("admin.dashboard.itemsCount", "{{count}} item(s)", {
+                            count: itemCount,
+                            defaultValue: `${itemCount} item(s)`,
+                          })}
                         </Text>
                       </View>
                       <Text style={styles.recentOrderPrice}>
