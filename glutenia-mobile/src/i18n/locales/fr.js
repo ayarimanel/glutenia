@@ -113,6 +113,7 @@ export default {
     free: "Gratuit",
     newcomer: "Débutant",
     xpHint: "{{current}} / {{next}} XP — Niveau {{nextLevel}}",
+    progressHint: "Le niveau reflète votre activité dans l'application. Le titre et le parcours reflètent ce que vous nous avez partagé sur vous.",
     roles: {
       warrior: {
         label: "Guerrier Sans Gluten",
@@ -319,7 +320,7 @@ export default {
       nameLabel: "Nom complet",
       namePlaceholder: "Votre nom",
       emailLabel: "E-mail",
-      phoneLabel: "Numéro de téléphone",
+      phoneLabel: "Numéro de téléphone (facultatif)",
       phonePlaceholder: "Votre numéro de téléphone",
       phoneInvalid: "Entrez un numéro de téléphone valide.",
       save: "Enregistrer",
@@ -685,6 +686,9 @@ export default {
     pinError: "Impossible de mettre à jour le badge",
     tryAgain: "Veuillez réessayer.",
     inProgress: "En cours",
+    summary: "{{earned}} badges sur {{total}} obtenus",
+    earnedSection: "Obtenus",
+    lockedSection: "Verrouillés",
     categories: {
       journey: "Parcours",
       scanner: "Scanner",
@@ -692,6 +696,99 @@ export default {
       safety: "Sécurité",
       shopper: "Acheteur",
       streak: "Série",
+    },
+    tierNames: {
+      bronze: "Bronze",
+      silver: "Argent",
+      gold: "Or",
+      platinum: "Platine",
+    },
+    detail: {
+      howToUnlock: "Comment le débloquer",
+      progress: "Progression",
+      dateEarned: "Obtenu le {{date}}",
+      locked: "Verrouillé",
+      ctaScan: "Scanner un produit",
+      ctaLabelScan: "Vérifier une étiquette",
+      ctaEvents: "Découvrir les événements",
+      ctaShop: "Faire des achats",
+    },
+    catalog: {
+      first_scan: {
+        name: "Premier scan",
+        description: "Vous avez scanné votre tout premier produit sur Glutenia.",
+        requirement: "Scanner 1 produit",
+      },
+      ten_scans: {
+        name: "10 scans",
+        description: "Vous avez scanné dix produits pour vérifier le gluten.",
+        requirement: "Scanner 10 produits",
+      },
+      fifty_scans: {
+        name: "50 scans",
+        description: "Scanner est devenu une habitude pour vous.",
+        requirement: "Scanner 50 produits",
+      },
+      hundred_scans: {
+        name: "100 scans",
+        description: "Un véritable expert du scan — rien ne vous échappe.",
+        requirement: "Scanner 100 produits",
+      },
+      label_master: {
+        name: "Maître des étiquettes",
+        description: "Vous avez vérifié des étiquettes 50 fois pour rester en sécurité.",
+        requirement: "Vérifier les ingrédients 50 fois",
+      },
+      event_attendee: {
+        name: "Participant",
+        description: "Vous avez rejoint votre premier événement communautaire Glutenia.",
+        requirement: "Participer à 1 événement",
+      },
+      event_regular: {
+        name: "Habitué des événements",
+        description: "Vous êtes un visage familier des événements Glutenia.",
+        requirement: "Participer à 5 événements",
+      },
+      first_order: {
+        name: "Première commande",
+        description: "Vous avez passé votre première commande sur Glutenia.",
+        requirement: "Passer 1 commande",
+      },
+      five_orders: {
+        name: "5 commandes",
+        description: "Vous avez commandé des produits sans gluten cinq fois.",
+        requirement: "Passer 5 commandes",
+      },
+      twenty_orders: {
+        name: "20 commandes",
+        description: "Un acheteur fidèle — Glutenia fait partie de votre routine.",
+        requirement: "Passer 20 commandes",
+      },
+      streak_7: {
+        name: "Série d'une semaine",
+        description: "Vous êtes resté actif sur Glutenia 7 jours d'affilée.",
+        requirement: "Atteindre une série de 7 jours",
+      },
+      streak_30: {
+        name: "Série mensuelle",
+        description: "Un mois complet de régularité — une discipline impressionnante.",
+        requirement: "Atteindre une série de 30 jours",
+      },
+      streak_100: {
+        name: "Série centenaire",
+        description: "100 jours d'affilée. Glutenia fait désormais partie de vos habitudes.",
+        requirement: "Atteindre une série de 100 jours",
+      },
+      first_month: {
+        name: "Premier mois",
+        description: "Vous faites partie de la communauté Glutenia depuis un mois.",
+        requirement: "Être membre depuis 30 jours",
+      },
+      one_year: {
+        name: "Un an",
+        description: "Une année complète sur votre parcours sans gluten avec Glutenia.",
+        requirement: "Être membre depuis 1 an",
+      },
     },
   },
   gamification: {

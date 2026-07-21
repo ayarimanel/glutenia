@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import Screen from "../components/Screen";
 import AppIcon from "../components/AppIcon";
+import BadgeIcon from "../components/BadgeIcon";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
 import { useTheme } from "../context/ThemeContext";
@@ -249,6 +250,7 @@ export default function AccountScreen({ navigation }) {
             <Text style={styles.xpHint}>
               {t("account.xpHint", { current: totalXp, next: nextMin, nextLevel: level + 1 })}
             </Text>
+            <Text style={styles.progressHint}>{t("account.progressHint")}</Text>
           </View>
         )}
 
@@ -407,12 +409,16 @@ export default function AccountScreen({ navigation }) {
                 const badge = ub.badgeId;
                 if (!badge) return null;
                 return (
-                  <View key={String(ub._id || badge.slug)} style={styles.badgePill}>
-                    <View style={styles.badgeDot} />
-                    <Text style={styles.badgeName} numberOfLines={1}>
-                      {badge.name}
+                  <Pressable
+                    key={String(ub._id || badge.slug)}
+                    style={styles.badgeMiniWrap}
+                    onPress={() => navigation.navigate("BadgeCollection")}
+                  >
+                    <BadgeIcon badge={badge} size={44} locked={false} />
+                    <Text style={styles.badgeMiniName} numberOfLines={1}>
+                      {t(`badges.catalog.${badge.slug}.name`, { defaultValue: badge.name })}
                     </Text>
-                  </View>
+                  </Pressable>
                 );
               })}
             </View>
@@ -427,25 +433,29 @@ export default function AccountScreen({ navigation }) {
               {inProgressBadges.map((entry, idx) => {
                 const { badge, currentProgress, ratio } = entry;
                 return (
-                  <View
+                  <Pressable
                     key={badge.slug}
                     style={[styles.achRow, idx > 0 && styles.achBorder]}
+                    onPress={() => navigation.navigate("BadgeCollection")}
                   >
-                    <Text style={styles.achName} numberOfLines={1}>
-                      {badge.name}
-                    </Text>
-                    <View style={styles.achTrack}>
-                      <View
-                        style={[
-                          styles.achFill,
-                          { width: `${Math.round(Math.min(1, ratio) * 100)}%` },
-                        ]}
-                      />
+                    <BadgeIcon badge={badge} size={36} locked progressRatio={ratio} />
+                    <View style={styles.achInfo}>
+                      <Text style={styles.achName} numberOfLines={1}>
+                        {t(`badges.catalog.${badge.slug}.name`, { defaultValue: badge.name })}
+                      </Text>
+                      <View style={styles.achTrack}>
+                        <View
+                          style={[
+                            styles.achFill,
+                            { width: `${Math.round(Math.min(1, ratio) * 100)}%` },
+                          ]}
+                        />
+                      </View>
+                      <Text style={styles.achCount}>
+                        {currentProgress} / {badge.targetValue}
+                      </Text>
                     </View>
-                    <Text style={styles.achCount}>
-                      {currentProgress} / {badge.targetValue}
-                    </Text>
-                  </View>
+                  </Pressable>
                 );
               })}
             </View>
@@ -661,6 +671,13 @@ const getStyles = (colors) => StyleSheet.create({
   },
   xpFill: { height: "100%", backgroundColor: colors.primary, borderRadius: 4 },
   xpHint: { fontSize: 12, color: colors.textMuted, textAlign: "right" },
+  progressHint: {
+    fontSize: 11,
+    color: colors.textMuted,
+    marginTop: 8,
+    lineHeight: 15,
+    fontStyle: "italic",
+  },
 
   // ── C. Stats ─────────────────────────────────────────────────────────────
   statsCard: {
@@ -754,21 +771,17 @@ const getStyles = (colors) => StyleSheet.create({
   badgesWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: 14,
     marginHorizontal: Spacing.md,
   },
-  badgePill: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.surface,
-    borderRadius: Radius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    gap: 6,
-    ...Shadow,
+  badgeMiniWrap: { alignItems: "center", width: 64 },
+  badgeMiniName: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: colors.textDark,
+    marginTop: 6,
+    textAlign: "center",
   },
-  badgeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
-  badgeName: { fontSize: 13, fontWeight: "600", color: colors.textDark, maxWidth: 140 },
 
   // ── G. Badges in progress ────────────────────────────────────────────────
   achCard: {
@@ -778,8 +791,9 @@ const getStyles = (colors) => StyleSheet.create({
     overflow: "hidden",
     ...Shadow,
   },
-  achRow: { padding: Spacing.md },
+  achRow: { flexDirection: "row", alignItems: "center", padding: Spacing.md, gap: Spacing.md },
   achBorder: { borderTopWidth: 1, borderTopColor: colors.divider },
+  achInfo: { flex: 1 },
   achName: { fontSize: 14, fontWeight: "600", color: colors.textDark, marginBottom: 8 },
   achTrack: {
     height: 6,

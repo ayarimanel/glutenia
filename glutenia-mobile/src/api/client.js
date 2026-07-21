@@ -162,8 +162,6 @@ export const api = {
     request("/gamification/profile", { token }),
   getHomeGamification: (token) =>
     request("/gamification/home", { token }),
-  getMyBadges: (token) =>
-    request("/gamification/me/badges", { token }),
   updateBadgePin: (token, badgeId, isPinned) =>
     request(`/gamification/badges/${badgeId}/pin`, {
       method: "PUT",

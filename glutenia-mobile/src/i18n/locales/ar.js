@@ -115,6 +115,7 @@ export default {
     free: "مجاني",
     newcomer: "مبتدئ",
     xpHint: "{{current}} / {{next}} نقاط — المستوى {{nextLevel}}",
+    progressHint: "المستوى يعكس نشاطك في التطبيق، بينما اللقب والرحلة يعكسان ما أخبرتنا به عن نفسك.",
     roles: {
       warrior: {
         label: "محارب بدون غلوتين",
@@ -321,7 +322,7 @@ export default {
       nameLabel: "الاسم الكامل",
       namePlaceholder: "اسمك",
       emailLabel: "البريد الإلكتروني",
-      phoneLabel: "رقم الهاتف",
+      phoneLabel: "رقم الهاتف (اختياري)",
       phonePlaceholder: "رقم هاتفك",
       phoneInvalid: "أدخل رقم هاتف صحيح.",
       save: "حفظ التغييرات",
@@ -687,6 +688,9 @@ export default {
     pinError: "تعذّر تحديث الشارة",
     tryAgain: "يرجى المحاولة مرة أخرى.",
     inProgress: "قيد التقدم",
+    summary: "تم الحصول على {{earned}} من {{total}} شارة",
+    earnedSection: "المكتسبة",
+    lockedSection: "المقفلة",
     categories: {
       journey: "الرحلة",
       scanner: "الماسح",
@@ -694,6 +698,99 @@ export default {
       safety: "السلامة",
       shopper: "المتسوق",
       streak: "التتابع",
+    },
+    tierNames: {
+      bronze: "برونزية",
+      silver: "فضية",
+      gold: "ذهبية",
+      platinum: "بلاتينية",
+    },
+    detail: {
+      howToUnlock: "كيفية الفتح",
+      progress: "التقدم",
+      dateEarned: "تم الحصول عليها في {{date}}",
+      locked: "مقفلة",
+      ctaScan: "اذهب وامسح منتجًا",
+      ctaLabelScan: "تحقق من ملصق المكونات",
+      ctaEvents: "تصفح الفعاليات",
+      ctaShop: "ابدأ التسوق",
+    },
+    catalog: {
+      first_scan: {
+        name: "أول مسح",
+        description: "لقد مسحت أول منتج لك على Glutenia.",
+        requirement: "امسح منتجًا واحدًا",
+      },
+      ten_scans: {
+        name: "10 عمليات مسح",
+        description: "لقد مسحت عشرة منتجات للتحقق من الغلوتين.",
+        requirement: "امسح 10 منتجات",
+      },
+      fifty_scans: {
+        name: "50 عملية مسح",
+        description: "أصبح المسح جزءًا من روتينك.",
+        requirement: "امسح 50 منتجًا",
+      },
+      hundred_scans: {
+        name: "100 عملية مسح",
+        description: "خبير مسح حقيقي — لا يفوتك شيء.",
+        requirement: "امسح 100 منتج",
+      },
+      label_master: {
+        name: "خبير الملصقات",
+        description: "لقد تحققت من ملصقات المكونات 50 مرة للبقاء بأمان.",
+        requirement: "تحقق من المكونات 50 مرة",
+      },
+      event_attendee: {
+        name: "حاضر الفعالية",
+        description: "لقد انضممت إلى أول فعالية مجتمعية على Glutenia.",
+        requirement: "احضر فعالية واحدة",
+      },
+      event_regular: {
+        name: "مواظب على الفعاليات",
+        description: "أصبحت وجهًا مألوفًا في فعاليات Glutenia.",
+        requirement: "احضر 5 فعاليات",
+      },
+      first_order: {
+        name: "أول طلب",
+        description: "لقد قمت بأول طلب لك على Glutenia.",
+        requirement: "قم بطلب واحد",
+      },
+      five_orders: {
+        name: "5 طلبات",
+        description: "لقد طلبت منتجات خالية من الغلوتين خمس مرات.",
+        requirement: "قم بـ 5 طلبات",
+      },
+      twenty_orders: {
+        name: "20 طلبًا",
+        description: "متسوق مخلص — أصبحت Glutenia جزءًا من روتينك.",
+        requirement: "قم بـ 20 طلبًا",
+      },
+      streak_7: {
+        name: "سلسلة أسبوع",
+        description: "بقيت نشطًا على Glutenia 7 أيام متتالية.",
+        requirement: "حقق سلسلة 7 أيام",
+      },
+      streak_30: {
+        name: "سلسلة شهرية",
+        description: "شهر كامل من الانتظام — انضباط مثير للإعجاب.",
+        requirement: "حقق سلسلة 30 يومًا",
+      },
+      streak_100: {
+        name: "سلسلة مئوية",
+        description: "100 يوم متتالٍ. أصبحت Glutenia عادة راسخة لديك.",
+        requirement: "حقق سلسلة 100 يوم",
+      },
+      first_month: {
+        name: "الشهر الأول",
+        description: "أنت جزء من مجتمع Glutenia منذ شهر.",
+        requirement: "كن عضوًا لمدة 30 يومًا",
+      },
+      one_year: {
+        name: "سنة كاملة",
+        description: "سنة كاملة في رحلتك الخالية من الغلوتين مع Glutenia.",
+        requirement: "كن عضوًا لمدة سنة واحدة",
+      },
     },
   },
   gamification: {

@@ -1,24 +1,6 @@
 const Badge = require("../models/Badge");
 const UserBadge = require("../models/UserBadge");
-const UserGamification = require("../models/UserGamification");
 const gamificationService = require("../services/gamificationService");
-
-exports.getMyGamification = async (req, res, next) => {
-  try {
-    const gamification = await UserGamification.findOne({ userId: req.user.id });
-
-    if (!gamification) {
-      return res.status(404).json({
-        success: false,
-        message: "Gamification record not found. Complete onboarding first.",
-      });
-    }
-
-    return res.json({ success: true, data: gamification });
-  } catch (error) {
-    return next(error);
-  }
-};
 
 exports.getHomeGamification = async (req, res, next) => {
   try {
@@ -30,41 +12,6 @@ exports.getHomeGamification = async (req, res, next) => {
       });
     }
     return res.json({ success: true, data });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-exports.getMyBadges = async (req, res, next) => {
-  try {
-    const userBadges = await UserBadge.find({ userId: req.user.id })
-      .populate("badgeId")
-      .sort({ isPinned: -1, earnedAt: -1 });
-
-    return res.json({ success: true, data: userBadges });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-exports.pinBadge = async (req, res, next) => {
-  try {
-    const userBadge = await UserBadge.findOne({
-      userId: req.user.id,
-      badgeId: req.params.badgeId,
-    });
-
-    if (!userBadge) {
-      return res.status(404).json({
-        success: false,
-        message: "Badge not found or not yet earned",
-      });
-    }
-
-    userBadge.isPinned = !userBadge.isPinned;
-    await userBadge.save();
-
-    return res.json({ success: true, data: userBadge });
   } catch (error) {
     return next(error);
   }

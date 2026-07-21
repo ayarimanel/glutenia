@@ -255,30 +255,37 @@ async function getProfileGamificationData(userId) {
     const pinnedBadges = earnedBadges.filter((ub) => ub.isPinned);
 
     const earnedBadgeIds = new Set(earnedBadges.map((ub) => ub.badgeId?._id?.toString()).filter(Boolean));
-    const lockedCatalog = await Badge.find({ _id: { $nin: [...earnedBadgeIds] } });
+    const lockedCatalog = await Badge.find({ _id: { $nin: [...earnedBadgeIds] } }).sort({
+      category: 1,
+      targetValue: 1,
+    });
 
-    const inProgressBadges = lockedCatalog
-      .map((badge) => {
-        const currentProgress = badge.targetMetric === "accountAgeDays"
-          ? Math.floor((Date.now() - new Date(user?.createdAt ?? Date.now())) / 86400000)
-          : gamification[badge.targetMetric] ?? 0;
-        return {
-          badge: {
-            slug: badge.slug,
-            name: badge.name,
-            description: badge.description,
-            category: badge.category,
-            targetValue: badge.targetValue,
-            xpReward: badge.xpReward,
-          },
-          currentProgress: Math.min(currentProgress, badge.targetValue),
-          ratio: badge.targetValue > 0 ? currentProgress / badge.targetValue : 0,
-        };
-      })
-      .sort((a, b) => b.ratio - a.ratio)
-      .slice(0, 3);
+    const lockedBadgeProgress = lockedCatalog.map((badge) => {
+      const currentProgress = badge.targetMetric === "accountAgeDays"
+        ? Math.floor((Date.now() - new Date(user?.createdAt ?? Date.now())) / 86400000)
+        : gamification[badge.targetMetric] ?? 0;
+      return {
+        badge: {
+          slug: badge.slug,
+          name: badge.name,
+          description: badge.description,
+          category: badge.category,
+          targetMetric: badge.targetMetric,
+          targetValue: badge.targetValue,
+          xpReward: badge.xpReward,
+        },
+        currentProgress: Math.min(currentProgress, badge.targetValue),
+        ratio: badge.targetValue > 0 ? currentProgress / badge.targetValue : 0,
+      };
+    });
 
-    return { gamification: gamificationWithLevel, earnedBadges, pinnedBadges, inProgressBadges };
+    // Top 3 nearest to completion, for compact previews (e.g. AccountScreen).
+    const inProgressBadges = [...lockedBadgeProgress].sort((a, b) => b.ratio - a.ratio).slice(0, 3);
+
+    // Every locked badge with its progress, catalog-ordered, for the full badge grid.
+    const lockedBadges = lockedBadgeProgress;
+
+    return { gamification: gamificationWithLevel, earnedBadges, pinnedBadges, inProgressBadges, lockedBadges };
   } catch (err) {
     console.error("[gamificationService] getProfileGamificationData error:", err);
     return null;
