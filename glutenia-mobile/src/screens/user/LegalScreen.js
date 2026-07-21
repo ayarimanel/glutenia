@@ -3,10 +3,13 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function LegalScreen({ route, navigation }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [section, setSection] = useState(route.params?.section === "terms" ? "terms" : "privacy");
 
   const sections = t(`legal.${section}.sections`, { returnObjects: true });
@@ -15,7 +18,7 @@ export default function LegalScreen({ route, navigation }) {
     <Screen>
       <View style={styles.navBar}>
         <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <AppIcon name="arrow-back" size={22} color={Colors.textDark} />
+          <AppIcon name="arrow-back" size={22} color={colors.textDark} />
         </Pressable>
         <Text style={styles.navTitle}>{t("legal.title")}</Text>
         <View style={styles.navSpacer} />
@@ -57,7 +60,7 @@ export default function LegalScreen({ route, navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   navBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -76,14 +79,14 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 17,
     fontWeight: "800",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
   navSpacer: { width: 40 },
 
   tabRow: {
     flexDirection: "row",
     marginHorizontal: Spacing.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.pill,
     padding: 4,
     gap: 4,
@@ -97,12 +100,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tabActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   tabText: {
     fontSize: 14,
     fontWeight: "700",
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   tabTextActive: {
     color: "#fff",
@@ -114,7 +117,7 @@ const styles = StyleSheet.create({
 
   updated: {
     fontSize: 12,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontWeight: "600",
     marginBottom: Spacing.md,
   },
@@ -125,12 +128,12 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 15,
     fontWeight: "800",
-    color: Colors.textDark,
+    color: colors.textDark,
     marginBottom: 6,
   },
   body: {
     fontSize: 14,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     lineHeight: 21,
   },
 });

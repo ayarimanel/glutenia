@@ -17,7 +17,8 @@ import AppIcon from "../../components/AppIcon";
 import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { notifyGamification } from "../../context/GamificationContext";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 const TAB_BAR_HEIGHT = 66;
 const IDLE = "idle";
@@ -27,6 +28,8 @@ const RESULT = "result";
 export default function LabelScanScreen({ navigation }) {
   const { t } = useTranslation();
   const { user, token } = useAuth();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const insets = useSafeAreaInsets();
   const [screenState, setScreenState] = useState(IDLE);
   const [result, setResult] = useState(null);
@@ -72,10 +75,10 @@ export default function LabelScanScreen({ navigation }) {
   };
 
   const VERDICT_COLOR = {
-    safe: Colors.primary,
-    caution: Colors.warning,
-    unsafe: Colors.danger,
-    error: Colors.textMuted,
+    safe: colors.primary,
+    caution: colors.warning,
+    unsafe: colors.danger,
+    error: colors.textMuted,
   };
 
   const VERDICT_ICON = {
@@ -91,7 +94,7 @@ export default function LabelScanScreen({ navigation }) {
       <View style={styles.root}>
         <AppHeader userName={user?.name ?? ""} safeTop />
         <View style={[styles.center, { paddingBottom: bottomPad }]}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.headingText}>{t("labelScan.analyzing")}</Text>
           <Text style={styles.bodyText}>{t("labelScan.analyzingHint")}</Text>
         </View>
@@ -101,7 +104,7 @@ export default function LabelScanScreen({ navigation }) {
 
   // ── RESULT ───────────────────────────────────────────────────────────────
   if (screenState === RESULT && result) {
-    const color = VERDICT_COLOR[result.verdict] ?? Colors.textMuted;
+    const color = VERDICT_COLOR[result.verdict] ?? colors.textMuted;
     const icon = VERDICT_ICON[result.verdict] ?? "info";
 
     const titleKey = {
@@ -134,7 +137,7 @@ export default function LabelScanScreen({ navigation }) {
             </Text>
             {result.confidence === "low" && (
               <View style={styles.lowConfidenceBanner}>
-                <AppIcon name="info" size={14} color={Colors.warning} />
+                <AppIcon name="info" size={14} color={colors.warning} />
                 <Text style={styles.lowConfidenceText}>
                   {t("labelScan.lowConfidence")}
                 </Text>
@@ -148,7 +151,7 @@ export default function LabelScanScreen({ navigation }) {
               <Text style={styles.sectionTitle}>{t("labelScan.flaggedTitle")}</Text>
               {result.flagged.map((item, i) => (
                 <View key={i} style={styles.flaggedItem}>
-                  <AppIcon name="close-circle" size={16} color={Colors.danger} />
+                  <AppIcon name="close-circle" size={16} color={colors.danger} />
                   <View style={styles.flaggedBody}>
                     <Text style={styles.flaggedIngredient}>{item.ingredient}</Text>
                     <Text style={styles.flaggedReason}>{item.reason}</Text>
@@ -165,7 +168,7 @@ export default function LabelScanScreen({ navigation }) {
               <View style={styles.safeRow}>
                 {result.safe_highlights.map((item, i) => (
                   <View key={i} style={styles.safeChip}>
-                    <AppIcon name="checkmark" size={12} color={Colors.primary} />
+                    <AppIcon name="checkmark" size={12} color={colors.primary} />
                     <Text style={styles.safeChipText}>{item}</Text>
                   </View>
                 ))}
@@ -205,13 +208,13 @@ export default function LabelScanScreen({ navigation }) {
       <AppHeader userName={user?.name ?? ""} safeTop />
       <View style={[styles.center, { paddingBottom: bottomPad }]}>
         <View style={styles.iconCircle}>
-          <AppIcon name="scan" size={48} color={Colors.primary} />
+          <AppIcon name="scan" size={48} color={colors.primary} />
         </View>
         <Text style={styles.headingText}>{t("labelScan.title")}</Text>
         <Text style={styles.subtitle}>{t("labelScan.subtitle")}</Text>
         <Text style={styles.bodyText}>{t("labelScan.instructions")}</Text>
         <View style={styles.tipBox}>
-          <AppIcon name="info" size={15} color={Colors.warning} />
+          <AppIcon name="info" size={15} color={colors.warning} />
           <Text style={styles.tipText}>{t("labelScan.tip")}</Text>
         </View>
         <Pressable style={styles.primaryBtn} onPress={handleTakePhoto}>
@@ -223,10 +226,10 @@ export default function LabelScanScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   center: {
     flex: 1,
@@ -243,7 +246,7 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Spacing.sm,
@@ -251,18 +254,18 @@ const styles = StyleSheet.create({
   headingText: {
     fontSize: 22,
     fontWeight: "900",
-    color: Colors.textDark,
+    color: colors.textDark,
     textAlign: "center",
   },
   subtitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: Colors.secondary,
+    color: colors.secondary,
     textAlign: "center",
   },
   bodyText: {
     fontSize: 14,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: "center",
     lineHeight: 22,
   },
@@ -287,7 +290,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.sm,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: Radius.pill,
     paddingVertical: 14,
     paddingHorizontal: Spacing.xl,
@@ -306,12 +309,12 @@ const styles = StyleSheet.create({
     alignSelf: "stretch",
   },
   secondaryBtnText: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 14,
     fontWeight: "600",
   },
   verdictCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.xl,
     borderWidth: 2,
     padding: Spacing.lg,
@@ -345,7 +348,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 15,
     fontWeight: "800",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
   flaggedItem: {
     flexDirection: "row",
@@ -362,11 +365,11 @@ const styles = StyleSheet.create({
   flaggedIngredient: {
     fontSize: 14,
     fontWeight: "700",
-    color: Colors.danger,
+    color: colors.danger,
   },
   flaggedReason: {
     fontSize: 13,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     lineHeight: 18,
   },
   safeRow: {
@@ -378,7 +381,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     borderRadius: Radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -386,23 +389,23 @@ const styles = StyleSheet.create({
   safeChipText: {
     fontSize: 13,
     fontWeight: "600",
-    color: Colors.primary,
+    color: colors.primary,
   },
   rawTextBox: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.md,
     padding: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   rawText: {
     fontSize: 12,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     lineHeight: 18,
   },
   disclaimer: {
     fontSize: 12,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: "center",
     lineHeight: 18,
     fontStyle: "italic",

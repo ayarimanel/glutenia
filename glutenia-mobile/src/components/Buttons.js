@@ -1,8 +1,11 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import AppIcon from "./AppIcon";
-import { Colors, Radius } from "../theme/colors";
+import { Radius } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 
 export function PrimaryButton({ title, icon, loading, disabled, onPress, style }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   return (
     <Pressable
       disabled={disabled || loading}
@@ -15,10 +18,10 @@ export function PrimaryButton({ title, icon, loading, disabled, onPress, style }
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={Colors.surface} />
+        <ActivityIndicator color={colors.surface} />
       ) : (
         <View style={styles.buttonContent}>
-          {icon ? <AppIcon name={icon} size={18} color={Colors.surface} /> : null}
+          {icon ? <AppIcon name={icon} size={18} color={colors.surface} /> : null}
           <Text style={styles.primaryText}>{title}</Text>
         </View>
       )}
@@ -27,6 +30,8 @@ export function PrimaryButton({ title, icon, loading, disabled, onPress, style }
 }
 
 export function SecondaryButton({ title, icon, disabled, onPress, style }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   return (
     <Pressable
       disabled={disabled}
@@ -39,29 +44,31 @@ export function SecondaryButton({ title, icon, disabled, onPress, style }) {
       ]}
     >
       <View style={styles.buttonContent}>
-        {icon ? <AppIcon name={icon} size={18} color={Colors.secondary} /> : null}
+        {icon ? <AppIcon name={icon} size={18} color={colors.secondary} /> : null}
         <Text style={styles.secondaryText}>{title}</Text>
       </View>
     </Pressable>
   );
 }
 
-export function IconButton({ icon, onPress, color = Colors.textDark, style }) {
+export function IconButton({ icon, onPress, color, style }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [styles.icon, pressed && styles.pressed, style]}
     >
-      <AppIcon name={icon} size={20} color={color} />
+      <AppIcon name={icon} size={20} color={color ?? colors.textDark} />
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   primary: {
     minHeight: 52,
     borderRadius: Radius.md,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 18,
@@ -69,7 +76,7 @@ const styles = StyleSheet.create({
   secondary: {
     minHeight: 48,
     borderRadius: Radius.md,
-    backgroundColor: Colors.secondaryPale,
+    backgroundColor: colors.secondaryPale,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 16,
@@ -78,7 +85,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -89,12 +96,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   primaryText: {
-    color: Colors.surface,
+    color: colors.surface,
     fontSize: 15,
     fontWeight: "700",
   },
   secondaryText: {
-    color: Colors.secondary,
+    color: colors.secondary,
     fontSize: 15,
     fontWeight: "700",
   },

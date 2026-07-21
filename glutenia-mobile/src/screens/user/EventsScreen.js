@@ -16,12 +16,15 @@ import AppHeader from "../../components/AppHeader";
 import EmptyState from "../../components/EmptyState";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 const CATEGORY_KEYS = ["all", "meetups", "classes", "markets", "workshops"];
 
 export default function EventsScreen({ navigation }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { user, token } = useAuth();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -92,7 +95,7 @@ export default function EventsScreen({ navigation }) {
         {/* Loading */}
         {loading && events.length === 0 ? (
           <View style={styles.loadingWrap}>
-            <ActivityIndicator color={Colors.primary} />
+            <ActivityIndicator color={colors.primary} />
           </View>
         ) : (
           <FlatList
@@ -121,18 +124,18 @@ export default function EventsScreen({ navigation }) {
                 <View style={styles.cardBody}>
                   <Text style={styles.cardTitle}>{item.title}</Text>
                   <View style={styles.cardMeta}>
-                    <AppIcon name="calendar" size={13} color={Colors.textMuted} />
+                    <AppIcon name="calendar" size={13} color={colors.textMuted} />
                     <Text style={styles.cardMetaText}>{item.date}</Text>
                   </View>
                   <View style={styles.cardFooter}>
                     <View style={styles.cardMeta}>
-                      <AppIcon name="location" size={13} color={Colors.textMuted} />
+                      <AppIcon name="location" size={13} color={colors.textMuted} />
                       <Text style={styles.cardMetaText} numberOfLines={1}>
                         {item.location}
                       </Text>
                     </View>
                     <View style={styles.goingBadge}>
-                      <AppIcon name="people" size={13} color={Colors.primary} />
+                      <AppIcon name="people" size={13} color={colors.primary} />
                       <Text style={styles.goingText}>
                         {t("events.going", { count: item.attendeeCount })}
                       </Text>
@@ -148,7 +151,7 @@ export default function EventsScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: Spacing.md,
@@ -160,7 +163,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: "900",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
   loadingWrap: {
     flex: 1,
@@ -179,21 +182,21 @@ const styles = StyleSheet.create({
   filterPill: {
     height: 36,
     borderRadius: Radius.pill,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: Colors.divider,
+    borderColor: colors.divider,
     alignItems: "center",
     justifyContent: "center",
   },
   filterPillActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   filterText: {
     fontSize: 13,
     fontWeight: "800",
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   filterTextActive: {
     color: "#fff",
@@ -204,7 +207,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.xl,
     overflow: "hidden",
     ...Shadow,
@@ -221,7 +224,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 12,
     left: 12,
-    backgroundColor: Colors.secondary,
+    backgroundColor: colors.secondary,
     borderRadius: Radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 5,
@@ -238,7 +241,7 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 17,
     fontWeight: "900",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
   cardMeta: {
     flexDirection: "row",
@@ -247,7 +250,7 @@ const styles = StyleSheet.create({
   },
   cardMetaText: {
     fontSize: 13,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     flex: 1,
   },
   cardFooter: {
@@ -263,6 +266,6 @@ const styles = StyleSheet.create({
   goingText: {
     fontSize: 13,
     fontWeight: "800",
-    color: Colors.primary,
+    color: colors.primary,
   },
 });

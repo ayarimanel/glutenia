@@ -15,7 +15,8 @@ import Field from "../../components/Field";
 import AppIcon from "../../components/AppIcon";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
-import { Colors, Radius, Spacing } from "../../theme/colors";
+import { Radius, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 const CATEGORIES = ["Meetups", "Classes", "Markets", "Workshops"];
 
@@ -31,6 +32,8 @@ const PRESET_COLORS = [
 
 export default function CreateEventScreen({ navigation, route }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { token } = useAuth();
   const eventId = route.params?.eventId;
 
@@ -123,7 +126,7 @@ export default function CreateEventScreen({ navigation, route }) {
           {/* Header */}
           <View style={styles.header}>
             <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
-              <AppIcon name="arrow-back" size={20} color={Colors.textDark} />
+              <AppIcon name="arrow-back" size={20} color={colors.textDark} />
             </Pressable>
             <Text style={styles.headerTitle}>
               {eventId ? t("createEvent.titleEdit") : t("createEvent.title")}
@@ -245,7 +248,7 @@ export default function CreateEventScreen({ navigation, route }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     padding: Spacing.md,
     gap: Spacing.md,
@@ -261,20 +264,20 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: "900",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
   fieldWrap: {
     gap: 8,
   },
   fieldLabel: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 13,
     fontWeight: "700",
   },
@@ -286,19 +289,19 @@ const styles = StyleSheet.create({
   pill: {
     borderRadius: Radius.pill,
     borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     paddingHorizontal: 16,
     paddingVertical: 9,
   },
   pillActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   pillText: {
     fontSize: 13,
     fontWeight: "800",
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   pillTextActive: {
     color: "#fff",
@@ -308,8 +311,8 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: Radius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -324,10 +327,10 @@ const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   colorSwatchActive: {
-    borderColor: Colors.primary,
+    borderColor: colors.primary,
   },
   errorText: {
-    color: Colors.danger,
+    color: colors.danger,
     fontSize: 12,
     fontWeight: "700",
   },
@@ -336,7 +339,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: Radius.lg,
     paddingVertical: 16,
     marginTop: Spacing.sm,

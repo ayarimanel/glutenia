@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Animated, ScrollView, StyleSheet, Text, View } from "react-native";
 import Svg, { Circle, Defs, G, Line as SvgLine, LinearGradient, Path, Stop } from "react-native-svg";
-import { Colors } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 const CHART_HEIGHT = 120;
 const TOP_PADDING = 12;
@@ -22,7 +22,10 @@ function buildSmoothPath(points) {
   return d;
 }
 
-export default function CurveChartView({ data, color = Colors.primary, labelEvery = 2 }) {
+export default function CurveChartView({ data, color, labelEvery = 2 }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
+  const lineColor = color ?? colors.primary;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(10)).current;
 
@@ -79,7 +82,7 @@ export default function CurveChartView({ data, color = Colors.primary, labelEver
                   y1={y}
                   x2={width - H_PADDING}
                   y2={y}
-                  stroke={Colors.divider}
+                  stroke={colors.divider}
                   strokeWidth={1}
                   strokeDasharray="4 4"
                   opacity={0.6}
@@ -93,7 +96,7 @@ export default function CurveChartView({ data, color = Colors.primary, labelEver
               y1={CHART_HEIGHT}
               x2={width - H_PADDING}
               y2={CHART_HEIGHT}
-              stroke={Colors.divider}
+              stroke={colors.divider}
               strokeWidth={1.2}
             />
 
@@ -115,7 +118,7 @@ export default function CurveChartView({ data, color = Colors.primary, labelEver
                   cx={point.x}
                   cy={point.y}
                   r={3.2}
-                  fill={Colors.surface}
+                  fill={colors.surface}
                   stroke={color}
                   strokeWidth={2}
                 />
@@ -138,7 +141,7 @@ export default function CurveChartView({ data, color = Colors.primary, labelEver
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   labelsRow: {
     height: 16,
   },
@@ -147,7 +150,7 @@ const styles = StyleSheet.create({
     width: 32,
     fontSize: 9,
     fontWeight: "600",
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: "center",
   },
 });

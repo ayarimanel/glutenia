@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import WheelPicker from "./WheelPicker";
-import { Colors, Radius, Spacing } from "../theme/colors";
+import { Radius, Spacing } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
 const MINUTES = ["00", "15", "30", "45"];
@@ -16,6 +17,8 @@ export default function TimePickerModal({
   doneLabel,
   cancelLabel,
 }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [hourIndex, setHourIndex] = useState(0);
   const [minuteIndex, setMinuteIndex] = useState(0);
 
@@ -57,7 +60,7 @@ export default function TimePickerModal({
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
@@ -68,13 +71,13 @@ const styles = StyleSheet.create({
   sheet: {
     width: "100%",
     maxWidth: 320,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.lg,
     padding: Spacing.md,
     gap: Spacing.md,
   },
   title: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 15,
     fontWeight: "800",
     textAlign: "center",
@@ -86,7 +89,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   colon: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 20,
     fontWeight: "800",
   },
@@ -98,23 +101,23 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: Radius.md,
     borderWidth: 1,
-    borderColor: Colors.divider,
+    borderColor: colors.divider,
     paddingVertical: 12,
     alignItems: "center",
   },
   cancelText: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontWeight: "800",
   },
   confirmBtn: {
     flex: 1,
     borderRadius: Radius.md,
-    backgroundColor: Colors.secondary,
+    backgroundColor: colors.secondary,
     paddingVertical: 12,
     alignItems: "center",
   },
   confirmText: {
-    color: Colors.surface,
+    color: colors.surface,
     fontWeight: "800",
   },
 });

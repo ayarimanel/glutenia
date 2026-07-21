@@ -4,7 +4,8 @@ import { useNavigation } from "@react-navigation/native";
 import AppIcon from "./AppIcon";
 import { useCart } from "../context/CartContext";
 import { useNotifications } from "../context/NotificationContext";
-import { Colors, Shadow, Spacing } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
+import { Shadow, Spacing } from "../theme/colors";
 
 /**
  * AppHeader — global identity bar for main tab screens (not Profile).
@@ -20,6 +21,8 @@ export default function AppHeader({ userName, avatarUri, onCartPress, safeTop = 
   const navigation = useNavigation();
   const { count } = useCart();
   const { unreadCount } = useNotifications() ?? {};
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
 
   return (
     <View style={[styles.container, safeTop && { paddingTop: insets.top + 12 }]}>
@@ -30,7 +33,7 @@ export default function AppHeader({ userName, avatarUri, onCartPress, safeTop = 
             <Image source={{ uri: avatarUri }} style={styles.avatar} />
           ) : (
             <View style={styles.avatarFallback}>
-              <AppIcon name="person" size={22} color={Colors.primary} />
+              <AppIcon name="person" size={22} color={colors.primary} />
             </View>
           )}
           <View style={styles.shieldBadge}>
@@ -46,7 +49,7 @@ export default function AppHeader({ userName, avatarUri, onCartPress, safeTop = 
           style={styles.iconBtn}
           onPress={() => navigation.navigate("Notifications")}
         >
-          <AppIcon name="bell" size={24} color={Colors.primary} />
+          <AppIcon name="bell" size={24} color={colors.primary} />
           {unreadCount > 0 && (
             <View style={styles.badge}>
               <Text style={styles.badgeText}>{unreadCount}</Text>
@@ -54,7 +57,7 @@ export default function AppHeader({ userName, avatarUri, onCartPress, safeTop = 
           )}
         </Pressable>
         <Pressable style={styles.iconBtn} onPress={onCartPress}>
-          <AppIcon name="basket" size={26} color={Colors.primary} />
+          <AppIcon name="basket" size={26} color={colors.primary} />
           {count > 0 && (
             <View style={styles.badge}>
               <Text style={styles.badgeText}>{count}</Text>
@@ -66,9 +69,9 @@ export default function AppHeader({ userName, avatarUri, onCartPress, safeTop = 
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -100,7 +103,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -111,16 +114,16 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1.5,
-    borderColor: Colors.surface,
+    borderColor: colors.surface,
   },
   name: {
     fontSize: 16,
     fontWeight: "600",
-    color: Colors.textDark,
+    color: colors.textDark,
     flex: 1,
   },
   rightRow: {
@@ -142,13 +145,13 @@ const styles = StyleSheet.create({
     minWidth: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: Colors.secondary,
+    backgroundColor: colors.secondary,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 4,
   },
   badgeText: {
-    color: Colors.surface,
+    color: colors.surface,
     fontSize: 10,
     fontWeight: "900",
   },

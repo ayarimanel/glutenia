@@ -8,7 +8,8 @@ import BarChartView from "../../components/charts/BarChartView";
 import CurveChartView from "../../components/charts/CurveChartView";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
 
 const ROLE_ORDER = ["customer", "professional", "admin"];
 const ROLE_TYPE_ORDER = ["warrior", "supporter", "unset"];
@@ -33,6 +34,8 @@ const CONFIDENCE_ORDER = ["low", "medium", "high", "unset"];
 
 export default function AdminAnalyticsScreen({ navigation }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { token, logout } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -109,7 +112,7 @@ export default function AdminAnalyticsScreen({ navigation }) {
     <Screen>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} activeOpacity={0.7}>
-          <AppIcon name="arrow-back" size={22} color={Colors.textDark} />
+          <AppIcon name="arrow-back" size={22} color={colors.textDark} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t("admin.analytics.title")}</Text>
         <View style={styles.headerSpacer} />
@@ -117,7 +120,7 @@ export default function AdminAnalyticsScreen({ navigation }) {
 
       {loading && !data ? (
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       ) : error ? (
         <View style={styles.centered}>
@@ -134,8 +137,8 @@ export default function AdminAnalyticsScreen({ navigation }) {
             <RefreshControl
               refreshing={loading}
               onRefresh={load}
-              colors={[Colors.primary]}
-              tintColor={Colors.primary}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
             />
           }
         >
@@ -145,7 +148,7 @@ export default function AdminAnalyticsScreen({ navigation }) {
               <Text style={styles.heroValue}>{data.totalUsers}</Text>
             </View>
             <View style={styles.heroIconContainer}>
-              <AppIcon name="people" size={24} color={Colors.primary} />
+              <AppIcon name="people" size={24} color={colors.primary} />
             </View>
           </View>
 
@@ -161,7 +164,7 @@ export default function AdminAnalyticsScreen({ navigation }) {
             <View style={styles.card}>
               <BarChartView
                 data={toChartData(ROLE_ORDER, data.byRole, roleLabels)}
-                color={Colors.primary}
+                color={colors.primary}
               />
             </View>
           </View>
@@ -171,7 +174,7 @@ export default function AdminAnalyticsScreen({ navigation }) {
             <View style={styles.card}>
               <BarChartView
                 data={toChartData(ROLE_TYPE_ORDER, data.byRoleType, roleTypeLabels)}
-                color={Colors.secondary}
+                color={colors.secondary}
               />
             </View>
           </View>
@@ -181,7 +184,7 @@ export default function AdminAnalyticsScreen({ navigation }) {
             <View style={styles.card}>
               <BarChartView
                 data={toChartData(EXPERIENCE_ORDER, data.byExperienceLevel, experienceLabels)}
-                color={Colors.primary}
+                color={colors.primary}
               />
             </View>
           </View>
@@ -191,7 +194,7 @@ export default function AdminAnalyticsScreen({ navigation }) {
             <View style={styles.card}>
               <BarChartView
                 data={toChartData(GOAL_ORDER, data.byPrimaryGoal, goalLabels)}
-                color={Colors.secondary}
+                color={colors.secondary}
               />
             </View>
           </View>
@@ -201,7 +204,7 @@ export default function AdminAnalyticsScreen({ navigation }) {
             <View style={styles.card}>
               <BarChartView
                 data={toChartData(CONFIDENCE_ORDER, data.byConfidence, confidenceLabels)}
-                color={Colors.primary}
+                color={colors.primary}
               />
             </View>
           </View>
@@ -211,7 +214,7 @@ export default function AdminAnalyticsScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -224,33 +227,33 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 18,
     fontWeight: "700",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
   headerSpacer: { width: 30 },
   centered: { flex: 1, alignItems: "center", justifyContent: "center", gap: Spacing.md },
   errorText: {
     fontSize: 15,
-    color: Colors.danger,
+    color: colors.danger,
     textAlign: "center",
     paddingHorizontal: Spacing.xl,
   },
   retryBtn: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
   },
-  retryText: { color: Colors.surface, fontWeight: "700", fontSize: 14 },
+  retryText: { color: colors.surface, fontWeight: "700", fontSize: 14 },
   scroll: {
     padding: Spacing.md,
     gap: Spacing.lg,
     paddingBottom: 48,
   },
   heroCard: {
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     borderRadius: Radius.lg,
     borderWidth: 1.5,
-    borderColor: Colors.primaryLight,
+    borderColor: colors.primaryLight,
     padding: Spacing.md,
     flexDirection: "row",
     alignItems: "center",
@@ -263,25 +266,25 @@ const styles = StyleSheet.create({
   heroLabel: {
     fontSize: 12,
     fontWeight: "800",
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   heroValue: {
     fontSize: 32,
     fontWeight: "900",
-    color: Colors.textDark,
+    color: colors.textDark,
     marginTop: 4,
   },
   heroIconContainer: {
     width: 48,
     height: 48,
     borderRadius: Radius.pill,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: Colors.primaryLight,
+    borderColor: colors.primaryLight,
     ...Shadow,
   },
   sectionGroup: {
@@ -289,17 +292,17 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 12,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontWeight: "700",
     textTransform: "uppercase",
     letterSpacing: 0.5,
     marginLeft: 4,
   },
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.lg,
     borderWidth: 1.5,
-    borderColor: Colors.divider,
+    borderColor: colors.divider,
     padding: Spacing.md,
     ...Shadow,
   },

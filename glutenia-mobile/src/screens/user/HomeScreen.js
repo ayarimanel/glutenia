@@ -14,7 +14,8 @@ import ProductCard from "../../components/ProductCard";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { api } from "../../api/client";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 import { useTranslation } from "react-i18next";
 
 const EVENTS_META = [
@@ -25,6 +26,8 @@ const EVENTS_META = [
 
 export default function HomeScreen({ navigation }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
 
   const EVENTS_PREVIEW = EVENTS_META.map((e) => ({
     ...e,
@@ -61,10 +64,10 @@ export default function HomeScreen({ navigation }) {
   }, [token, isProfessional]);
 
   const VERDICT_META = {
-    safe: { icon: "checkmark-circle", color: Colors.primary },
-    caution: { icon: "info", color: "#F59E0B" },
-    unsafe: { icon: "close-circle", color: Colors.danger },
-    error: { icon: "info", color: Colors.textMuted },
+    safe: { icon: "checkmark-circle", color: colors.primary },
+    caution: { icon: "info", color: colors.warning },
+    unsafe: { icon: "close-circle", color: colors.danger },
+    error: { icon: "info", color: colors.textMuted },
   };
 
   return (
@@ -124,7 +127,7 @@ export default function HomeScreen({ navigation }) {
               {scanHistory.map((item) => {
                 const meta = VERDICT_META[item.verdict] || {
                   icon: "scan",
-                  color: Colors.secondary,
+                  color: colors.secondary,
                 };
                 const isBarcodeWithProduct = item.scanType === "barcode" && item.product;
                 return (
@@ -158,7 +161,7 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate("Recipes")}
           >
             <View style={styles.quickIcon}>
-              <AppIcon name="utensils" size={26} color={Colors.secondary} />
+              <AppIcon name="utensils" size={26} color={colors.secondary} />
             </View>
             <Text style={styles.quickLabel}>{t("home.recipes")}</Text>
           </Pressable>
@@ -167,7 +170,7 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate("Events")}
           >
             <View style={styles.quickIcon}>
-              <AppIcon name="people" size={26} color={Colors.secondary} />
+              <AppIcon name="people" size={26} color={colors.secondary} />
             </View>
             <Text style={styles.quickLabel}>{t("events.title")}</Text>
           </Pressable>
@@ -176,7 +179,7 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate("PatientResources")}
           >
             <View style={styles.quickIcon}>
-              <AppIcon name="heart" size={26} color={Colors.secondary} />
+              <AppIcon name="heart" size={26} color={colors.secondary} />
             </View>
             <Text style={styles.quickLabel}>{t("home.patientResources")}</Text>
           </Pressable>
@@ -185,7 +188,7 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate("Map")}
           >
             <View style={styles.quickIcon}>
-              <AppIcon name="location" size={26} color={Colors.secondary} />
+              <AppIcon name="location" size={26} color={colors.secondary} />
             </View>
             <Text style={styles.quickLabel}>{t("home.map")}</Text>
           </Pressable>
@@ -199,7 +202,7 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate("ShopScreen")}
           >
             <Text style={styles.seeAllText}>{t("home.seeAll")}</Text>
-            <AppIcon name="chevron-right" size={15} color={Colors.secondary} />
+            <AppIcon name="chevron-right" size={15} color={colors.secondary} />
           </Pressable>
         </View>
         <ScrollView
@@ -231,7 +234,7 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate("Events")}
           >
             <Text style={styles.seeAllText}>{t("home.seeAll")}</Text>
-            <AppIcon name="chevron-right" size={15} color={Colors.secondary} />
+            <AppIcon name="chevron-right" size={15} color={colors.secondary} />
           </Pressable>
         </View>
         <ScrollView
@@ -256,13 +259,13 @@ export default function HomeScreen({ navigation }) {
                   {event.title}
                 </Text>
                 <View style={styles.eventMeta}>
-                  <AppIcon name="location" size={12} color={Colors.textMuted} />
+                  <AppIcon name="location" size={12} color={colors.textMuted} />
                   <Text style={styles.eventMetaText} numberOfLines={1}>
                     {event.location}
                   </Text>
                 </View>
                 <View style={styles.eventMeta}>
-                  <AppIcon name="calendar" size={12} color={Colors.textMuted} />
+                  <AppIcon name="calendar" size={12} color={colors.textMuted} />
                   <Text style={styles.eventMetaText}>{event.date}</Text>
                 </View>
               </View>
@@ -276,7 +279,7 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   // ── Gamification strip ──
   gamStrip: {
     flexDirection: "row",
@@ -284,7 +287,7 @@ const styles = StyleSheet.create({
     gap: 10,
     marginHorizontal: Spacing.md,
     marginTop: Spacing.sm,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.pill,
     paddingVertical: 8,
     paddingHorizontal: 14,
@@ -293,18 +296,18 @@ const styles = StyleSheet.create({
   gamLevelText: {
     fontSize: 12,
     fontWeight: "800",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
   gamBarTrack: {
     flex: 1,
     height: 6,
-    backgroundColor: Colors.divider,
+    backgroundColor: colors.divider,
     borderRadius: 3,
     overflow: "hidden",
   },
   gamBarFill: {
     height: "100%",
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 3,
   },
   gamStreakWrap: {
@@ -313,7 +316,7 @@ const styles = StyleSheet.create({
   gamStreakText: {
     fontSize: 12,
     fontWeight: "800",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
 
   // ── Hero ──
@@ -321,7 +324,7 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.md,
     marginTop: Spacing.md,
     marginBottom: Spacing.lg,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: Radius.xl,
     paddingVertical: Spacing.xl,
     paddingHorizontal: Spacing.lg,
@@ -355,7 +358,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 20,
     fontWeight: "900",
-    color: Colors.textDark,
+    color: colors.textDark,
     marginHorizontal: Spacing.md,
     marginBottom: Spacing.sm,
   },
@@ -374,7 +377,7 @@ const styles = StyleSheet.create({
   seeAllText: {
     fontSize: 13,
     fontWeight: "700",
-    color: Colors.secondary,
+    color: colors.secondary,
   },
 
   // ── Quick Access ──
@@ -387,7 +390,7 @@ const styles = StyleSheet.create({
   },
   quickCard: {
     width: "47.5%",
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.xl,
     paddingVertical: Spacing.lg,
     paddingHorizontal: Spacing.md,
@@ -399,14 +402,14 @@ const styles = StyleSheet.create({
     width: 54,
     height: 54,
     borderRadius: 27,
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     alignItems: "center",
     justifyContent: "center",
   },
   quickLabel: {
     fontSize: 13,
     fontWeight: "700",
-    color: Colors.textDark,
+    color: colors.textDark,
     textAlign: "center",
   },
 
@@ -425,7 +428,7 @@ const styles = StyleSheet.create({
   // ── Recently scanned ──
   scanCard: {
     width: 130,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.lg,
     padding: Spacing.sm,
     gap: 8,
@@ -441,14 +444,14 @@ const styles = StyleSheet.create({
   scanSummary: {
     fontSize: 12,
     fontWeight: "700",
-    color: Colors.textDark,
+    color: colors.textDark,
     lineHeight: 16,
   },
 
   // ── Event cards ──
   eventCard: {
     width: 200,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.xl,
     overflow: "hidden",
     ...Shadow,
@@ -465,7 +468,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10,
     left: 10,
-    backgroundColor: Colors.secondary,
+    backgroundColor: colors.secondary,
     borderRadius: Radius.pill,
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -482,7 +485,7 @@ const styles = StyleSheet.create({
   eventTitle: {
     fontSize: 13,
     fontWeight: "800",
-    color: Colors.textDark,
+    color: colors.textDark,
     lineHeight: 18,
     marginBottom: 2,
   },
@@ -493,7 +496,7 @@ const styles = StyleSheet.create({
   },
   eventMetaText: {
     fontSize: 11,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     flex: 1,
   },
 });

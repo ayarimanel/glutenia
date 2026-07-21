@@ -13,7 +13,8 @@ import AppIcon from "../../components/AppIcon";
 import { PrimaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const daysAgo = (n) => new Date(Date.now() - n * MS_PER_DAY).toISOString();
@@ -26,7 +27,7 @@ const EXPERIENCE_META = [
   { value: "3_plus_years", days: 1095 },
 ];
 
-function OptionGroup({ options, selected, onSelect }) {
+function OptionGroup({ options, selected, onSelect, styles }) {
   return (
     <View style={{ gap: 10 }}>
       {options.map((opt) => {
@@ -56,6 +57,8 @@ function OptionGroup({ options, selected, onSelect }) {
 
 export default function EditJourneyScreen({ navigation }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { user, token, updateUser } = useAuth();
 
   const [roleType, setRoleType] = useState(user?.role_type || "warrior");
@@ -120,7 +123,7 @@ export default function EditJourneyScreen({ navigation }) {
     <Screen>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn} activeOpacity={0.7}>
-          <AppIcon name="arrow-back" size={22} color={Colors.textDark} />
+          <AppIcon name="arrow-back" size={22} color={colors.textDark} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t("editJourney.title")}</Text>
         <View style={styles.headerBtn} />
@@ -128,20 +131,20 @@ export default function EditJourneyScreen({ navigation }) {
 
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <Text style={styles.sectionTitle}>{t("profileOnboarding.role.question")}</Text>
-        <OptionGroup options={roleOptions} selected={roleType} onSelect={setRoleType} />
+        <OptionGroup options={roleOptions} selected={roleType} onSelect={setRoleType} styles={styles} />
 
         <Text style={styles.sectionTitle}>
           {roleType === "warrior"
             ? t("profileOnboarding.journey.questionWarrior")
             : t("profileOnboarding.journey.questionSupporter")}
         </Text>
-        <OptionGroup options={experienceOptions} selected={experienceLevel} onSelect={setExperienceLevel} />
+        <OptionGroup options={experienceOptions} selected={experienceLevel} onSelect={setExperienceLevel} styles={styles} />
 
         <Text style={styles.sectionTitle}>{t("profileOnboarding.goal.question")}</Text>
-        <OptionGroup options={goalOptions} selected={primaryGoal} onSelect={setPrimaryGoal} />
+        <OptionGroup options={goalOptions} selected={primaryGoal} onSelect={setPrimaryGoal} styles={styles} />
 
         <Text style={styles.sectionTitle}>{t("profileOnboarding.confidence.question")}</Text>
-        <OptionGroup options={confidenceOptions} selected={confidence} onSelect={setConfidence} />
+        <OptionGroup options={confidenceOptions} selected={confidence} onSelect={setConfidence} styles={styles} />
 
         <PrimaryButton
           title={t("editJourney.save")}
@@ -157,7 +160,7 @@ export default function EditJourneyScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -170,7 +173,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 18,
     fontWeight: "700",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
   container: {
     padding: Spacing.md,
@@ -179,33 +182,33 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 17,
     fontWeight: "800",
-    color: Colors.textDark,
+    color: colors.textDark,
     marginTop: Spacing.lg,
     marginBottom: Spacing.sm,
   },
   card: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.lg,
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     padding: Spacing.md,
     ...Shadow,
   },
-  cardActive: { borderColor: Colors.primary, backgroundColor: Colors.primaryPale },
-  cardLabel: { fontSize: 15, fontWeight: "700", color: Colors.textDark },
-  cardLabelActive: { color: Colors.primary },
-  cardSub: { fontSize: 12, color: Colors.textMuted, marginTop: 2, lineHeight: 17 },
+  cardActive: { borderColor: colors.primary, backgroundColor: colors.primaryPale },
+  cardLabel: { fontSize: 15, fontWeight: "700", color: colors.textDark },
+  cardLabelActive: { color: colors.primary },
+  cardSub: { fontSize: 12, color: colors.textMuted, marginTop: 2, lineHeight: 17 },
   radio: {
     width: 22,
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
   },
-  radioActive: { borderColor: Colors.primary },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.primary },
+  radioActive: { borderColor: colors.primary },
+  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary },
 });

@@ -2,10 +2,13 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function ResourceDetailScreen({ route, navigation }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { resource } = route.params;
 
   return (
@@ -13,7 +16,7 @@ export default function ResourceDetailScreen({ route, navigation }) {
       {/* Nav bar */}
       <View style={styles.navBar}>
         <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <AppIcon name="arrow-back" size={22} color={Colors.textDark} />
+          <AppIcon name="arrow-back" size={22} color={colors.textDark} />
         </Pressable>
         <Text style={styles.navTitle} numberOfLines={2}>{resource.title}</Text>
         <View style={styles.navSpacer} />
@@ -28,7 +31,7 @@ export default function ResourceDetailScreen({ route, navigation }) {
         {/* Title + read time */}
         <Text style={styles.title}>{resource.title}</Text>
         <View style={styles.readTimeRow}>
-          <AppIcon name="clock" size={14} color={Colors.textMuted} />
+          <AppIcon name="clock" size={14} color={colors.textMuted} />
           <Text style={styles.readTimeText}>{resource.readTime} {t("resourceDetail.readSuffix")}</Text>
         </View>
 
@@ -40,7 +43,7 @@ export default function ResourceDetailScreen({ route, navigation }) {
 
         {/* Disclaimer */}
         <View style={styles.disclaimer}>
-          <AppIcon name="info" size={15} color={Colors.secondary} />
+          <AppIcon name="info" size={15} color={colors.secondary} />
           <Text style={styles.disclaimerText}>
             {t("resourceDetail.disclaimer")}
           </Text>
@@ -52,7 +55,7 @@ export default function ResourceDetailScreen({ route, navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   navBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -71,7 +74,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 16,
     fontWeight: "800",
-    color: Colors.textDark,
+    color: colors.textDark,
     lineHeight: 21,
   },
   navSpacer: { width: 40 },
@@ -94,7 +97,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "900",
-    color: Colors.textDark,
+    color: colors.textDark,
     lineHeight: 30,
     textAlign: "center",
     marginBottom: Spacing.sm,
@@ -109,25 +112,25 @@ const styles = StyleSheet.create({
   },
   readTimeText: {
     fontSize: 13,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontWeight: "600",
   },
 
   divider: {
     height: 1,
-    backgroundColor: Colors.divider,
+    backgroundColor: colors.divider,
     marginBottom: Spacing.lg,
   },
 
   body: {
     fontSize: 15,
-    color: Colors.textDark,
+    color: colors.textDark,
     lineHeight: 25,
     marginBottom: Spacing.xl,
   },
 
   disclaimer: {
-    backgroundColor: Colors.secondaryPale,
+    backgroundColor: colors.secondaryPale,
     borderRadius: Radius.lg,
     padding: Spacing.md,
     flexDirection: "row",
@@ -138,7 +141,7 @@ const styles = StyleSheet.create({
   disclaimerText: {
     flex: 1,
     fontSize: 12,
-    color: Colors.secondary,
+    color: colors.secondary,
     lineHeight: 18,
   },
 });

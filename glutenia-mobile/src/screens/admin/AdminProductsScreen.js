@@ -9,11 +9,14 @@ import EmptyState from "../../components/EmptyState";
 import ProductVisual from "../../components/ProductVisual";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function AdminProductsScreen({ navigation }) {
   const { token, logout, user } = useAuth();
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const isAdmin = user?.role === "admin";
   const productFormRoute = isAdmin ? "AdminProductForm" : "SellerProductForm";
   const [products, setProducts] = useState([]);
@@ -79,7 +82,7 @@ export default function AdminProductsScreen({ navigation }) {
               style={styles.addButton}
               onPress={() => navigation.navigate(productFormRoute)}
             >
-              <AppIcon name="add" size={24} color={Colors.surface} />
+              <AppIcon name="add" size={24} color={colors.surface} />
             </Pressable>
           }
         />
@@ -110,11 +113,11 @@ export default function AdminProductsScreen({ navigation }) {
                     navigation.navigate(productFormRoute, { productId: item._id })
                   }
                 >
-                  <AppIcon name="pencil" size={18} color={Colors.primary} />
+                  <AppIcon name="pencil" size={18} color={colors.primary} />
                   <Text style={styles.actionText}>{t("admin.products.edit")}</Text>
                 </Pressable>
                 <Pressable style={styles.actionButton} onPress={() => deleteProduct(item)}>
-                  <AppIcon name="trash" size={18} color={Colors.danger} />
+                  <AppIcon name="trash" size={18} color={colors.danger} />
                   <Text style={[styles.actionText, styles.deleteText]}>{t("admin.products.delete")}</Text>
                 </Pressable>
               </View>
@@ -126,7 +129,7 @@ export default function AdminProductsScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: Spacing.md,
@@ -136,7 +139,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -148,7 +151,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderRadius: Radius.lg,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: 10,
     gap: 12,
     ...Shadow,
@@ -161,17 +164,17 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   name: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 16,
     fontWeight: "900",
   },
   meta: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: "700",
   },
   price: {
-    color: Colors.primary,
+    color: colors.primary,
     fontWeight: "900",
   },
   actions: {
@@ -181,7 +184,7 @@ const styles = StyleSheet.create({
     minWidth: 74,
     minHeight: 38,
     borderRadius: Radius.pill,
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
@@ -189,11 +192,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   actionText: {
-    color: Colors.primary,
+    color: colors.primary,
     fontSize: 12,
     fontWeight: "900",
   },
   deleteText: {
-    color: Colors.danger,
+    color: colors.danger,
   },
 });

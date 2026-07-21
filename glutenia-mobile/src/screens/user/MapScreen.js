@@ -16,16 +16,29 @@ import BottomSheet, {
   BottomSheetScrollView,
   BottomSheetBackdrop,
 } from "@gorhom/bottom-sheet";
-import { Colors, Radius, Spacing } from "../../theme/colors";
+import { Radius, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 import AppIcon from "../../components/AppIcon";
 import AppHeader from "../../components/AppHeader";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { useTranslation } from "react-i18next";
 
+// ─── Color helper ─────────────────────────────────────────────────────────────
+
+function hexToRgba(hex, alpha) {
+  const h = hex.replace("#", "");
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const bigint = parseInt(full, 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 // ─── Data ────────────────────────────────────────────────────────────────────
 
-const SPOTS = [
+const getSpots = (colors) => [
   {
     id: "1",
     name: "Ben Yaghlene Shops",
@@ -40,7 +53,7 @@ const SPOTS = [
     description:
       "A premier grocery store with a dedicated gluten-free section. Over 200 certified GF products from local and international brands.",
     tags: ["GF Bread", "Pasta", "Imported"],
-    color: Colors.primary,
+    color: colors.primary,
     accentEmoji: "🌿",
   },
   {
@@ -57,7 +70,7 @@ const SPOTS = [
     description:
       "Fully gluten-free menu with organic salads, fresh smoothies, and a warm cozy atmosphere. A safe haven for celiacs.",
     tags: ["GF Menu", "Salads", "Smoothies"],
-    color: Colors.secondary,
+    color: colors.secondary,
     accentEmoji: "🥗",
   },
   {
@@ -74,7 +87,7 @@ const SPOTS = [
     description:
       "Organic health store specializing in gluten-free cereals, natural supplements, and herbal remedies.",
     tags: ["Organic", "GF Cereals", "Supplements"],
-    color: Colors.primary,
+    color: colors.primary,
     accentEmoji: "🌱",
   },
   {
@@ -91,7 +104,7 @@ const SPOTS = [
     description:
       "100% gluten-free bakery baking fresh bread, croissants, and cakes daily. Locals' top pick in Tunis.",
     tags: ["Fresh Bread", "Pastries", "Cakes"],
-    color: Colors.secondary,
+    color: colors.secondary,
     accentEmoji: "🍞",
   },
   {
@@ -108,7 +121,7 @@ const SPOTS = [
     description:
       "Large bio supermarket with an extensive imported gluten-free section and great variety of international GF brands.",
     tags: ["GF Section", "Imported", "Bio"],
-    color: Colors.primary,
+    color: colors.primary,
     accentEmoji: "🥦",
   },
   {
@@ -125,7 +138,7 @@ const SPOTS = [
     description:
       "Beachfront café with gluten-free and vegan options. Famous for GF pancakes and tropical smoothie bowls.",
     tags: ["GF Options", "Vegan", "Beachfront"],
-    color: Colors.secondary,
+    color: colors.secondary,
     accentEmoji: "☀️",
   },
   {
@@ -142,7 +155,7 @@ const SPOTS = [
     description:
       "Friendly health shop stocked with a wide range of gluten-free flours, snacks, and plant-based alternatives. Staff are celiac-aware.",
     tags: ["GF Flour", "Snacks", "Vegan"],
-    color: Colors.primary,
+    color: colors.primary,
     accentEmoji: "🥬",
   },
   {
@@ -159,7 +172,7 @@ const SPOTS = [
     description:
       "Artisan bakery offering exclusively gluten-free pastries, tarts, and celebration cakes. Pre-order available for custom creations.",
     tags: ["GF Cakes", "Tarts", "Custom Orders"],
-    color: Colors.secondary,
+    color: colors.secondary,
     accentEmoji: "🎂",
   },
   {
@@ -176,7 +189,7 @@ const SPOTS = [
     description:
       "Dedicated gluten-free bistro serving traditional Tunisian dishes reinvented with rice and corn-based recipes. Cosy terrace dining.",
     tags: ["Tunisian Cuisine", "GF Menu", "Terrace"],
-    color: Colors.secondary,
+    color: colors.secondary,
     accentEmoji: "🫕",
   },
   {
@@ -193,7 +206,7 @@ const SPOTS = [
     description:
       "Central supermarket with a dedicated bio & sans-gluten aisle. Good selection of imported French GF brands and local alternatives.",
     tags: ["GF Aisle", "Bio", "French Brands"],
-    color: Colors.primary,
+    color: colors.primary,
     accentEmoji: "🏷️",
   },
 ];
@@ -203,7 +216,7 @@ const FILTERS = ["All", "Supermarket", "Restaurant", "Health Store", "Bakery", "
 
 // ─── Star rating helper ───────────────────────────────────────────────────────
 
-function StarRating({ rating }) {
+function StarRating({ rating, styles }) {
   const full = Math.floor(rating);
   const half = rating - full >= 0.5;
   return (
@@ -243,14 +256,14 @@ const FILTER_ICONS = {
 
 // ─── Real (professional-submitted) establishments → map spot shape ──────────
 
-const CATEGORY_VISUAL = {
-  Supermarket: { emoji: "🛒", color: Colors.primary, accentEmoji: "🛒" },
-  Restaurant: { emoji: "🍽️", color: Colors.secondary, accentEmoji: "🍽️" },
-  "Health Store": { emoji: "🌿", color: Colors.primary, accentEmoji: "🌿" },
-  Bakery: { emoji: "🥐", color: Colors.secondary, accentEmoji: "🥐" },
-  Pharmacy: { emoji: "💊", color: Colors.primary, accentEmoji: "💊" },
-  Other: { emoji: "🏪", color: Colors.secondary, accentEmoji: "🏪" },
-};
+const getCategoryVisual = (colors) => ({
+  Supermarket: { emoji: "🛒", color: colors.primary, accentEmoji: "🛒" },
+  Restaurant: { emoji: "🍽️", color: colors.secondary, accentEmoji: "🍽️" },
+  "Health Store": { emoji: "🌿", color: colors.primary, accentEmoji: "🌿" },
+  Bakery: { emoji: "🥐", color: colors.secondary, accentEmoji: "🥐" },
+  Pharmacy: { emoji: "💊", color: colors.primary, accentEmoji: "💊" },
+  Other: { emoji: "🏪", color: colors.secondary, accentEmoji: "🏪" },
+});
 
 const MAP_CENTER = { latitude: 36.82, longitude: 10.2 };
 
@@ -264,8 +277,8 @@ function haversineKm(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function normalizeEstablishment(est) {
-  const visual = CATEGORY_VISUAL[est.category] || CATEGORY_VISUAL.Other;
+function normalizeEstablishment(est, categoryVisual) {
+  const visual = categoryVisual[est.category] || categoryVisual.Other;
   const lat = est.coordinates?.latitude;
   const lng = est.coordinates?.longitude;
   const hasCoords = typeof lat === "number" && typeof lng === "number";
@@ -450,6 +463,10 @@ export default function MapScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { colors } = useTheme();
+  const styles = useMemo(() => getStyles(colors), [colors]);
+  const categoryVisual = useMemo(() => getCategoryVisual(colors), [colors]);
+  const SPOTS = useMemo(() => getSpots(colors), [colors]);
   const filterLabels = {
     All: t("map.all"),
     Supermarket: t("map.supermarket"),
@@ -487,11 +504,16 @@ export default function MapScreen({ navigation }) {
   const [headerHeight, setHeaderHeight] = useState(88);
   const [sheetIndex, setSheetIndex] = useState(-1);
   const [realSpots, setRealSpots] = useState([]);
+  const [mapWebViewReady, setMapWebViewReady] = useState(false);
 
   const snapPoints = useMemo(() => ["55%", "90%"], []);
-  const leafletHTML = useMemo(() => buildLeafletHTML(SPOTS), []);
+  const leafletHTML = useMemo(() => buildLeafletHTML(SPOTS), [SPOTS]);
 
-  const allSpots = useMemo(() => [...SPOTS, ...realSpots], [realSpots]);
+  useEffect(() => {
+    setMapWebViewReady(false);
+  }, [leafletHTML]);
+
+  const allSpots = useMemo(() => [...SPOTS, ...realSpots], [SPOTS, realSpots]);
 
   useFocusEffect(
     useCallback(() => {
@@ -502,14 +524,14 @@ export default function MapScreen({ navigation }) {
           if (cancelled) return;
           const normalized = (list || [])
             .filter((e) => e.coordinates?.latitude != null && e.coordinates?.longitude != null)
-            .map(normalizeEstablishment);
+            .map((e) => normalizeEstablishment(e, categoryVisual));
           setRealSpots(normalized);
         })
         .catch(() => {});
       return () => {
         cancelled = true;
       };
-    }, [])
+    }, [categoryVisual])
   );
 
   const filtered =
@@ -522,12 +544,12 @@ export default function MapScreen({ navigation }) {
 
   const sendToMap = useCallback((data) => {
     webViewRef.current?.injectJavaScript(
-      `window.handleFromRN(${JSON.stringify(data)}); true;`
+      `if (window.handleFromRN) { window.handleFromRN(${JSON.stringify(data)}); } true;`
     );
   }, []);
 
   useEffect(() => {
-    if (realSpots.length === 0) return;
+    if (!mapWebViewReady || realSpots.length === 0) return;
     const next =
       activeFilter === "All" ? allSpots : allSpots.filter((s) => s.type === activeFilter);
     sendToMap({
@@ -544,7 +566,7 @@ export default function MapScreen({ navigation }) {
         })),
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [realSpots]);
+  }, [realSpots, mapWebViewReady]);
 
   const animateToSpot = useCallback(
     (spot) => {
@@ -638,7 +660,7 @@ export default function MapScreen({ navigation }) {
       lng: SPOTS[0].coordinate.longitude,
     });
     setSelectedId(SPOTS[0].id);
-  }, [sendToMap]);
+  }, [sendToMap, SPOTS]);
 
   const renderBackdrop = useCallback(
     (props) => (
@@ -663,6 +685,7 @@ export default function MapScreen({ navigation }) {
         style={StyleSheet.absoluteFillObject}
         source={{ html: leafletHTML }}
         onMessage={handleWebViewMessage}
+        onLoadEnd={() => setMapWebViewReady(true)}
         javaScriptEnabled
         originWhitelist={["*"]}
         scrollEnabled={false}
@@ -1014,525 +1037,526 @@ export default function MapScreen({ navigation }) {
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: "#F8F9FA",
-  },
+const getStyles = (colors) =>
+  StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
 
-  headerWrap: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-  },
-  filterBar: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    gap: 10,
-    zIndex: 9,
-  },
-  filterScroll: { flex: 1 },
-  filterRow: {
-    gap: 8,
-    alignItems: "center",
-    paddingRight: 4,
-  },
-  filterPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    height: 40,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-  },
-  filterPillActive: {
-    backgroundColor: "#8BC34A",
-    borderColor: "#8BC34A",
-    shadowColor: "#8BC34A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  filterPillInactive: {
-    backgroundColor: "#FFFFFF",
-    borderColor: "rgba(0, 0, 0, 0.04)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  filterText: {
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  filterTextActive: {
-    color: "#FFFFFF",
-  },
-  filterTextInactive: {
-    color: "#6C757D",
-  },
-  filterIconBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: "rgba(0, 0, 0, 0.04)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  filterIconLabel: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#2E2E2E",
-  },
+    headerWrap: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 10,
+    },
+    filterBar: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 16,
+      gap: 10,
+      zIndex: 9,
+    },
+    filterScroll: { flex: 1 },
+    filterRow: {
+      gap: 8,
+      alignItems: "center",
+      paddingRight: 4,
+    },
+    filterPill: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      height: 40,
+      borderRadius: 20,
+      paddingHorizontal: 16,
+      borderWidth: 1,
+    },
+    filterPillActive: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.18,
+      shadowRadius: 6,
+      elevation: 3,
+    },
+    filterPillInactive: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    filterText: {
+      fontSize: 13,
+      fontWeight: "700",
+    },
+    filterTextActive: {
+      color: "#FFFFFF",
+    },
+    filterTextInactive: {
+      color: colors.textMuted,
+    },
+    filterIconBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.surface,
+      paddingHorizontal: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    filterIconLabel: {
+      fontSize: 13,
+      fontWeight: "700",
+      color: colors.textDark,
+    },
 
-  infoCard: {
-    position: "absolute",
-    left: 16,
-    right: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.94)",
-    borderRadius: 24,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.6)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 8,
-    zIndex: 8,
-  },
-  cardContentRow: {
-    flexDirection: "row",
-    gap: 16,
-  },
-  cardImage: {
-    width: 88,
-    height: 88,
-    borderRadius: 16,
-    backgroundColor: "#F1F8E9",
-  },
-  cardInfo: {
-    flex: 1,
-    justifyContent: "space-between",
-  },
-  cardTitleRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: 8,
-  },
-  cardName: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#2E2E2E",
-    flex: 1,
-  },
-  favoriteBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "rgba(200, 16, 46, 0.04)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  cardBadgeRow: {
-    flexDirection: "row",
-    gap: 8,
-    alignItems: "center",
-    marginTop: 4,
-  },
-  verifiedBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: "#F1F8E9",
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderWidth: 1,
-    borderColor: "rgba(139, 195, 74, 0.2)",
-  },
-  verifiedBadgeText: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: "#8BC34A",
-  },
-  cardCategoryBadge: {
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  cardCategoryText: {
-    fontSize: 10,
-    fontWeight: "700",
-  },
-  cardMetaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 8,
-  },
-  metaItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  metaValText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#2E2E2E",
-  },
-  metaCountText: {
-    fontSize: 11,
-    color: "#6C757D",
-  },
-  metaDivider: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#DEE2E6",
-    marginHorizontal: 8,
-  },
-  metaPriceText: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: "#8BC34A",
-  },
-  cardActionRow: {
-    marginTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(0, 0, 0, 0.04)",
-    paddingTop: 12,
-  },
-  cardCtaBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "#8BC34A",
-    borderRadius: 16,
-    height: 44,
-    shadowColor: "#8BC34A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  cardCtaText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
+    infoCard: {
+      position: "absolute",
+      left: 16,
+      right: 16,
+      backgroundColor: hexToRgba(colors.surface, 0.94),
+      borderRadius: 24,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: hexToRgba(colors.surface, 0.6),
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.1,
+      shadowRadius: 20,
+      elevation: 8,
+      zIndex: 8,
+    },
+    cardContentRow: {
+      flexDirection: "row",
+      gap: 16,
+    },
+    cardImage: {
+      width: 88,
+      height: 88,
+      borderRadius: 16,
+      backgroundColor: colors.primaryPale,
+    },
+    cardInfo: {
+      flex: 1,
+      justifyContent: "space-between",
+    },
+    cardTitleRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      gap: 8,
+    },
+    cardName: {
+      fontSize: 16,
+      fontWeight: "800",
+      color: colors.textDark,
+      flex: 1,
+    },
+    favoriteBtn: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: hexToRgba(colors.danger, 0.04),
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    cardBadgeRow: {
+      flexDirection: "row",
+      gap: 8,
+      alignItems: "center",
+      marginTop: 4,
+    },
+    verifiedBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      backgroundColor: colors.primaryPale,
+      borderRadius: 12,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderWidth: 1,
+      borderColor: hexToRgba(colors.primary, 0.2),
+    },
+    verifiedBadgeText: {
+      fontSize: 10,
+      fontWeight: "700",
+      color: colors.primary,
+    },
+    cardCategoryBadge: {
+      borderRadius: 12,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+    },
+    cardCategoryText: {
+      fontSize: 10,
+      fontWeight: "700",
+    },
+    cardMetaRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: 8,
+    },
+    metaItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+    },
+    metaValText: {
+      fontSize: 12,
+      fontWeight: "700",
+      color: colors.textDark,
+    },
+    metaCountText: {
+      fontSize: 11,
+      color: colors.textMuted,
+    },
+    metaDivider: {
+      width: 4,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: colors.border,
+      marginHorizontal: 8,
+    },
+    metaPriceText: {
+      fontSize: 12,
+      fontWeight: "800",
+      color: colors.primary,
+    },
+    cardActionRow: {
+      marginTop: 12,
+      borderTopWidth: 1,
+      borderTopColor: colors.divider,
+      paddingTop: 12,
+    },
+    cardCtaBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      backgroundColor: colors.primary,
+      borderRadius: 16,
+      height: 44,
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 6,
+      elevation: 3,
+    },
+    cardCtaText: {
+      fontSize: 14,
+      fontWeight: "700",
+      color: "#FFFFFF",
+    },
 
-  locateMeBtn: {
-    position: "absolute",
-    right: 16,
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "rgba(241, 248, 233, 0.95)",
-    borderWidth: 1,
-    borderColor: "rgba(139, 195, 74, 0.3)",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#8BC34A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
-    zIndex: 7,
-  },
+    locateMeBtn: {
+      position: "absolute",
+      right: 16,
+      width: 50,
+      height: 50,
+      borderRadius: 25,
+      backgroundColor: hexToRgba(colors.primaryPale, 0.95),
+      borderWidth: 1,
+      borderColor: hexToRgba(colors.primary, 0.3),
+      alignItems: "center",
+      justifyContent: "center",
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.15,
+      shadowRadius: 8,
+      elevation: 4,
+      zIndex: 7,
+    },
 
-  sheetBg: {
-    backgroundColor: "#F8F9FA",
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-  },
-  sheetHandle: {
-    width: 48,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: "#DEE2E6",
-    alignSelf: "center",
-  },
-  sheetScrollContent: {
-    paddingBottom: 130,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
+    sheetBg: {
+      backgroundColor: colors.background,
+      borderTopLeftRadius: 32,
+      borderTopRightRadius: 32,
+    },
+    sheetHandle: {
+      width: 48,
+      height: 5,
+      borderRadius: 2.5,
+      backgroundColor: colors.border,
+      alignSelf: "center",
+    },
+    sheetScrollContent: {
+      paddingBottom: 130,
+      paddingHorizontal: 16,
+      paddingTop: 16,
+    },
 
-  sheetHero: {
-    height: 240,
-    borderRadius: 24,
-    overflow: "hidden",
-    marginBottom: 16,
-    position: "relative",
-  },
-  heroImage: {
-    width: "100%",
-    height: "100%",
-  },
-  heroGradient: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.42)",
-    justifyContent: "space-between",
-    padding: 16,
-  },
-  heroBadgeRow: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-  },
-  gfCertBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "#8BC34A",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    shadowColor: "#8BC34A",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  gfCertText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
-  heroDetailsContainer: {
-    gap: 4,
-  },
-  heroCategory: {
-    fontSize: 10,
-    fontWeight: "800",
-    color: "#A5D66A",
-    letterSpacing: 1.2,
-  },
-  heroTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
-  heroMetaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 4,
-  },
-  heroMetaItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  heroMetaText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  heroMetaBullet: {
-    color: "rgba(255, 255, 255, 0.6)",
-    marginHorizontal: 8,
-    fontSize: 12,
-  },
+    sheetHero: {
+      height: 240,
+      borderRadius: 24,
+      overflow: "hidden",
+      marginBottom: 16,
+      position: "relative",
+    },
+    heroImage: {
+      width: "100%",
+      height: "100%",
+    },
+    heroGradient: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: "rgba(0, 0, 0, 0.42)",
+      justifyContent: "space-between",
+      padding: 16,
+    },
+    heroBadgeRow: {
+      flexDirection: "row",
+      justifyContent: "flex-end",
+    },
+    gfCertBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      backgroundColor: colors.primary,
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 5,
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    gfCertText: {
+      fontSize: 11,
+      fontWeight: "700",
+      color: "#FFFFFF",
+    },
+    heroDetailsContainer: {
+      gap: 4,
+    },
+    heroCategory: {
+      fontSize: 10,
+      fontWeight: "800",
+      color: colors.primaryLight,
+      letterSpacing: 1.2,
+    },
+    heroTitle: {
+      fontSize: 22,
+      fontWeight: "800",
+      color: "#FFFFFF",
+    },
+    heroMetaRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: 4,
+    },
+    heroMetaItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+    },
+    heroMetaText: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: "#FFFFFF",
+    },
+    heroMetaBullet: {
+      color: "rgba(255, 255, 255, 0.6)",
+      marginHorizontal: 8,
+      fontSize: 12,
+    },
 
-  sectionCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: "rgba(0, 0, 0, 0.03)",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.02,
-    shadowRadius: 6,
-    elevation: 1,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#2E2E2E",
-  },
-  descriptionText: {
-    fontSize: 13,
-    color: "#6C757D",
-    lineHeight: 20,
-  },
+    sectionCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 20,
+      padding: 16,
+      marginBottom: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.02,
+      shadowRadius: 6,
+      elevation: 1,
+    },
+    sectionHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      marginBottom: 12,
+    },
+    sectionTitle: {
+      fontSize: 14,
+      fontWeight: "800",
+      color: colors.textDark,
+    },
+    descriptionText: {
+      fontSize: 13,
+      color: colors.textMuted,
+      lineHeight: 20,
+    },
 
-  hoursList: {
-    gap: 8,
-  },
-  hoursItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  hoursDayText: {
-    fontSize: 13,
-    color: "#6C757D",
-    fontWeight: "600",
-  },
-  hoursTimeText: {
-    fontSize: 13,
-    color: "#2E2E2E",
-    fontWeight: "700",
-  },
+    hoursList: {
+      gap: 8,
+    },
+    hoursItem: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    hoursDayText: {
+      fontSize: 13,
+      color: colors.textMuted,
+      fontWeight: "600",
+    },
+    hoursTimeText: {
+      fontSize: 13,
+      color: colors.textDark,
+      fontWeight: "700",
+    },
 
-  tagCloud: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  gfProductTag: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "#F1F8E9",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: "rgba(139, 195, 74, 0.15)",
-  },
-  gfProductTagText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#8BC34A",
-  },
+    tagCloud: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+    },
+    gfProductTag: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      backgroundColor: colors.primaryPale,
+      borderRadius: 12,
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      borderWidth: 1,
+      borderColor: hexToRgba(colors.primary, 0.15),
+    },
+    gfProductTagText: {
+      fontSize: 12,
+      fontWeight: "700",
+      color: colors.primary,
+    },
 
-  facilityGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-  facilityItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    width: "47%",
-  },
-  facilityDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#8BC34A",
-  },
-  facilityText: {
-    fontSize: 12,
-    color: "#6C757D",
-    fontWeight: "600",
-  },
+    facilityGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 10,
+    },
+    facilityItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      width: "47%",
+    },
+    facilityDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: colors.primary,
+    },
+    facilityText: {
+      fontSize: 12,
+      color: colors.textMuted,
+      fontWeight: "600",
+    },
 
-  reviewsContainer: {
-    gap: 12,
-  },
-  reviewItem: {
-    gap: 6,
-  },
-  reviewHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  reviewAuthor: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#2E2E2E",
-  },
-  reviewStars: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  reviewRating: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#2E2E2E",
-  },
-  reviewText: {
-    fontSize: 13,
-    color: "#6C757D",
-    fontStyle: "italic",
-    lineHeight: 18,
-  },
-  reviewDivider: {
-    height: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.04)",
-  },
+    reviewsContainer: {
+      gap: 12,
+    },
+    reviewItem: {
+      gap: 6,
+    },
+    reviewHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    reviewAuthor: {
+      fontSize: 13,
+      fontWeight: "700",
+      color: colors.textDark,
+    },
+    reviewStars: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+    },
+    reviewRating: {
+      fontSize: 12,
+      fontWeight: "700",
+      color: colors.textDark,
+    },
+    reviewText: {
+      fontSize: 13,
+      color: colors.textMuted,
+      fontStyle: "italic",
+      lineHeight: 18,
+    },
+    reviewDivider: {
+      height: 1,
+      backgroundColor: colors.divider,
+    },
 
-  locationAddressText: {
-    fontSize: 13,
-    color: "#6C757D",
-    lineHeight: 18,
-  },
+    locationAddressText: {
+      fontSize: 13,
+      color: colors.textMuted,
+      lineHeight: 18,
+    },
 
-  ctaBar: {
-    flexDirection: "row",
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    backgroundColor: "#FFFFFF",
-    borderTopWidth: 1,
-    borderTopColor: "rgba(0, 0, 0, 0.05)",
-  },
-  ctaCallBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "#F1F8E9",
-    borderWidth: 1.5,
-    borderColor: "#8BC34A",
-    borderRadius: 16,
-    height: 50,
-  },
-  ctaCallBtnText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#8BC34A",
-  },
-  ctaDirectionsBtn: {
-    flex: 2,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: "#8BC34A",
-    borderRadius: 16,
-    height: 50,
-    shadowColor: "#8BC34A",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  ctaDirectionsBtnText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
-});
+    ctaBar: {
+      flexDirection: "row",
+      gap: 12,
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      backgroundColor: colors.surface,
+      borderTopWidth: 1,
+      borderTopColor: colors.divider,
+    },
+    ctaCallBtn: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      backgroundColor: colors.primaryPale,
+      borderWidth: 1.5,
+      borderColor: colors.primary,
+      borderRadius: 16,
+      height: 50,
+    },
+    ctaCallBtnText: {
+      fontSize: 14,
+      fontWeight: "700",
+      color: colors.primary,
+    },
+    ctaDirectionsBtn: {
+      flex: 2,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      backgroundColor: colors.primary,
+      borderRadius: 16,
+      height: 50,
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    ctaDirectionsBtnText: {
+      fontSize: 14,
+      fontWeight: "700",
+      color: "#FFFFFF",
+    },
+  });

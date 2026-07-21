@@ -1,12 +1,15 @@
 import { StyleSheet, Text, TextInput, View } from "react-native";
-import { Colors, Radius } from "../theme/colors";
+import { Radius } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 
 export default function Field({ label, error, multiline, style, inputStyle, ...props }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   return (
     <View style={[styles.wrap, style]}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
-        placeholderTextColor={Colors.textMuted}
+        placeholderTextColor={colors.textMuted}
         multiline={multiline}
         style={[
           styles.input,
@@ -21,22 +24,22 @@ export default function Field({ label, error, multiline, style, inputStyle, ...p
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   wrap: {
     gap: 8,
   },
   label: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 13,
     fontWeight: "700",
   },
   input: {
     minHeight: 48,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     borderRadius: Radius.md,
-    backgroundColor: Colors.surface,
-    color: Colors.textDark,
+    backgroundColor: colors.surface,
+    color: colors.textDark,
     paddingHorizontal: 14,
     fontSize: 15,
   },
@@ -46,11 +49,11 @@ const styles = StyleSheet.create({
     textAlignVertical: "top",
   },
   inputError: {
-    borderColor: Colors.danger,
+    borderColor: colors.danger,
     backgroundColor: "#FFF7F6",
   },
   error: {
-    color: Colors.danger,
+    color: colors.danger,
     fontSize: 12,
     fontWeight: "700",
   },

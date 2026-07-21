@@ -7,11 +7,14 @@ import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function SellerOrdersScreen() {
   const { token, logout } = useAuth();
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
@@ -112,7 +115,7 @@ export default function SellerOrdersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: Spacing.md,
@@ -124,7 +127,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: Radius.lg,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: Spacing.md,
     gap: 8,
     ...Shadow,
@@ -135,31 +138,31 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   id: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 18,
     fontWeight: "900",
   },
   status: {
-    color: Colors.secondary,
+    color: colors.secondary,
     fontWeight: "900",
     textTransform: "uppercase",
   },
   customer: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontWeight: "800",
   },
   meta: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   total: {
-    color: Colors.primary,
+    color: colors.primary,
     fontSize: 18,
     fontWeight: "900",
   },
   shipBtn: {
     alignSelf: "flex-start",
     borderRadius: Radius.md,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     paddingHorizontal: 14,
     paddingVertical: 9,
     marginTop: 4,
@@ -168,7 +171,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   shipBtnText: {
-    color: Colors.surface,
+    color: colors.surface,
     fontSize: 13,
     fontWeight: "800",
   },

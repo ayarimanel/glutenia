@@ -9,7 +9,8 @@ import ProductVisual from "../../components/ProductVisual";
 import { IconButton, PrimaryButton, SecondaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
-import { Colors, Radius, Spacing } from "../../theme/colors";
+import { Radius, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 const categories = ["Bread", "Pasta", "Snacks", "Flour", "Sweets", "Other"];
 const MAX_IMAGE_DATA_URL_LENGTH = 5500000;
@@ -38,6 +39,8 @@ const readUriAsDataUrl = async (uri, mimeType) => {
 export default function AdminProductFormScreen({ navigation, route }) {
   const { token } = useAuth();
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const productId = route.params?.productId;
   const imageDataUrlRef = useRef("");
   const [name, setName] = useState("");
@@ -350,8 +353,8 @@ export default function AdminProductFormScreen({ navigation, route }) {
           <Switch
             value={isGlutenFree}
             onValueChange={setIsGlutenFree}
-            trackColor={{ false: Colors.divider, true: Colors.secondaryPale }}
-            thumbColor={isGlutenFree ? Colors.secondary : Colors.textMuted}
+            trackColor={{ false: colors.divider, true: colors.secondaryPale }}
+            thumbColor={isGlutenFree ? colors.secondary : colors.textMuted}
           />
         </View>
         <PrimaryButton
@@ -366,7 +369,7 @@ export default function AdminProductFormScreen({ navigation, route }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     padding: Spacing.md,
     gap: Spacing.md,
@@ -382,7 +385,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   label: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 13,
     fontWeight: "700",
   },
@@ -393,22 +396,22 @@ const styles = StyleSheet.create({
   },
   category: {
     borderRadius: Radius.pill,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.divider,
+    borderColor: colors.divider,
     paddingHorizontal: 13,
     paddingVertical: 8,
   },
   categoryActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   categoryText: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontWeight: "800",
   },
   categoryTextActive: {
-    color: Colors.surface,
+    color: colors.surface,
   },
   imageSection: {
     gap: 8,
@@ -425,24 +428,24 @@ const styles = StyleSheet.create({
   },
   imageStatusBox: {
     borderRadius: Radius.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.divider,
+    borderColor: colors.divider,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   imageStatusBoxActive: {
-    borderColor: Colors.secondary,
-    backgroundColor: Colors.secondaryPale,
+    borderColor: colors.secondary,
+    backgroundColor: colors.secondaryPale,
   },
   imageStatus: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 12,
     fontWeight: "800",
   },
   switchCard: {
     borderRadius: Radius.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: Spacing.md,
     flexDirection: "row",
     alignItems: "center",
@@ -450,11 +453,11 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   switchTitle: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontWeight: "900",
   },
   switchSub: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     marginTop: 4,
   },
 });

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
-import { Colors } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 const CHART_HEIGHT = 100; // slightly shorter for better proportions inside cards
 
@@ -26,7 +26,10 @@ function AnimatedBar({ height, color }) {
   );
 }
 
-export default function BarChartView({ data, color = Colors.primary }) {
+export default function BarChartView({ data, color }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
+  const barColor = color ?? colors.primary;
   const maxValue = Math.max(1, ...data.map((item) => item.value));
 
   return (
@@ -37,7 +40,7 @@ export default function BarChartView({ data, color = Colors.primary }) {
           <View key={item.label} style={styles.col}>
             <Text style={styles.value}>{item.value}</Text>
             <View style={styles.barTrack}>
-              <AnimatedBar height={barHeight} color={item.color || color} />
+              <AnimatedBar height={barHeight} color={item.color || barColor} />
             </View>
             <Text style={styles.label} numberOfLines={2}>
               {item.label}
@@ -49,7 +52,7 @@ export default function BarChartView({ data, color = Colors.primary }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   wrap: {
     flexDirection: "row",
     alignItems: "flex-end",
@@ -65,13 +68,13 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 11,
     fontWeight: "800",
-    color: Colors.textDark,
+    color: colors.textDark,
     marginBottom: 6,
   },
   barTrack: {
     height: CHART_HEIGHT,
     width: 14,
-    backgroundColor: Colors.divider,
+    backgroundColor: colors.divider,
     borderRadius: 7,
     justifyContent: "flex-end",
     overflow: "hidden",
@@ -83,7 +86,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 10,
     fontWeight: "600",
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: "center",
     marginTop: 8,
     height: 26,

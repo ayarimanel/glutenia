@@ -11,7 +11,8 @@ import AppIcon from "../../components/AppIcon";
 import { IconButton, PrimaryButton, SecondaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
-import { Colors, Radius, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
+import { Radius, Spacing } from "../../theme/colors";
 
 const categories = ["Supermarket", "Restaurant", "Health Store", "Bakery", "Pharmacy", "Other"];
 const MAX_IMAGE_DATA_URL_LENGTH = 5500000;
@@ -115,6 +116,8 @@ function buildPickerHTML(lat, lng) {
 export default function SellerEstablishmentFormScreen({ navigation }) {
   const { token } = useAuth();
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const imageDataUrlRef = useRef("");
   const [name, setName] = useState("");
   const [category, setCategory] = useState("Restaurant");
@@ -358,7 +361,7 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
               style={styles.timeChip}
               onPress={() => setActiveTimePicker("open")}
             >
-              <AppIcon name="clock" size={14} color={Colors.secondary} />
+              <AppIcon name="clock" size={14} color={colors.secondary} />
               <View>
                 <Text style={styles.timeChipLabel}>{t("seller.form.openTime")}</Text>
                 <Text style={styles.timeChipValue}>
@@ -370,7 +373,7 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
               style={styles.timeChip}
               onPress={() => setActiveTimePicker("close")}
             >
-              <AppIcon name="clock" size={14} color={Colors.secondary} />
+              <AppIcon name="clock" size={14} color={colors.secondary} />
               <View>
                 <Text style={styles.timeChipLabel}>{t("seller.form.closeTime")}</Text>
                 <Text style={styles.timeChipValue}>
@@ -435,7 +438,7 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
             ) : null}
           </View>
           <View style={styles.coordsRow}>
-            <AppIcon name="map-pin" size={14} color={Colors.secondary} />
+            <AppIcon name="map-pin" size={14} color={colors.secondary} />
             <Text style={styles.coordsText}>
               {latitude != null && longitude != null
                 ? `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
@@ -476,7 +479,7 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     padding: Spacing.md,
     gap: Spacing.md,
@@ -489,7 +492,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   label: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 13,
     fontWeight: "700",
   },
@@ -503,23 +506,23 @@ const styles = StyleSheet.create({
     gap: 10,
     minHeight: 48,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     borderRadius: Radius.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     paddingHorizontal: 14,
   },
   timeChipLabel: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 11,
     fontWeight: "700",
   },
   timeChipValue: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 15,
     fontWeight: "800",
   },
   error: {
-    color: Colors.danger,
+    color: colors.danger,
     fontSize: 12,
     fontWeight: "700",
   },
@@ -533,22 +536,22 @@ const styles = StyleSheet.create({
   },
   categoryPill: {
     borderRadius: Radius.pill,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.divider,
+    borderColor: colors.divider,
     paddingHorizontal: 13,
     paddingVertical: 8,
   },
   categoryPillActive: {
-    backgroundColor: Colors.secondary,
-    borderColor: Colors.secondary,
+    backgroundColor: colors.secondary,
+    borderColor: colors.secondary,
   },
   categoryText: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontWeight: "800",
   },
   categoryTextActive: {
-    color: Colors.surface,
+    color: colors.surface,
   },
   imageSection: {
     gap: 8,
@@ -562,18 +565,18 @@ const styles = StyleSheet.create({
   },
   imageStatusBox: {
     borderRadius: Radius.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.divider,
+    borderColor: colors.divider,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   imageStatusBoxActive: {
-    borderColor: Colors.secondary,
-    backgroundColor: Colors.secondaryPale,
+    borderColor: colors.secondary,
+    backgroundColor: colors.secondaryPale,
   },
   imageStatus: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 12,
     fontWeight: "800",
   },
@@ -581,7 +584,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   locationHint: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     lineHeight: 17,
   },
@@ -589,12 +592,12 @@ const styles = StyleSheet.create({
     height: 220,
     borderRadius: Radius.lg,
     overflow: "hidden",
-    backgroundColor: Colors.divider,
+    backgroundColor: colors.divider,
     borderWidth: 1,
     borderColor: "transparent",
   },
   mapBoxError: {
-    borderColor: Colors.danger,
+    borderColor: colors.danger,
   },
   coordsRow: {
     flexDirection: "row",
@@ -602,7 +605,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   coordsText: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 12,
     fontWeight: "700",
   },

@@ -7,11 +7,14 @@ import SectionHeader from "../../components/SectionHeader";
 import AppIcon from "../../components/AppIcon";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function SellerVisibilityScreen() {
   const { token, logout } = useAuth();
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -71,7 +74,7 @@ export default function SellerVisibilityScreen() {
           <Metric label={t("seller.visibility.revenue")} value={revenue.toFixed(2)} icon="cash" />
         </View>
         <View style={styles.hintCard}>
-          <AppIcon name="info" size={18} color={Colors.secondary} />
+          <AppIcon name="info" size={18} color={colors.secondary} />
           <Text style={styles.hintText}>
             {lowStockCount > 0
               ? t("seller.visibility.lowStockHint", { count: lowStockCount })
@@ -84,16 +87,18 @@ export default function SellerVisibilityScreen() {
 }
 
 function Metric({ label, value, icon }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   return (
     <View style={styles.metric}>
-      <AppIcon name={icon} size={22} color={Colors.secondary} />
+      <AppIcon name={icon} size={22} color={colors.secondary} />
       <Text style={styles.metricValue}>{value}</Text>
       <Text style={styles.metricLabel}>{label}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     padding: Spacing.md,
     gap: Spacing.md,
@@ -106,18 +111,18 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 116,
     borderRadius: Radius.lg,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: 12,
     justifyContent: "space-between",
     ...Shadow,
   },
   metricValue: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 24,
     fontWeight: "900",
   },
   metricLabel: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: "800",
   },
@@ -125,13 +130,13 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    backgroundColor: Colors.secondaryPale,
+    backgroundColor: colors.secondaryPale,
     borderRadius: Radius.lg,
     padding: Spacing.md,
   },
   hintText: {
     flex: 1,
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 13,
     lineHeight: 19,
     fontWeight: "600",

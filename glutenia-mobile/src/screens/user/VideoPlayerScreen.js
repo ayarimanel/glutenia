@@ -2,9 +2,12 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { WebView } from "react-native-webview";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
-import { Colors, Spacing } from "../../theme/colors";
+import { Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function VideoPlayerScreen({ route, navigation }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { youtubeId, title } = route.params;
 
   return (
@@ -12,7 +15,7 @@ export default function VideoPlayerScreen({ route, navigation }) {
       {/* Nav bar */}
       <View style={styles.navBar}>
         <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <AppIcon name="arrow-back" size={22} color={Colors.textDark} />
+          <AppIcon name="arrow-back" size={22} color={colors.textDark} />
         </Pressable>
         <Text style={styles.navTitle} numberOfLines={1}>{title}</Text>
         <View style={styles.navSpacer} />
@@ -30,7 +33,7 @@ export default function VideoPlayerScreen({ route, navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   navBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -49,7 +52,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 16,
     fontWeight: "800",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
   navSpacer: { width: 40 },
   player: {

@@ -3,11 +3,11 @@ import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AppIcon from "./AppIcon";
 import { useTheme } from "../context/ThemeContext";
-import { Colors } from "../theme/colors";
 
 export default function CustomTabBar({ state, descriptors, navigation }) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const styles = getStyles(colors);
 
   return (
     <View style={[styles.wrapper, { paddingBottom: insets.bottom || 10 }]}>
@@ -76,7 +76,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   wrapper: {
     position: "absolute",
     bottom: 0,
@@ -114,12 +114,12 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 4,
     borderColor: "#fff",
-    shadowColor: Colors.primary,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 8,

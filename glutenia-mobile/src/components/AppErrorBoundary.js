@@ -1,10 +1,15 @@
 import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { Colors, Radius, Spacing } from "../theme/colors";
+import { Radius, Spacing } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 import { PrimaryButton } from "./Buttons";
 import i18n from "../i18n";
 
-export default class AppErrorBoundary extends React.Component {
+// AppErrorBoundary must be a class component (getDerivedStateFromError has
+// no hook equivalent), so it can't call useTheme() directly. Instead, a thin
+// functional wrapper reads the theme via the hook and passes colors down as
+// a prop to the class component that does the actual rendering.
+class AppErrorBoundaryClass extends React.Component {
   state = {
     error: null,
   };
@@ -17,6 +22,8 @@ export default class AppErrorBoundary extends React.Component {
     if (!this.state.error) {
       return this.props.children;
     }
+
+    const styles = getStyles(this.props.colors);
 
     return (
       <View style={styles.screen}>
@@ -41,37 +48,42 @@ export default class AppErrorBoundary extends React.Component {
   }
 }
 
-const styles = StyleSheet.create({
+export default function AppErrorBoundary(props) {
+  const { colors } = useTheme();
+  return <AppErrorBoundaryClass {...props} colors={colors} />;
+}
+
+const getStyles = (colors) => StyleSheet.create({
   screen: {
     flex: 1,
     justifyContent: "center",
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     padding: Spacing.md,
   },
   card: {
     borderRadius: Radius.xl,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: Spacing.lg,
     gap: Spacing.md,
   },
   title: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 24,
     fontWeight: "900",
   },
   body: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 15,
     lineHeight: 22,
   },
   errorBox: {
     maxHeight: 140,
     borderRadius: Radius.md,
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     padding: 12,
   },
   errorText: {
-    color: Colors.primary,
+    color: colors.primary,
     fontSize: 12,
     lineHeight: 18,
   },

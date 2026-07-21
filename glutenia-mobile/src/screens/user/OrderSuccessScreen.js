@@ -3,10 +3,13 @@ import { useTranslation } from "react-i18next";
 import AppIcon from "../../components/AppIcon";
 import Screen from "../../components/Screen";
 import { PrimaryButton, SecondaryButton } from "../../components/Buttons";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function OrderSuccessScreen({ navigation, route }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const order = route.params?.order;
   const shortId = order?._id?.slice(-6)?.toUpperCase() || "DONE";
 
@@ -15,7 +18,7 @@ export default function OrderSuccessScreen({ navigation, route }) {
       <View style={styles.container}>
         <View style={styles.card}>
           <View style={styles.iconWrap}>
-            <AppIcon name="checkmark" size={54} color={Colors.surface} />
+            <AppIcon name="checkmark" size={54} color={colors.surface} />
           </View>
           <Text style={styles.title}>{t("orderSuccess.title")}</Text>
           <Text style={styles.body}>{t("orderSuccess.body")}</Text>
@@ -38,7 +41,7 @@ export default function OrderSuccessScreen({ navigation, route }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
@@ -47,7 +50,7 @@ const styles = StyleSheet.create({
   card: {
     alignItems: "center",
     borderRadius: Radius.xl,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: Spacing.xl,
     gap: Spacing.md,
     ...Shadow,
@@ -56,27 +59,27 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: Colors.secondary,
+    backgroundColor: colors.secondary,
     alignItems: "center",
     justifyContent: "center",
   },
   title: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 30,
     fontWeight: "900",
   },
   body: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 15,
   },
   idPill: {
     borderRadius: Radius.pill,
-    backgroundColor: Colors.secondaryPale,
+    backgroundColor: colors.secondaryPale,
     paddingHorizontal: 18,
     paddingVertical: 9,
   },
   idText: {
-    color: Colors.secondary,
+    color: colors.secondary,
     fontWeight: "900",
   },
 });

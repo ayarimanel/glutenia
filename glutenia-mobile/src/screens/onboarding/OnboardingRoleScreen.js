@@ -2,10 +2,13 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function OnboardingRoleScreen({ navigation }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [selected, setSelected] = useState(null);
 
   const OPTIONS = [
@@ -76,8 +79,8 @@ export default function OnboardingRoleScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+const getStyles = (colors) => StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.background },
 
   headerRow: {
     flexDirection: "row",
@@ -92,25 +95,25 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 13,
     fontWeight: "600",
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
 
   progressTrack: {
     height: 4,
-    backgroundColor: Colors.divider,
+    backgroundColor: colors.divider,
     marginHorizontal: Spacing.md,
     borderRadius: 2,
     marginBottom: Spacing.xl,
     overflow: "hidden",
   },
-  progressFill: { height: "100%", backgroundColor: Colors.primary, borderRadius: 2 },
+  progressFill: { height: "100%", backgroundColor: colors.primary, borderRadius: 2 },
 
   body: { paddingHorizontal: Spacing.md, paddingBottom: Spacing.lg },
 
   question: {
     fontSize: 26,
     fontWeight: "800",
-    color: Colors.textDark,
+    color: colors.textDark,
     marginBottom: Spacing.xl,
     lineHeight: 34,
   },
@@ -118,40 +121,40 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.lg,
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     padding: Spacing.md,
     marginBottom: Spacing.md,
     ...Shadow,
   },
-  cardActive: { borderColor: Colors.primary, backgroundColor: Colors.primaryPale },
+  cardActive: { borderColor: colors.primary, backgroundColor: colors.primaryPale },
   cardBody: { flex: 1 },
-  cardLabel: { fontSize: 16, fontWeight: "700", color: Colors.textDark, marginBottom: 2 },
-  cardLabelActive: { color: Colors.primary },
-  cardSub: { fontSize: 13, color: Colors.textMuted, lineHeight: 18 },
+  cardLabel: { fontSize: 16, fontWeight: "700", color: colors.textDark, marginBottom: 2 },
+  cardLabelActive: { color: colors.primary },
+  cardSub: { fontSize: 13, color: colors.textMuted, lineHeight: 18 },
 
   radio: {
     width: 22,
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
   },
-  radioActive: { borderColor: Colors.primary },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.primary },
+  radioActive: { borderColor: colors.primary },
+  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary },
 
   footer: { padding: Spacing.md, paddingBottom: Spacing.lg },
   btn: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: Radius.md,
     height: 52,
     alignItems: "center",
     justifyContent: "center",
   },
   btnDisabled: { opacity: 0.45 },
-  btnText: { color: Colors.surface, fontSize: 16, fontWeight: "700" },
+  btnText: { color: colors.surface, fontSize: 16, fontWeight: "700" },
 });

@@ -14,10 +14,13 @@ import Field from "../../components/Field";
 import AppIcon from "../../components/AppIcon";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
-import { Colors, Radius, Spacing } from "../../theme/colors";
+import { Radius, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function DeleteAccountScreen({ navigation }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { token, logout } = useAuth();
 
   const [password, setPassword] = useState("");
@@ -57,7 +60,7 @@ export default function DeleteAccountScreen({ navigation }) {
     <Screen>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn} activeOpacity={0.7}>
-          <AppIcon name="arrow-back" size={22} color={Colors.textDark} />
+          <AppIcon name="arrow-back" size={22} color={colors.textDark} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t("settings.deleteAccountScreen.title")}</Text>
         <View style={styles.headerBtn} />
@@ -73,7 +76,7 @@ export default function DeleteAccountScreen({ navigation }) {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.warningCard}>
-            <AppIcon name="close-circle" size={20} color={Colors.danger} />
+            <AppIcon name="close-circle" size={20} color={colors.danger} />
             <Text style={styles.warningText}>
               {t("settings.deleteAccountScreen.warning")}
             </Text>
@@ -108,7 +111,7 @@ export default function DeleteAccountScreen({ navigation }) {
   );
 }
 
-const styles = {
+const getStyles = (colors) => ({
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -121,7 +124,7 @@ const styles = {
     textAlign: "center",
     fontSize: 18,
     fontWeight: "700",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
   container: {
     padding: Spacing.md,
@@ -139,11 +142,11 @@ const styles = {
   warningText: {
     flex: 1,
     fontSize: 13,
-    color: Colors.danger,
+    color: colors.danger,
     lineHeight: 19,
   },
   deleteButton: {
-    backgroundColor: Colors.danger,
+    backgroundColor: colors.danger,
     borderRadius: Radius.md,
     height: 52,
     alignItems: "center",
@@ -152,4 +155,4 @@ const styles = {
   },
   deleteButtonDisabled: { opacity: 0.6 },
   deleteButtonText: { color: "#fff", fontSize: 16, fontWeight: "700" },
-};
+});

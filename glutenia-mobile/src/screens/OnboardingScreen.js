@@ -12,7 +12,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, ArrowRight } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
-import { Colors, Spacing } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
+import { Spacing } from "../theme/colors";
 import LanguageSelector from "../components/LanguageSelector";
 
 const SLIDE_ASSETS = [
@@ -26,6 +27,8 @@ const SLIDE_ASSETS = [
 export default function OnboardingScreen() {
   const { completeOnboarding } = useAuth();
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { width } = useWindowDimensions();
   const IMAGE_SIZE = width * 0.82;
   const [activeIndex, setActiveIndex] = useState(0);
@@ -98,7 +101,7 @@ export default function OnboardingScreen() {
           onPress={handleBack}
           activeOpacity={0.8}
         >
-          <ArrowLeft color={Colors.textDark} size={24} strokeWidth={2.5} />
+          <ArrowLeft color={colors.textDark} size={24} strokeWidth={2.5} />
         </TouchableOpacity>
 
         <View style={styles.dots}>
@@ -130,10 +133,10 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   langButton: {
     position: "absolute",
@@ -157,16 +160,16 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "800",
-    color: Colors.textDark,
+    color: colors.textDark,
     textAlign: "center",
     marginBottom: Spacing.md,
   },
   titleHighlight: {
-    color: Colors.primary,
+    color: colors.primary,
   },
   description: {
     fontSize: 15,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: "center",
     lineHeight: 22,
     paddingHorizontal: Spacing.md,
@@ -182,7 +185,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
@@ -195,10 +198,10 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: Colors.primary,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -220,7 +223,7 @@ const styles = StyleSheet.create({
     height: 14,
     borderRadius: 7,
     borderWidth: 1.5,
-    borderColor: Colors.secondary,
+    borderColor: colors.secondary,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -228,12 +231,12 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: Colors.secondary,
+    backgroundColor: colors.secondary,
   },
   inactiveDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: Colors.secondary,
+    backgroundColor: colors.secondary,
   },
 });

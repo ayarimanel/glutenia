@@ -9,7 +9,8 @@ import {
 } from "react-native";
 import { Globe, Check } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
-import { Colors, Radius, Spacing, Shadow } from "../theme/colors";
+import { Radius, Spacing, Shadow } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 
 const LANGUAGES = [
   { code: "fr", label: "Français", flag: "🇫🇷" },
@@ -19,6 +20,8 @@ const LANGUAGES = [
 
 export default function LanguageSelector({ visible: externalVisible, onClose, onSelect }) {
   const { t, i18n } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [internalVisible, setInternalVisible] = useState(false);
 
   const controlled = externalVisible !== undefined;
@@ -33,7 +36,7 @@ export default function LanguageSelector({ visible: externalVisible, onClose, on
           onPress={() => setInternalVisible(true)}
           activeOpacity={0.8}
         >
-          <Globe color={Colors.textDark} size={20} strokeWidth={2} />
+          <Globe color={colors.textDark} size={20} strokeWidth={2} />
         </TouchableOpacity>
       )}
 
@@ -67,7 +70,7 @@ export default function LanguageSelector({ visible: externalVisible, onClose, on
                     {lang.label}
                   </Text>
                   {active && (
-                    <Check color={Colors.primary} size={18} strokeWidth={2.5} />
+                    <Check color={colors.primary} size={18} strokeWidth={2.5} />
                   )}
                 </TouchableOpacity>
               );
@@ -79,12 +82,12 @@ export default function LanguageSelector({ visible: externalVisible, onClose, on
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   trigger: {
     width: 42,
     height: 42,
     borderRadius: Radius.pill,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
     ...Shadow,
@@ -98,7 +101,7 @@ const styles = StyleSheet.create({
   },
   sheet: {
     width: "100%",
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.xl,
     paddingVertical: Spacing.lg,
     paddingHorizontal: Spacing.lg,
@@ -107,7 +110,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 17,
     fontWeight: "700",
-    color: Colors.textDark,
+    color: colors.textDark,
     textAlign: "center",
     marginBottom: Spacing.md,
   },
@@ -120,7 +123,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   rowActive: {
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
   },
   flag: {
     fontSize: 22,
@@ -129,11 +132,11 @@ const styles = StyleSheet.create({
   label: {
     flex: 1,
     fontSize: 15,
-    color: Colors.textDark,
+    color: colors.textDark,
     fontWeight: "500",
   },
   labelActive: {
-    color: Colors.primary,
+    color: colors.primary,
     fontWeight: "700",
   },
 });

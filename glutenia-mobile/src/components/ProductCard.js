@@ -1,10 +1,13 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import AppIcon from "./AppIcon";
-import { Colors, Radius, Shadow } from "../theme/colors";
+import { Radius, Shadow } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 import GlutenFreeBadge from "./GlutenFreeBadge";
 import ProductVisual from "./ProductVisual";
 
 export default function ProductCard({ product, onPress, onAdd }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   return (
     <Pressable style={({ pressed }) => [styles.card, pressed && styles.pressed]} onPress={onPress}>
       <ProductVisual product={product} />
@@ -19,7 +22,7 @@ export default function ProductCard({ product, onPress, onAdd }) {
         <View style={styles.bottom}>
           <Text style={styles.price}>{product.price.toFixed(2)} TND</Text>
           <Pressable style={styles.addButton} onPress={onAdd}>
-            <AppIcon name="add" size={20} color={Colors.surface} />
+            <AppIcon name="add" size={20} color={colors.surface} />
           </Pressable>
         </View>
       </View>
@@ -27,12 +30,12 @@ export default function ProductCard({ product, onPress, onAdd }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   card: {
     flex: 1,
     minHeight: 260,
     borderRadius: Radius.lg,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: 10,
     gap: 10,
     ...Shadow,
@@ -49,13 +52,13 @@ const styles = StyleSheet.create({
   },
   name: {
     minHeight: 40,
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 15,
     fontWeight: "800",
     lineHeight: 20,
   },
   category: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: "600",
   },
@@ -66,7 +69,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   price: {
-    color: Colors.primary,
+    color: colors.primary,
     fontSize: 15,
     fontWeight: "900",
   },
@@ -74,7 +77,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },

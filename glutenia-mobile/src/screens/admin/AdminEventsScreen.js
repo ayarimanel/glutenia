@@ -16,11 +16,14 @@ import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function AdminEventsScreen({ navigation }) {
   const { token, logout } = useAuth();
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -85,7 +88,7 @@ export default function AdminEventsScreen({ navigation }) {
               style={styles.addButton}
               onPress={() => navigation.navigate("CreateEvent")}
             >
-              <AppIcon name="add" size={24} color={Colors.surface} />
+              <AppIcon name="add" size={24} color={colors.surface} />
             </Pressable>
           }
         />
@@ -119,14 +122,14 @@ export default function AdminEventsScreen({ navigation }) {
                   style={styles.actionButton}
                   onPress={() => navigation.navigate("CreateEvent", { eventId: item._id })}
                 >
-                  <AppIcon name="pencil" size={18} color={Colors.primary} />
+                  <AppIcon name="pencil" size={18} color={colors.primary} />
                   <Text style={styles.actionText}>{t("admin.events.edit")}</Text>
                 </Pressable>
                 <Pressable
                   style={styles.actionButton}
                   onPress={() => deleteEvent(item)}
                 >
-                  <AppIcon name="trash" size={18} color={Colors.danger} />
+                  <AppIcon name="trash" size={18} color={colors.danger} />
                   <Text style={[styles.actionText, styles.deleteText]}>
                     {t("admin.events.delete")}
                   </Text>
@@ -140,7 +143,7 @@ export default function AdminEventsScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: Spacing.md,
@@ -150,7 +153,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -162,7 +165,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderRadius: Radius.lg,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: 10,
     gap: 12,
     ...Shadow,
@@ -182,17 +185,17 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   name: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 15,
     fontWeight: "900",
   },
   meta: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: "600",
   },
   going: {
-    color: Colors.primary,
+    color: colors.primary,
     fontSize: 12,
     fontWeight: "800",
   },
@@ -203,7 +206,7 @@ const styles = StyleSheet.create({
     minWidth: 74,
     minHeight: 38,
     borderRadius: Radius.pill,
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
@@ -211,11 +214,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   actionText: {
-    color: Colors.primary,
+    color: colors.primary,
     fontSize: 12,
     fontWeight: "900",
   },
   deleteText: {
-    color: Colors.danger,
+    color: colors.danger,
   },
 });

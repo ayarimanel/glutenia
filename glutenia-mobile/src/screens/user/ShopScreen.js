@@ -8,8 +8,9 @@ import EmptyState from "../../components/EmptyState";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { api } from "../../api/client";
-import { Colors, Radius, Spacing } from "../../theme/colors";
+import { Radius, Spacing } from "../../theme/colors";
 import { useTranslation } from "react-i18next";
+import { useTheme } from "../../context/ThemeContext";
 
 const categories = ["All", "Bread", "Pasta", "Snacks", "Flour", "Sweets"];
 
@@ -17,6 +18,8 @@ export default function ShopScreen({ navigation }) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { addItem } = useCart();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState("All");
   const [search, setSearch] = useState("");
@@ -51,12 +54,12 @@ export default function ShopScreen({ navigation }) {
       <View style={styles.container}>
 
         <View style={styles.searchBox}>
-          <AppIcon name="search" size={19} color={Colors.textMuted} />
+          <AppIcon name="search" size={19} color={colors.textMuted} />
           <TextInput
             value={search}
             onChangeText={setSearch}
             placeholder={t("shop.searchPlaceholder")}
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor={colors.textMuted}
             style={styles.searchInput}
           />
         </View>
@@ -112,7 +115,7 @@ export default function ShopScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: Spacing.md,
@@ -121,9 +124,9 @@ const styles = StyleSheet.create({
   searchBox: {
     height: 52,
     borderRadius: Radius.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 14,
@@ -131,7 +134,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 15,
   },
   categories: {
@@ -141,22 +144,22 @@ const styles = StyleSheet.create({
   },
   category: {
     borderRadius: Radius.pill,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: Colors.divider,
+    borderColor: colors.divider,
   },
   categoryActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   categoryText: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontWeight: "800",
   },
   categoryTextActive: {
-    color: Colors.surface,
+    color: colors.surface,
   },
   listContent: {
     paddingBottom: 24,

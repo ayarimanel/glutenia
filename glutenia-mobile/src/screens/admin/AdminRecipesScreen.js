@@ -17,11 +17,14 @@ import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function AdminRecipesScreen({ navigation }) {
   const { token, logout } = useAuth();
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -85,7 +88,7 @@ export default function AdminRecipesScreen({ navigation }) {
               style={styles.addButton}
               onPress={() => navigation.navigate("AdminRecipeForm")}
             >
-              <AppIcon name="add" size={24} color={Colors.surface} />
+              <AppIcon name="add" size={24} color={colors.surface} />
             </Pressable>
           }
         />
@@ -107,7 +110,7 @@ export default function AdminRecipesScreen({ navigation }) {
                 <Image source={{ uri: item.imageUrl }} style={styles.visual} />
               ) : (
                 <View style={[styles.visual, styles.visualPlaceholder]}>
-                  <AppIcon name="utensils" size={24} color={Colors.primary} />
+                  <AppIcon name="utensils" size={24} color={colors.primary} />
                 </View>
               )}
               <View style={styles.recipeBody}>
@@ -122,14 +125,14 @@ export default function AdminRecipesScreen({ navigation }) {
                   style={styles.actionButton}
                   onPress={() => navigation.navigate("AdminRecipeForm", { recipeId: item._id })}
                 >
-                  <AppIcon name="pencil" size={18} color={Colors.primary} />
+                  <AppIcon name="pencil" size={18} color={colors.primary} />
                   <Text style={styles.actionText}>{t("admin.recipes.edit")}</Text>
                 </Pressable>
                 <Pressable
                   style={styles.actionButton}
                   onPress={() => deleteRecipe(item)}
                 >
-                  <AppIcon name="trash" size={18} color={Colors.danger} />
+                  <AppIcon name="trash" size={18} color={colors.danger} />
                   <Text style={[styles.actionText, styles.deleteText]}>
                     {t("admin.recipes.delete")}
                   </Text>
@@ -143,7 +146,7 @@ export default function AdminRecipesScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: Spacing.md,
@@ -153,7 +156,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -165,7 +168,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderRadius: Radius.lg,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: 10,
     gap: 12,
     ...Shadow,
@@ -176,7 +179,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
   },
   visualPlaceholder: {
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -185,17 +188,17 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   name: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 15,
     fontWeight: "900",
   },
   meta: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: "600",
   },
   popular: {
-    color: Colors.primary,
+    color: colors.primary,
     fontSize: 12,
     fontWeight: "800",
   },
@@ -206,7 +209,7 @@ const styles = StyleSheet.create({
     minWidth: 74,
     minHeight: 38,
     borderRadius: Radius.pill,
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
@@ -214,11 +217,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   actionText: {
-    color: Colors.primary,
+    color: colors.primary,
     fontSize: 12,
     fontWeight: "900",
   },
   deleteText: {
-    color: Colors.danger,
+    color: colors.danger,
   },
 });

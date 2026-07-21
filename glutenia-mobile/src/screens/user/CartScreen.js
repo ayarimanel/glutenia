@@ -8,10 +8,13 @@ import ProductVisual from "../../components/ProductVisual";
 import QuantityStepper from "../../components/QuantityStepper";
 import { PrimaryButton } from "../../components/Buttons";
 import { useCart } from "../../context/CartContext";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function CartScreen({ navigation }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { items, updateQty, removeItem, clearCart, total } = useCart();
 
   return (
@@ -31,7 +34,7 @@ export default function CartScreen({ navigation }) {
                   ])
                 }
               >
-                <AppIcon name="trash" size={18} color={Colors.danger} />
+                <AppIcon name="trash" size={18} color={colors.danger} />
               </Pressable>
             ) : null
           }
@@ -63,7 +66,7 @@ export default function CartScreen({ navigation }) {
                     onChange={(qty) => updateQty(item.productId, qty)}
                   />
                   <Pressable onPress={() => removeItem(item.productId)}>
-                    <AppIcon name="close-circle" size={28} color={Colors.danger} />
+                    <AppIcon name="close-circle" size={28} color={colors.danger} />
                   </Pressable>
                 </View>
               </View>
@@ -88,7 +91,7 @@ export default function CartScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: Spacing.md,
@@ -98,7 +101,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -109,7 +112,7 @@ const styles = StyleSheet.create({
   itemCard: {
     flexDirection: "row",
     borderRadius: Radius.lg,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: 10,
     gap: 12,
     ...Shadow,
@@ -122,13 +125,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   itemName: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 16,
     fontWeight: "900",
     lineHeight: 21,
   },
   itemPrice: {
-    color: Colors.primary,
+    color: colors.primary,
     fontSize: 14,
     fontWeight: "900",
   },
@@ -144,7 +147,7 @@ const styles = StyleSheet.create({
     right: Spacing.md,
     bottom: Spacing.md,
     borderRadius: Radius.lg,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: Spacing.md,
     flexDirection: "row",
     alignItems: "center",
@@ -153,11 +156,11 @@ const styles = StyleSheet.create({
     ...Shadow,
   },
   summaryLabel: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontWeight: "700",
   },
   total: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 20,
     fontWeight: "900",
   },

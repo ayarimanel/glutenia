@@ -6,11 +6,14 @@ import AppIcon from "../../components/AppIcon";
 import Field from "../../components/Field";
 import { PrimaryButton, SecondaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function ProfessionalPendingScreen({ navigation, route }) {
   const { t } = useTranslation();
   const { login } = useAuth();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { approvalCode, email } = route.params || {};
 
   const [password, setPassword] = useState("");
@@ -44,7 +47,7 @@ export default function ProfessionalPendingScreen({ navigation, route }) {
     <Screen>
       <View style={styles.container}>
         <View style={styles.iconWrap}>
-          <AppIcon name="clock" size={34} color={Colors.secondary} strokeWidth={2.2} />
+          <AppIcon name="clock" size={34} color={colors.secondary} strokeWidth={2.2} />
         </View>
         <Text style={styles.title}>{t("professionalPending.title")}</Text>
         <Text style={styles.subtitle}>{t("professionalPending.subtitle")}</Text>
@@ -84,7 +87,7 @@ export default function ProfessionalPendingScreen({ navigation, route }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
@@ -96,19 +99,19 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: Colors.secondaryPale,
+    backgroundColor: colors.secondaryPale,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Spacing.sm,
   },
   title: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 24,
     fontWeight: "900",
     textAlign: "center",
   },
   subtitle: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 15,
     lineHeight: 22,
     textAlign: "center",
@@ -117,32 +120,32 @@ const styles = StyleSheet.create({
   codeCard: {
     width: "100%",
     borderRadius: Radius.xl,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: Spacing.lg,
     alignItems: "center",
     gap: 6,
     ...Shadow,
   },
   codeLabel: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: "800",
     textTransform: "uppercase",
     letterSpacing: 0.6,
   },
   code: {
-    color: Colors.secondary,
+    color: colors.secondary,
     fontSize: 34,
     fontWeight: "900",
     letterSpacing: 4,
   },
   email: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 13,
     marginTop: 4,
   },
   hint: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 13,
     lineHeight: 19,
     textAlign: "center",

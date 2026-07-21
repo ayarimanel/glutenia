@@ -15,10 +15,13 @@ import AppIcon from "../../components/AppIcon";
 import { PrimaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
-import { Colors, Spacing } from "../../theme/colors";
+import { Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function ChangePasswordScreen({ navigation }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { token } = useAuth();
 
   const [currentPassword, setCurrentPassword] = useState("");
@@ -64,7 +67,7 @@ export default function ChangePasswordScreen({ navigation }) {
     <Screen>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn} activeOpacity={0.7}>
-          <AppIcon name="arrow-back" size={22} color={Colors.textDark} />
+          <AppIcon name="arrow-back" size={22} color={colors.textDark} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t("settings.changePasswordScreen.title")}</Text>
         <View style={styles.headerBtn} />
@@ -123,7 +126,7 @@ export default function ChangePasswordScreen({ navigation }) {
   );
 }
 
-const styles = {
+const getStyles = (colors) => ({
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -136,7 +139,7 @@ const styles = {
     textAlign: "center",
     fontSize: 18,
     fontWeight: "700",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
   container: {
     padding: Spacing.md,
@@ -144,4 +147,4 @@ const styles = {
     gap: Spacing.md,
   },
   submitButton: { marginTop: Spacing.sm },
-};
+});

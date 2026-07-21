@@ -14,7 +14,8 @@ import Screen from "../components/Screen";
 import AppIcon from "../components/AppIcon";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
-import { Colors, Radius, Shadow, Spacing } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
+import { Radius, Shadow, Spacing } from "../theme/colors";
 import { useTranslation } from "react-i18next";
 
 function formatTimeAgo(dateString) {
@@ -45,6 +46,8 @@ const mascot = require("../../assets/mascot.png");
 
 export default function AccountScreen({ navigation }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
 
   const JOURNEY_STEPS = [
     { key: "beginner", label: t("account.journey.beginner") },
@@ -127,7 +130,7 @@ export default function AccountScreen({ navigation }) {
   if (loading) {
     return (
       <Screen style={styles.centered}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
       </Screen>
     );
   }
@@ -155,8 +158,8 @@ export default function AccountScreen({ navigation }) {
   const isProfessional = user?.role === "professional";
   const roleType = user?.role_type;
   const roleMeta = isProfessional ? ROLE_META.professional : ROLE_META[roleType] || ROLE_META.unset;
-  const accentColor = isProfessional ? Colors.secondary : Colors.primary;
-  const accentPale = isProfessional ? Colors.secondaryPale : Colors.primaryPale;
+  const accentColor = isProfessional ? colors.secondary : colors.primary;
+  const accentPale = isProfessional ? colors.secondaryPale : colors.primaryPale;
   const currentTitle = gamification?.currentTitle || t("account.newcomer");
   const level = gamification?.currentLevel ?? 1;
   const totalXp = gamification?.totalXp ?? 0;
@@ -186,7 +189,7 @@ export default function AccountScreen({ navigation }) {
               <Image source={{ uri: user.avatar }} style={styles.avatarImage} />
             ) : (
               <View style={styles.avatar}>
-                <AppIcon name="person" size={40} color={Colors.primary} />
+                <AppIcon name="person" size={40} color={colors.primary} />
               </View>
             )}
             <View style={[styles.avatarBadge, { backgroundColor: accentColor }]}>
@@ -327,7 +330,7 @@ export default function AccountScreen({ navigation }) {
                   </View>
                   <Text style={styles.settingsLabel}>{t("account.myBusiness")}</Text>
                 </View>
-                <AppIcon name="chevron-right" size={20} color={Colors.textMuted} />
+                <AppIcon name="chevron-right" size={20} color={colors.textMuted} />
               </Pressable>
 
               <View style={styles.divider} />
@@ -342,7 +345,7 @@ export default function AccountScreen({ navigation }) {
                   </View>
                   <Text style={styles.settingsLabel}>{t("account.myProducts")}</Text>
                 </View>
-                <AppIcon name="chevron-right" size={20} color={Colors.textMuted} />
+                <AppIcon name="chevron-right" size={20} color={colors.textMuted} />
               </Pressable>
 
               <View style={styles.divider} />
@@ -357,7 +360,7 @@ export default function AccountScreen({ navigation }) {
                   </View>
                   <Text style={styles.settingsLabel}>{t("account.visibility")}</Text>
                 </View>
-                <AppIcon name="chevron-right" size={20} color={Colors.textMuted} />
+                <AppIcon name="chevron-right" size={20} color={colors.textMuted} />
               </Pressable>
 
               <View style={styles.divider} />
@@ -372,7 +375,7 @@ export default function AccountScreen({ navigation }) {
                   </View>
                   <Text style={styles.settingsLabel}>{t("account.sellerOrders")}</Text>
                 </View>
-                <AppIcon name="chevron-right" size={20} color={Colors.textMuted} />
+                <AppIcon name="chevron-right" size={20} color={colors.textMuted} />
               </Pressable>
             </View>
           </>
@@ -477,12 +480,12 @@ export default function AccountScreen({ navigation }) {
         <View style={styles.settingsList}>
           <Pressable style={styles.settingsRow} onPress={() => navigation.navigate("Orders")}>
             <View style={styles.settingsLeft}>
-              <View style={[styles.iconWrap, { backgroundColor: Colors.primaryPale }]}>
-                <AppIcon name="receipt" size={20} color={Colors.primary} />
+              <View style={[styles.iconWrap, { backgroundColor: colors.primaryPale }]}>
+                <AppIcon name="receipt" size={20} color={colors.primary} />
               </View>
               <Text style={styles.settingsLabel}>{t("account.myOrders")}</Text>
             </View>
-            <AppIcon name="chevron-right" size={20} color={Colors.textMuted} />
+            <AppIcon name="chevron-right" size={20} color={colors.textMuted} />
           </Pressable>
 
           <View style={styles.divider} />
@@ -492,50 +495,50 @@ export default function AccountScreen({ navigation }) {
             onPress={() => navigation.navigate("PatientResources")}
           >
             <View style={styles.settingsLeft}>
-              <View style={[styles.iconWrap, { backgroundColor: Colors.primaryPale }]}>
-                <AppIcon name="activity" size={20} color={Colors.primary} />
+              <View style={[styles.iconWrap, { backgroundColor: colors.primaryPale }]}>
+                <AppIcon name="activity" size={20} color={colors.primary} />
               </View>
               <Text style={styles.settingsLabel}>{t("home.patientResources")}</Text>
             </View>
-            <AppIcon name="chevron-right" size={20} color={Colors.textMuted} />
+            <AppIcon name="chevron-right" size={20} color={colors.textMuted} />
           </Pressable>
 
           <View style={styles.divider} />
 
           <Pressable style={styles.settingsRow} onPress={() => navigation.navigate("Settings")}>
             <View style={styles.settingsLeft}>
-              <View style={[styles.iconWrap, { backgroundColor: Colors.secondaryPale }]}>
-                <AppIcon name="settings" size={20} color={Colors.secondary} />
+              <View style={[styles.iconWrap, { backgroundColor: colors.secondaryPale }]}>
+                <AppIcon name="settings" size={20} color={colors.secondary} />
               </View>
               <Text style={styles.settingsLabel}>{t("account.settings")}</Text>
             </View>
-            <AppIcon name="chevron-right" size={20} color={Colors.textMuted} />
+            <AppIcon name="chevron-right" size={20} color={colors.textMuted} />
           </Pressable>
 
           <View style={styles.divider} />
 
           <Pressable style={styles.settingsRow} onPress={handlePrivacySecurity}>
             <View style={styles.settingsLeft}>
-              <View style={[styles.iconWrap, { backgroundColor: Colors.secondaryPale }]}>
-                <AppIcon name="shield-check" size={20} color={Colors.secondary} />
+              <View style={[styles.iconWrap, { backgroundColor: colors.secondaryPale }]}>
+                <AppIcon name="shield-check" size={20} color={colors.secondary} />
               </View>
               <Text style={styles.settingsLabel}>{t("account.privacySecurity")}</Text>
             </View>
-            <AppIcon name="chevron-right" size={20} color={Colors.textMuted} />
+            <AppIcon name="chevron-right" size={20} color={colors.textMuted} />
           </Pressable>
 
           <View style={styles.divider} />
 
           <Pressable style={styles.settingsRow} onPress={handleLogout}>
             <View style={styles.settingsLeft}>
-              <View style={[styles.iconWrap, { backgroundColor: Colors.secondaryPale }]}>
-                <AppIcon name="log-out" size={20} color={Colors.secondary} />
+              <View style={[styles.iconWrap, { backgroundColor: colors.secondaryPale }]}>
+                <AppIcon name="log-out" size={20} color={colors.secondary} />
               </View>
               <Text style={[styles.settingsLabel, styles.settingsLabelDanger]}>
                 {t("account.logout")}
               </Text>
             </View>
-            <AppIcon name="chevron-right" size={20} color={Colors.textMuted} />
+            <AppIcon name="chevron-right" size={20} color={colors.textMuted} />
           </Pressable>
         </View>
       </ScrollView>
@@ -543,22 +546,22 @@ export default function AccountScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   centered: { alignItems: "center", justifyContent: "center" },
   errorMsg: {
     fontSize: 15,
-    color: Colors.danger,
+    color: colors.danger,
     textAlign: "center",
     marginBottom: Spacing.md,
     paddingHorizontal: Spacing.xl,
   },
   retryBtn: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: Radius.md,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
   },
-  retryText: { color: Colors.surface, fontWeight: "700", fontSize: 14 },
+  retryText: { color: colors.surface, fontWeight: "700", fontSize: 14 },
 
   scroll: { paddingBottom: 48 },
   mt: { marginTop: Spacing.lg },
@@ -570,7 +573,7 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 45,
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -586,32 +589,32 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: Colors.surface,
+    borderColor: colors.surface,
   },
   userName: {
     fontSize: 20,
     fontWeight: "700",
-    color: Colors.textDark,
+    color: colors.textDark,
     textAlign: "center",
     marginBottom: 8,
   },
   titlePill: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 3,
     marginBottom: 6,
   },
-  titlePillText: { color: Colors.surface, fontSize: 12, fontWeight: "700" },
-  timeText: { fontSize: 13, color: Colors.textMuted, marginTop: 4, textAlign: "center" },
+  titlePillText: { color: colors.surface, fontSize: 12, fontWeight: "700" },
+  timeText: { fontSize: 13, color: colors.textMuted, marginTop: 4, textAlign: "center" },
 
   // ── B. XP card ───────────────────────────────────────────────────────────
   xpCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.lg,
     padding: Spacing.md,
     marginHorizontal: Spacing.md,
@@ -624,29 +627,29 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: Spacing.sm,
   },
-  xpLevelNum: { fontSize: 18, fontWeight: "800", color: Colors.textDark },
-  xpTitleSub: { fontSize: 13, color: Colors.textMuted, marginTop: 2 },
+  xpLevelNum: { fontSize: 18, fontWeight: "800", color: colors.textDark },
+  xpTitleSub: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
   xpChip: {
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     borderRadius: Radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 4,
   },
-  xpChipText: { color: Colors.primary, fontWeight: "700", fontSize: 13 },
+  xpChipText: { color: colors.primary, fontWeight: "700", fontSize: 13 },
   xpTrack: {
     height: 8,
-    backgroundColor: Colors.divider,
+    backgroundColor: colors.divider,
     borderRadius: 4,
     overflow: "hidden",
     marginBottom: 6,
   },
-  xpFill: { height: "100%", backgroundColor: Colors.primary, borderRadius: 4 },
-  xpHint: { fontSize: 12, color: Colors.textMuted, textAlign: "right" },
+  xpFill: { height: "100%", backgroundColor: colors.primary, borderRadius: 4 },
+  xpHint: { fontSize: 12, color: colors.textMuted, textAlign: "right" },
 
   // ── C. Stats ─────────────────────────────────────────────────────────────
   statsCard: {
     flexDirection: "row",
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.lg,
     marginHorizontal: Spacing.md,
     marginTop: Spacing.md,
@@ -654,14 +657,14 @@ const styles = StyleSheet.create({
     ...Shadow,
   },
   statItem: { flex: 1, alignItems: "center" },
-  statValue: { fontSize: 16, fontWeight: "700", color: Colors.textDark, marginBottom: 4 },
-  statLabel: { fontSize: 11, color: Colors.textMuted, fontWeight: "600" },
-  statDivider: { width: 1, backgroundColor: Colors.divider, marginVertical: 4 },
+  statValue: { fontSize: 16, fontWeight: "700", color: colors.textDark, marginBottom: 4 },
+  statLabel: { fontSize: 11, color: colors.textMuted, fontWeight: "600" },
+  statDivider: { width: 1, backgroundColor: colors.divider, marginVertical: 4 },
 
   // ── Section label ─────────────────────────────────────────────────────────
   sectionLabel: {
     fontSize: 12,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     marginLeft: Spacing.md,
     marginBottom: 6,
     fontWeight: "600",
@@ -684,17 +687,17 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: Radius.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
   },
   roleTextWrap: { flex: 1 },
-  roleTitle: { fontSize: 15, fontWeight: "700", color: Colors.textDark, marginBottom: 4 },
-  roleDesc: { fontSize: 13, color: Colors.textMuted, lineHeight: 19 },
+  roleTitle: { fontSize: 15, fontWeight: "700", color: colors.textDark, marginBottom: 4 },
+  roleDesc: { fontSize: 13, color: colors.textMuted, lineHeight: 19 },
 
   // ── E.2 Seller activity ──────────────────────────────────────────────────
   activityCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.lg,
     marginHorizontal: Spacing.md,
     paddingHorizontal: Spacing.md,
@@ -703,7 +706,7 @@ const styles = StyleSheet.create({
 
   // ── E. Journey ────────────────────────────────────────────────────────────
   journeyCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.lg,
     padding: Spacing.md,
     marginHorizontal: Spacing.md,
@@ -713,13 +716,13 @@ const styles = StyleSheet.create({
   stepItem: { flex: 1, alignItems: "center" },
   stepTrack: { flexDirection: "row", alignItems: "center", width: "100%" },
   trackLine: { flex: 1, height: 2 },
-  lineDone: { backgroundColor: Colors.primary },
-  lineGray: { backgroundColor: Colors.divider },
+  lineDone: { backgroundColor: colors.primary },
+  lineGray: { backgroundColor: colors.divider },
   stepCircle: { width: 14, height: 14, borderRadius: 7 },
-  circleDone: { backgroundColor: Colors.primary },
-  circleGray: { backgroundColor: Colors.surface, borderWidth: 2, borderColor: Colors.divider },
-  stepLbl: { fontSize: 10, color: Colors.textMuted, marginTop: 6, textAlign: "center" },
-  stepLblActive: { color: Colors.primary, fontWeight: "700" },
+  circleDone: { backgroundColor: colors.primary },
+  circleGray: { backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.divider },
+  stepLbl: { fontSize: 10, color: colors.textMuted, marginTop: 6, textAlign: "center" },
+  stepLblActive: { color: colors.primary, fontWeight: "700" },
 
   // ── F. Badges ─────────────────────────────────────────────────────────────
   badgeSectionRow: {
@@ -731,7 +734,7 @@ const styles = StyleSheet.create({
   viewAllLink: {
     fontSize: 13,
     fontWeight: "600",
-    color: Colors.primary,
+    color: colors.primary,
   },
   badgesWrap: {
     flexDirection: "row",
@@ -742,42 +745,42 @@ const styles = StyleSheet.create({
   badgePill: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 6,
     gap: 6,
     ...Shadow,
   },
-  badgeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: Colors.primary },
-  badgeName: { fontSize: 13, fontWeight: "600", color: Colors.textDark, maxWidth: 140 },
+  badgeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.primary },
+  badgeName: { fontSize: 13, fontWeight: "600", color: colors.textDark, maxWidth: 140 },
 
   // ── G. Badges in progress ────────────────────────────────────────────────
   achCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.lg,
     marginHorizontal: Spacing.md,
     overflow: "hidden",
     ...Shadow,
   },
   achRow: { padding: Spacing.md },
-  achBorder: { borderTopWidth: 1, borderTopColor: Colors.divider },
-  achName: { fontSize: 14, fontWeight: "600", color: Colors.textDark, marginBottom: 8 },
+  achBorder: { borderTopWidth: 1, borderTopColor: colors.divider },
+  achName: { fontSize: 14, fontWeight: "600", color: colors.textDark, marginBottom: 8 },
   achTrack: {
     height: 6,
-    backgroundColor: Colors.divider,
+    backgroundColor: colors.divider,
     borderRadius: 3,
     overflow: "hidden",
     marginBottom: 4,
   },
-  achFill: { height: "100%", backgroundColor: Colors.primary, borderRadius: 3 },
-  achCount: { fontSize: 11, color: Colors.textMuted, textAlign: "right" },
+  achFill: { height: "100%", backgroundColor: colors.primary, borderRadius: 3 },
+  achCount: { fontSize: 11, color: colors.textMuted, textAlign: "right" },
 
   // ── H. Eco card ───────────────────────────────────────────────────────────
   ecoCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     borderRadius: Radius.lg,
     padding: Spacing.md,
     marginHorizontal: Spacing.md,
@@ -785,11 +788,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   mascot: { width: 56, height: 56 },
-  ecoText: { flex: 1, fontSize: 14, fontWeight: "500", color: Colors.textDark, lineHeight: 20 },
+  ecoText: { flex: 1, fontSize: 14, fontWeight: "500", color: colors.textDark, lineHeight: 20 },
 
   // ── I. Events ─────────────────────────────────────────────────────────────
   eventsCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.lg,
     marginHorizontal: Spacing.md,
     overflow: "hidden",
@@ -801,7 +804,7 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     gap: 12,
   },
-  eventBorder: { borderTopWidth: 1, borderTopColor: Colors.divider },
+  eventBorder: { borderTopWidth: 1, borderTopColor: colors.divider },
   eventEmoji: {
     width: 44,
     height: 44,
@@ -811,9 +814,9 @@ const styles = StyleSheet.create({
   },
   eventEmojiText: { fontSize: 22 },
   eventInfo: { flex: 1 },
-  eventTitle: { fontSize: 14, fontWeight: "700", color: Colors.textDark, marginBottom: 3 },
-  eventDate: { fontSize: 12, color: Colors.textMuted },
-  eventPrice: { fontSize: 13, fontWeight: "800", color: Colors.primary },
+  eventTitle: { fontSize: 14, fontWeight: "700", color: colors.textDark, marginBottom: 3 },
+  eventDate: { fontSize: 12, color: colors.textMuted },
+  eventPrice: { fontSize: 13, fontWeight: "800", color: colors.primary },
 
   // ── J. Settings ───────────────────────────────────────────────────────────
   settingsList: { marginTop: 28, marginHorizontal: Spacing.md },
@@ -825,7 +828,7 @@ const styles = StyleSheet.create({
   },
   settingsLeft: { flexDirection: "row", alignItems: "center", gap: 12 },
   iconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  settingsLabel: { fontSize: 15, fontWeight: "500", color: Colors.textDark },
-  settingsLabelDanger: { color: Colors.secondary },
+  settingsLabel: { fontSize: 15, fontWeight: "500", color: colors.textDark },
+  settingsLabelDanger: { color: colors.secondary },
   divider: { height: 1, backgroundColor: "#F0F0F0" },
 });

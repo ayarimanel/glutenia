@@ -11,7 +11,8 @@ import Screen from "../../components/Screen";
 import Field from "../../components/Field";
 import { PrimaryButton, SecondaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
-import { Colors, Radius, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
+import { Radius, Spacing } from "../../theme/colors";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -19,6 +20,8 @@ const MASCOT = require("../../../assets/mascot.png");
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
@@ -127,13 +130,14 @@ export default function LoginScreen({ navigation }) {
 }
 
 // ─── Styles ────────────────────────────────────────────────────────────────────
-const WAVE_GREEN       = Colors.primary;        // #8BC34A  — outer wave
 const WAVE_GREEN_DEEP  = "#6ea832";             // deeper shade — inner wave accent
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => {
+const WAVE_GREEN = colors.primary;        // #8BC34A  — outer wave
+return StyleSheet.create({
   // Root background matches the wave so there's no colour seam on tall devices
   screen: {
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
   },
 
   // ── Wave ──────────────────────────────────────────────────────────────────
@@ -190,13 +194,13 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
   title: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 36,
     fontWeight: "900",
     letterSpacing: -0.5,
   },
   subtitle: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 14,
     textAlign: "center",
     lineHeight: 21,
@@ -205,20 +209,21 @@ const styles = StyleSheet.create({
 
   // ── Card ──────────────────────────────────────────────────────────────────
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.xl,          // 24 — matches your existing Radius token
     padding: Spacing.lg,
     gap: Spacing.md,
     // Lifted shadow using primary green tint (same as your Shadow token logic)
-    shadowColor: Colors.primary,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: -6 },
     shadowOpacity: 0.10,
     shadowRadius: 24,
     elevation: 10,
   },
   cardTitle: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 22,
     fontWeight: "900",
   },
 });
+};

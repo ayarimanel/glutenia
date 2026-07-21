@@ -2,7 +2,8 @@ import { Image, StyleSheet, Text, View } from "react-native";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import AppIcon from "./AppIcon";
-import { Colors, Radius } from "../theme/colors";
+import { Radius } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 
 const iconByCategory = {
   Bread: "bread-slice",
@@ -15,6 +16,8 @@ const iconByCategory = {
 
 export default function ProductVisual({ product, size = "card" }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const isLarge = size === "large";
   const [failed, setFailed] = useState(false);
   const imageUrl = product?.imageUrl;
@@ -39,19 +42,19 @@ export default function ProductVisual({ product, size = "card" }) {
       <AppIcon
         name={iconByCategory[product?.category] || "leaf"}
         size={isLarge ? 62 : 34}
-        color={Colors.primary}
+        color={colors.primary}
       />
       {isLarge ? <Text style={styles.category}>{product?.category || t("productVisual.gfFallback")}</Text> : null}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   image: {
     width: "100%",
     aspectRatio: 1.18,
     borderRadius: Radius.md,
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
   },
   large: {
     aspectRatio: 1.35,
@@ -61,13 +64,13 @@ const styles = StyleSheet.create({
     width: "100%",
     aspectRatio: 1.18,
     borderRadius: Radius.md,
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
   },
   category: {
-    color: Colors.primary,
+    color: colors.primary,
     fontSize: 13,
     fontWeight: "800",
   },

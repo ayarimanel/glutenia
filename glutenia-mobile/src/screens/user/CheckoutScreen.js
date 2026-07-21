@@ -9,12 +9,15 @@ import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { api } from "../../api/client";
 import { notifyGamification } from "../../context/GamificationContext";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 const DELIVERY_FEE = 7;
 
 export default function CheckoutScreen({ navigation }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { token, user, updateUser } = useAuth();
   const { items, total, clearCart } = useCart();
   const [fullName, setFullName] = useState(user?.name || "");
@@ -117,7 +120,7 @@ export default function CheckoutScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   flex: {
     flex: 1,
   },
@@ -127,7 +130,7 @@ const styles = StyleSheet.create({
   },
   summary: {
     borderRadius: Radius.lg,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: Spacing.md,
     gap: 12,
     ...Shadow,
@@ -140,26 +143,26 @@ const styles = StyleSheet.create({
   },
   lineName: {
     flex: 1,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontWeight: "700",
   },
   linePrice: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontWeight: "900",
   },
   totalLine: {
     borderTopWidth: 1,
-    borderTopColor: Colors.divider,
+    borderTopColor: colors.divider,
     paddingTop: 12,
     flexDirection: "row",
     justifyContent: "space-between",
   },
   totalLabel: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontWeight: "900",
   },
   total: {
-    color: Colors.primary,
+    color: colors.primary,
     fontSize: 20,
     fontWeight: "900",
   },

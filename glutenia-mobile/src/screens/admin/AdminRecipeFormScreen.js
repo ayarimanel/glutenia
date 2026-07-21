@@ -19,7 +19,8 @@ import AppIcon from "../../components/AppIcon";
 import { PrimaryButton, SecondaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
-import { Colors, Radius, Spacing } from "../../theme/colors";
+import { Radius, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 const CATEGORIES = ["Quick", "Tunisian", "Easy"];
 const MAX_IMAGE_DATA_URL_LENGTH = 3000000;
@@ -27,6 +28,8 @@ const MAX_IMAGE_DATA_URL_LENGTH = 3000000;
 export default function AdminRecipeFormScreen({ navigation, route }) {
   const { token } = useAuth();
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const recipeId = route.params?.recipeId;
 
   const [name, setName] = useState("");
@@ -152,7 +155,7 @@ export default function AdminRecipeFormScreen({ navigation, route }) {
         <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
             <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
-              <AppIcon name="arrow-back" size={20} color={Colors.textDark} />
+              <AppIcon name="arrow-back" size={20} color={colors.textDark} />
             </Pressable>
             <Text style={styles.headerTitle}>
               {recipeId ? t("admin.recipeForm.titleEdit") : t("admin.recipeForm.titleAdd")}
@@ -237,8 +240,8 @@ export default function AdminRecipeFormScreen({ navigation, route }) {
             <Switch
               value={popular}
               onValueChange={setPopular}
-              trackColor={{ false: Colors.border, true: Colors.primary }}
-              thumbColor={Colors.surface}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor={colors.surface}
             />
           </View>
 
@@ -271,7 +274,7 @@ export default function AdminRecipeFormScreen({ navigation, route }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     padding: Spacing.md,
     gap: Spacing.md,
@@ -287,20 +290,20 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: "900",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
   fieldWrap: {
     gap: 8,
   },
   fieldLabel: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 13,
     fontWeight: "700",
   },
@@ -316,19 +319,19 @@ const styles = StyleSheet.create({
   pill: {
     borderRadius: Radius.pill,
     borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     paddingHorizontal: 16,
     paddingVertical: 9,
   },
   pillActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   pillText: {
     fontSize: 13,
     fontWeight: "800",
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   pillTextActive: {
     color: "#fff",
@@ -340,18 +343,18 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
   },
   noImageText: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 13,
   },
   switchRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.lg,
     padding: Spacing.md,
   },
   switchSub: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     marginTop: 2,
   },

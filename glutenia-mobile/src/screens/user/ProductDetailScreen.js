@@ -8,10 +8,13 @@ import QuantityStepper from "../../components/QuantityStepper";
 import { IconButton, PrimaryButton } from "../../components/Buttons";
 import { useCart } from "../../context/CartContext";
 import { api } from "../../api/client";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function ProductDetailScreen({ navigation, route }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { productId } = route.params;
   const { addItem } = useCart();
   const [product, setProduct] = useState(null);
@@ -74,7 +77,7 @@ export default function ProductDetailScreen({ navigation, route }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     padding: Spacing.md,
     gap: Spacing.md,
@@ -85,7 +88,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: Radius.xl,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: Spacing.lg,
     gap: Spacing.md,
     ...Shadow,
@@ -97,18 +100,18 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   name: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 30,
     fontWeight: "900",
     lineHeight: 36,
   },
   category: {
-    color: Colors.primary,
+    color: colors.primary,
     fontSize: 14,
     fontWeight: "900",
   },
   description: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 15,
     lineHeight: 23,
   },
@@ -119,7 +122,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   price: {
-    color: Colors.primary,
+    color: colors.primary,
     fontSize: 26,
     fontWeight: "900",
   },

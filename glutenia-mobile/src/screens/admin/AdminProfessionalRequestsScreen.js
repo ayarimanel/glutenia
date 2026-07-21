@@ -16,11 +16,14 @@ import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function AdminProfessionalRequestsScreen() {
   const { token, logout } = useAuth();
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [actioningId, setActioningId] = useState(null);
@@ -123,7 +126,7 @@ export default function AdminProfessionalRequestsScreen() {
                   disabled={actioningId === item._id}
                   onPress={() => respond(item, "approve")}
                 >
-                  <AppIcon name="checkmark-circle" size={16} color={Colors.surface} />
+                  <AppIcon name="checkmark-circle" size={16} color={colors.surface} />
                   <Text style={styles.approveText}>{t("admin.requests.approve")}</Text>
                 </Pressable>
                 <Pressable
@@ -131,7 +134,7 @@ export default function AdminProfessionalRequestsScreen() {
                   disabled={actioningId === item._id}
                   onPress={() => respond(item, "reject")}
                 >
-                  <AppIcon name="close-circle" size={16} color={Colors.danger} />
+                  <AppIcon name="close-circle" size={16} color={colors.danger} />
                   <Text style={styles.rejectText}>{t("admin.requests.reject")}</Text>
                 </Pressable>
               </View>
@@ -143,7 +146,7 @@ export default function AdminProfessionalRequestsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: Spacing.md,
@@ -155,7 +158,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: Radius.lg,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: Spacing.md,
     gap: 6,
     ...Shadow,
@@ -168,29 +171,29 @@ const styles = StyleSheet.create({
   },
   name: {
     flex: 1,
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 16,
     fontWeight: "900",
   },
   codePill: {
-    backgroundColor: Colors.secondaryPale,
+    backgroundColor: colors.secondaryPale,
     borderRadius: Radius.pill,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
   codeText: {
-    color: Colors.secondary,
+    color: colors.secondary,
     fontSize: 13,
     fontWeight: "900",
     letterSpacing: 1,
   },
   email: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 13,
     fontWeight: "600",
   },
   date: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 11,
     fontWeight: "600",
   },
@@ -209,10 +212,10 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   approveButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   approveText: {
-    color: Colors.surface,
+    color: colors.surface,
     fontSize: 13,
     fontWeight: "900",
   },
@@ -220,7 +223,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FCEAEA",
   },
   rejectText: {
-    color: Colors.danger,
+    color: colors.danger,
     fontSize: 13,
     fontWeight: "900",
   },

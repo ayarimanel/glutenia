@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { Colors } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 
 const ITEM_HEIGHT = 40;
 const VISIBLE_ITEMS = 5;
@@ -8,6 +8,8 @@ const CONTAINER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
 const PADDING = (CONTAINER_HEIGHT - ITEM_HEIGHT) / 2;
 
 export default function WheelPicker({ items, selectedIndex, onChange, width = 72 }) {
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -46,7 +48,7 @@ export default function WheelPicker({ items, selectedIndex, onChange, width = 72
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     height: CONTAINER_HEIGHT,
   },
@@ -58,8 +60,8 @@ const styles = StyleSheet.create({
     height: ITEM_HEIGHT,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: Colors.secondary,
-    backgroundColor: Colors.secondaryPale,
+    borderColor: colors.secondary,
+    backgroundColor: colors.secondaryPale,
     borderRadius: 8,
   },
   content: {
@@ -72,11 +74,11 @@ const styles = StyleSheet.create({
   },
   itemText: {
     fontSize: 17,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontWeight: "600",
   },
   itemTextActive: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontWeight: "800",
   },
 });

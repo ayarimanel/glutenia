@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Pressable,
   ScrollView,
@@ -10,20 +10,21 @@ import { useTranslation } from "react-i18next";
 
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  STATIC CONTENT
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CATEGORIES = [
-  { key: "celiac",    icon: "activity",     bg: Colors.secondaryPale, color: Colors.secondary },
-  { key: "diet",      icon: "utensils",     bg: Colors.primaryPale,   color: Colors.primary   },
-  { key: "safe",      icon: "shield-check", bg: Colors.primaryPale,   color: Colors.primary   },
-  { key: "lifestyle", icon: "star",         bg: "#FFF9E6",            color: "#F59E0B"        },
+const getCategories = (colors) => [
+  { key: "celiac",    icon: "activity",     bg: colors.secondaryPale, color: colors.secondary },
+  { key: "diet",      icon: "utensils",     bg: colors.primaryPale,   color: colors.primary   },
+  { key: "safe",      icon: "shield-check", bg: colors.primaryPale,   color: colors.primary   },
+  { key: "lifestyle", icon: "star",         bg: "#FFF9E6",            color: colors.warning   },
 ];
 
-const RESOURCES = [
+const getResources = (colors) => [
   {
     id: "1",
     resourceKey: "r1",
@@ -32,8 +33,8 @@ const RESOURCES = [
     description: "Learn which foods to avoid, how to read ingredient labels, and how to set up a safe gluten-free kitchen from day one.",
     readTime: "5 min",
     icon: "utensils",
-    bg: Colors.primaryPale,
-    color: Colors.primary,
+    bg: colors.primaryPale,
+    color: colors.primary,
     body: `Transitioning to a gluten-free diet is the only treatment for celiac disease. Here is how to do it safely.
 
 Foods to avoid:
@@ -64,8 +65,8 @@ In the first weeks, stick to naturally gluten-free whole foods (meat, fish, eggs
     description: "Gluten hides in soy sauce, salad dressings, medications, and more. Discover the unexpected products to watch out for.",
     readTime: "4 min",
     icon: "shield",
-    bg: Colors.primaryPale,
-    color: Colors.primary,
+    bg: colors.primaryPale,
+    color: colors.primary,
     body: `Gluten does not only hide in obvious foods like bread and pasta. Many everyday products contain hidden gluten.
 
 Common hidden sources:
@@ -106,8 +107,8 @@ When in doubt, contact the manufacturer directly or choose products with a certi
     description: "Celiac disease often causes low levels of iron, calcium, vitamin D, and B12. Learn how to identify and correct them.",
     readTime: "6 min",
     icon: "activity",
-    bg: Colors.secondaryPale,
-    color: Colors.secondary,
+    bg: colors.secondaryPale,
+    color: colors.secondary,
     body: `Untreated celiac disease damages the small intestine, reducing its ability to absorb nutrients. Even after going gluten-free, deficiencies can persist for months while the gut heals.
 
 Most common deficiencies:
@@ -196,6 +197,10 @@ const VIDEOS = [
 
 export default function PatientResourcesScreen({ navigation }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
+  const CATEGORIES = useMemo(() => getCategories(colors), [colors]);
+  const RESOURCES = useMemo(() => getResources(colors), [colors]);
   const [activeCategory, setActiveCategory] = useState(null);
   const visibleResources = activeCategory
     ? RESOURCES.filter((item) => item.category === activeCategory)
@@ -211,7 +216,7 @@ export default function PatientResourcesScreen({ navigation }) {
       {/* ── Navigation bar ── */}
       <View style={styles.navBar}>
         <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <AppIcon name="arrow-back" size={22} color={Colors.textDark} />
+          <AppIcon name="arrow-back" size={22} color={colors.textDark} />
         </Pressable>
         <Text style={styles.navTitle}>{t("patientResources.title")}</Text>
         <View style={styles.navSpacer} />
@@ -257,13 +262,13 @@ export default function PatientResourcesScreen({ navigation }) {
         <Text style={styles.sectionMeta}>{t("patientResources.featured")}</Text>
         <View style={styles.featuredCard}>
           <View style={styles.featuredIconCircle}>
-            <AppIcon name="activity" size={34} color={Colors.secondary} />
+            <AppIcon name="activity" size={34} color={colors.secondary} />
           </View>
           <Text style={styles.featuredTitle}>{t("patientResources.featuredTitle")}</Text>
           <Text style={styles.featuredDesc}>{t("patientResources.featuredDesc")}</Text>
           <View style={styles.featuredFooter}>
             <View style={styles.readTimeRow}>
-              <AppIcon name="clock" size={13} color={Colors.textMuted} />
+              <AppIcon name="clock" size={13} color={colors.textMuted} />
               <Text style={styles.readTimeText}>{t("patientResources.readTime", { time: t("patientResources.featuredReadTime") })}</Text>
             </View>
             <Pressable
@@ -272,8 +277,8 @@ export default function PatientResourcesScreen({ navigation }) {
                 resource: {
                   title: t("patientResources.featuredTitle"),
                   icon: "activity",
-                  bg: Colors.secondaryPale,
-                  color: Colors.secondary,
+                  bg: colors.secondaryPale,
+                  color: colors.secondary,
                   readTime: t("patientResources.featuredReadTime"),
                   body: `Celiac disease is a chronic autoimmune condition in which the ingestion of gluten — a protein found in wheat, barley, and rye — causes damage to the lining of the small intestine.
 
@@ -301,7 +306,7 @@ With the right knowledge, celiac disease is entirely manageable. Most people lea
               })}
             >
               <Text style={styles.readMoreText}>{t("patientResources.readMore")}</Text>
-              <AppIcon name="chevron-right" size={14} color={Colors.primary} />
+              <AppIcon name="chevron-right" size={14} color={colors.primary} />
             </Pressable>
           </View>
         </View>
@@ -326,7 +331,7 @@ With the right knowledge, celiac disease is entirely manageable. Most people lea
                   {t(`patientResources.resources.${item.resourceKey}.description`)}
                 </Text>
                 <View style={styles.resourceFooter}>
-                  <AppIcon name="clock" size={12} color={Colors.textMuted} />
+                  <AppIcon name="clock" size={12} color={colors.textMuted} />
                   <Text style={styles.resourceTime}>{t(`patientResources.resources.${item.resourceKey}.readTime`)}</Text>
                   <Text style={styles.resourceReadMore}>  {t("patientResources.readMore")} →</Text>
                 </View>
@@ -347,7 +352,7 @@ With the right knowledge, celiac disease is entirely manageable. Most people lea
           {VIDEOS.map((video) => (
             <Pressable key={video.id} style={styles.videoCard} onPress={() => openVideo(video)}>
               <View style={styles.videoThumb}>
-                <AppIcon name="play-circle" size={44} color={Colors.secondary} />
+                <AppIcon name="play-circle" size={44} color={colors.secondary} />
                 <View style={styles.durationBadge}>
                   <Text style={styles.durationText}>{video.duration}</Text>
                 </View>
@@ -362,7 +367,7 @@ With the right knowledge, celiac disease is entirely manageable. Most people lea
 
         {/* ── Disclaimer ── */}
         <View style={styles.disclaimer}>
-          <AppIcon name="info" size={16} color={Colors.secondary} />
+          <AppIcon name="info" size={16} color={colors.secondary} />
           <Text style={styles.disclaimerText}>{t("patientResources.disclaimer")}</Text>
         </View>
 
@@ -376,7 +381,7 @@ With the right knowledge, celiac disease is entirely manageable. Most people lea
 //  STYLES
 // ─────────────────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   // Nav bar
   navBar: {
     flexDirection: "row",
@@ -396,7 +401,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 17,
     fontWeight: "800",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
   navSpacer: { width: 40 },
 
@@ -404,7 +409,7 @@ const styles = StyleSheet.create({
   sectionMeta: {
     fontSize: 13,
     fontWeight: "600",
-    color: Colors.textMuted,
+    color: colors.textMuted,
     marginHorizontal: Spacing.md,
     marginTop: Spacing.md,
     marginBottom: Spacing.sm,
@@ -431,7 +436,7 @@ const styles = StyleSheet.create({
   catLabel: {
     fontSize: 11,
     fontWeight: "700",
-    color: Colors.textDark,
+    color: colors.textDark,
     textAlign: "center",
     lineHeight: 15,
   },
@@ -439,7 +444,7 @@ const styles = StyleSheet.create({
   // Featured card
   featuredCard: {
     marginHorizontal: Spacing.md,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.xl,
     padding: Spacing.lg,
     gap: Spacing.sm,
@@ -449,7 +454,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: Colors.secondaryPale,
+    backgroundColor: colors.secondaryPale,
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "center",
@@ -458,12 +463,12 @@ const styles = StyleSheet.create({
   featuredTitle: {
     fontSize: 18,
     fontWeight: "900",
-    color: Colors.textDark,
+    color: colors.textDark,
     lineHeight: 24,
   },
   featuredDesc: {
     fontSize: 14,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     lineHeight: 20,
   },
   featuredFooter: {
@@ -479,7 +484,7 @@ const styles = StyleSheet.create({
   },
   readTimeText: {
     fontSize: 12,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontWeight: "600",
   },
   readMoreBtn: {
@@ -490,7 +495,7 @@ const styles = StyleSheet.create({
   readMoreText: {
     fontSize: 13,
     fontWeight: "700",
-    color: Colors.primary,
+    color: colors.primary,
   },
 
   // Resource list
@@ -499,7 +504,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   resourceCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.lg,
     padding: Spacing.md,
     flexDirection: "row",
@@ -522,12 +527,12 @@ const styles = StyleSheet.create({
   resourceTitle: {
     fontSize: 15,
     fontWeight: "800",
-    color: Colors.textDark,
+    color: colors.textDark,
     lineHeight: 20,
   },
   resourceDesc: {
     fontSize: 12,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     lineHeight: 17,
   },
   resourceFooter: {
@@ -537,13 +542,13 @@ const styles = StyleSheet.create({
   },
   resourceTime: {
     fontSize: 11,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     marginLeft: 4,
   },
   resourceReadMore: {
     fontSize: 11,
     fontWeight: "700",
-    color: Colors.primary,
+    color: colors.primary,
     marginLeft: 6,
   },
 
@@ -559,7 +564,7 @@ const styles = StyleSheet.create({
   videosSectionTitle: {
     fontSize: 13,
     fontWeight: "600",
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   seeAll: {
     flexDirection: "row",
@@ -569,7 +574,7 @@ const styles = StyleSheet.create({
   seeAllText: {
     fontSize: 13,
     fontWeight: "700",
-    color: Colors.secondary,
+    color: colors.secondary,
   },
 
   // Video cards
@@ -589,7 +594,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.secondaryPale,
+    backgroundColor: colors.secondaryPale,
   },
   durationBadge: {
     position: "absolute",
@@ -608,19 +613,19 @@ const styles = StyleSheet.create({
   videoTitle: {
     fontSize: 13,
     fontWeight: "800",
-    color: Colors.textDark,
+    color: colors.textDark,
     lineHeight: 18,
   },
   videoAuthor: {
     fontSize: 11,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
 
   // Disclaimer
   disclaimer: {
     marginHorizontal: Spacing.md,
     marginTop: Spacing.lg,
-    backgroundColor: Colors.secondaryPale,
+    backgroundColor: colors.secondaryPale,
     borderRadius: Radius.lg,
     padding: Spacing.md,
     flexDirection: "row",
@@ -630,7 +635,7 @@ const styles = StyleSheet.create({
   disclaimerText: {
     flex: 1,
     fontSize: 12,
-    color: Colors.secondary,
+    color: colors.secondary,
     lineHeight: 18,
   },
 });

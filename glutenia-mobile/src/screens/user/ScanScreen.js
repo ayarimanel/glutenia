@@ -18,7 +18,8 @@ import { api } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { notifyGamification } from "../../context/GamificationContext";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTranslation } from "react-i18next";
 
 const FRAME_W = 260;
@@ -32,6 +33,8 @@ const NOT_FOUND = "not_found";
 
 export default function ScanScreen({ navigation }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { user, token } = useAuth();
   const cart = useCart();
   const [permission, requestPermission] = useCameraPermissions();
@@ -113,7 +116,7 @@ export default function ScanScreen({ navigation }) {
         />
         <View style={[styles.center, { paddingBottom: bottomPad }]}>
           <View style={styles.iconCircle}>
-            <AppIcon name="scan" size={48} color={Colors.primary} />
+            <AppIcon name="scan" size={48} color={colors.primary} />
           </View>
           <Text style={styles.headingText}>{t("scan.permissionTitle")}</Text>
           <Text style={styles.bodyText}>
@@ -151,7 +154,7 @@ export default function ScanScreen({ navigation }) {
           safeTop
         />
         <View style={[styles.center, { paddingBottom: bottomPad }]}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.bodyText}>{t("scan.checking")}</Text>
         </View>
       </View>
@@ -204,7 +207,7 @@ export default function ScanScreen({ navigation }) {
             <Text style={styles.primaryBtnText}>{t("scan.addToCart")}</Text>
           </Pressable>
           <Pressable style={styles.secondaryBtn} onPress={resetToScanning}>
-            <AppIcon name="scan" size={18} color={Colors.primary} />
+            <AppIcon name="scan" size={18} color={colors.primary} />
             <Text style={styles.secondaryBtnText}>{t("scan.scanAnother")}</Text>
           </Pressable>
         </ScrollView>
@@ -223,7 +226,7 @@ export default function ScanScreen({ navigation }) {
         />
         <View style={[styles.center, { paddingBottom: bottomPad }]}>
           <View style={[styles.iconCircle, styles.iconCircleGray]}>
-            <AppIcon name="close-circle" size={48} color={Colors.textMuted} />
+            <AppIcon name="close-circle" size={48} color={colors.textMuted} />
           </View>
           <Text style={styles.headingText}>{t("scan.notFoundTitle")}</Text>
           <Text style={styles.bodyText}>
@@ -237,7 +240,7 @@ export default function ScanScreen({ navigation }) {
             style={styles.secondaryBtn}
             onPress={() => navigation.navigate("LabelScan")}
           >
-            <AppIcon name="image" size={18} color={Colors.primary} />
+            <AppIcon name="image" size={18} color={colors.primary} />
             <Text style={styles.secondaryBtnText}>{t("labelScan.fromScan")}</Text>
           </Pressable>
         </View>
@@ -287,10 +290,10 @@ export default function ScanScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
 
   center: {
@@ -305,23 +308,23 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: Spacing.sm,
   },
   iconCircleGray: {
-    backgroundColor: Colors.divider,
+    backgroundColor: colors.divider,
   },
   headingText: {
     fontSize: 22,
     fontWeight: "900",
-    color: Colors.textDark,
+    color: colors.textDark,
     textAlign: "center",
   },
   bodyText: {
     fontSize: 14,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textAlign: "center",
     lineHeight: 22,
   },
@@ -331,7 +334,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.sm,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: Radius.pill,
     paddingVertical: 14,
     paddingHorizontal: Spacing.xl,
@@ -348,7 +351,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: Spacing.sm,
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     borderRadius: Radius.pill,
     paddingVertical: 14,
     paddingHorizontal: Spacing.xl,
@@ -356,7 +359,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   secondaryBtnText: {
-    color: Colors.primary,
+    color: colors.primary,
     fontSize: 15,
     fontWeight: "800",
   },
@@ -368,7 +371,7 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.xl,
     padding: Spacing.lg,
     gap: Spacing.md,
@@ -379,7 +382,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     alignSelf: "flex-start",
     gap: 6,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: Radius.pill,
     paddingVertical: 5,
     paddingHorizontal: 12,
@@ -392,16 +395,16 @@ const styles = StyleSheet.create({
   productName: {
     fontSize: 24,
     fontWeight: "900",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
   productPrice: {
     fontSize: 20,
     fontWeight: "800",
-    color: Colors.primary,
+    color: colors.primary,
   },
   productDesc: {
     fontSize: 14,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     lineHeight: 22,
   },
 
@@ -425,7 +428,7 @@ const styles = StyleSheet.create({
     width: FRAME_W,
     height: FRAME_H,
     borderWidth: 3,
-    borderColor: Colors.primary,
+    borderColor: colors.primary,
     borderRadius: Radius.md,
     backgroundColor: "transparent",
   },

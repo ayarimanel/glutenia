@@ -6,11 +6,14 @@ import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function AdminDashboardScreen({ navigation }) {
   const { token, logout, user } = useAuth();
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -63,11 +66,11 @@ export default function AdminDashboardScreen({ navigation }) {
       <ScrollView
         contentContainerStyle={styles.container}
         refreshControl={
-          <RefreshControl 
-            refreshing={loading} 
-            onRefresh={load} 
-            colors={[Colors.primary]} 
-            tintColor={Colors.primary} 
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={load}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
           />
         }
         showsVerticalScrollIndicator={false}
@@ -85,11 +88,11 @@ export default function AdminDashboardScreen({ navigation }) {
               </Text>
             </View>
           </View>
-          <Pressable 
-            style={({ pressed }) => [styles.logoutButton, pressed && styles.pressed]} 
+          <Pressable
+            style={({ pressed }) => [styles.logoutButton, pressed && styles.pressed]}
             onPress={logout}
           >
-            <AppIcon name="log-out" size={20} color={Colors.danger} />
+            <AppIcon name="log-out" size={20} color={colors.danger} />
           </Pressable>
         </View>
 
@@ -104,7 +107,7 @@ export default function AdminDashboardScreen({ navigation }) {
               </Text>
             </View>
             <View style={styles.revenueIconContainer}>
-              <AppIcon name="cash" size={24} color={Colors.primary} />
+              <AppIcon name="cash" size={24} color={colors.primary} />
             </View>
           </View>
 
@@ -113,8 +116,8 @@ export default function AdminDashboardScreen({ navigation }) {
             {/* Products Card */}
             <View style={styles.statCard}>
               <View style={styles.statCardHeader}>
-                <View style={[styles.statIconContainer, { backgroundColor: Colors.primaryPale }]}>
-                  <AppIcon name="cube" size={18} color={Colors.primary} />
+                <View style={[styles.statIconContainer, { backgroundColor: colors.primaryPale }]}>
+                  <AppIcon name="cube" size={18} color={colors.primary} />
                 </View>
                 <Text style={styles.statValue}>{products.length}</Text>
               </View>
@@ -126,8 +129,8 @@ export default function AdminDashboardScreen({ navigation }) {
             {/* Orders Card */}
             <View style={styles.statCard}>
               <View style={styles.statCardHeader}>
-                <View style={[styles.statIconContainer, { backgroundColor: Colors.secondaryPale }]}>
-                  <AppIcon name="receipt" size={18} color={Colors.secondary} />
+                <View style={[styles.statIconContainer, { backgroundColor: colors.secondaryPale }]}>
+                  <AppIcon name="receipt" size={18} color={colors.secondary} />
                 </View>
                 <Text style={styles.statValue}>{orders.length}</Text>
               </View>
@@ -149,12 +152,16 @@ export default function AdminDashboardScreen({ navigation }) {
                 icon="add-circle"
                 onPress={() => navigation.navigate("AdminProductForm")}
                 themeColor="primary"
+                colors={colors}
+                styles={styles}
               />
               <ActionItem
                 title={t("admin.dashboard.manageProducts")}
                 icon="list"
                 onPress={() => navigation.navigate("Products")}
                 themeColor="primary"
+                colors={colors}
+                styles={styles}
               />
             </View>
           </View>
@@ -168,12 +175,16 @@ export default function AdminDashboardScreen({ navigation }) {
                 icon="calendar"
                 onPress={() => navigation.navigate("CreateEvent")}
                 themeColor="secondary"
+                colors={colors}
+                styles={styles}
               />
               <ActionItem
                 title={t("admin.dashboard.manageEvents")}
                 icon="list"
                 onPress={() => navigation.navigate("AdminEvents")}
                 themeColor="secondary"
+                colors={colors}
+                styles={styles}
               />
             </View>
           </View>
@@ -187,18 +198,24 @@ export default function AdminDashboardScreen({ navigation }) {
                 icon="receipt"
                 onPress={() => navigation.navigate("Orders")}
                 themeColor="primary"
+                colors={colors}
+                styles={styles}
               />
               <ActionItem
                 title={t("admin.dashboard.professionalRequests")}
                 icon="shield-check"
                 onPress={() => navigation.navigate("AdminProfessionalRequests")}
                 themeColor="secondary"
+                colors={colors}
+                styles={styles}
               />
               <ActionItem
                 title={t("admin.dashboard.userInsights")}
                 icon="activity"
                 onPress={() => navigation.navigate("AdminAnalytics")}
                 themeColor="primary"
+                colors={colors}
+                styles={styles}
               />
             </View>
           </View>
@@ -208,10 +225,10 @@ export default function AdminDashboardScreen({ navigation }) {
   );
 }
 
-function ActionItem({ title, icon, onPress, themeColor }) {
+function ActionItem({ title, icon, onPress, themeColor, colors, styles }) {
   const isPrimary = themeColor === "primary";
-  const iconColor = isPrimary ? Colors.primary : Colors.secondary;
-  const iconBg = isPrimary ? Colors.primaryPale : Colors.secondaryPale;
+  const iconColor = isPrimary ? colors.primary : colors.secondary;
+  const iconBg = isPrimary ? colors.primaryPale : colors.secondaryPale;
 
   return (
     <Pressable
@@ -227,14 +244,14 @@ function ActionItem({ title, icon, onPress, themeColor }) {
       <Text style={styles.actionCardText} numberOfLines={1}>
         {title}
       </Text>
-      <AppIcon name="chevron-right" size={18} color={Colors.textMuted} />
+      <AppIcon name="chevron-right" size={18} color={colors.textMuted} />
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   screen: {
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   container: {
     padding: Spacing.md,
@@ -257,14 +274,14 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: Radius.pill,
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1.5,
-    borderColor: Colors.primaryLight,
+    borderColor: colors.primaryLight,
   },
   avatarText: {
-    color: Colors.primary,
+    color: colors.primary,
     fontSize: 16,
     fontWeight: "900",
   },
@@ -273,7 +290,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   eyebrow: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 11,
     fontWeight: "750",
     textTransform: "uppercase",
@@ -281,7 +298,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   adminName: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 22,
     fontWeight: "900",
     lineHeight: 26,
@@ -290,21 +307,21 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: Radius.pill,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1.5,
-    borderColor: Colors.divider,
+    borderColor: colors.divider,
     ...Shadow,
   },
   statsContainer: {
     gap: Spacing.md,
   },
   revenueHeroCard: {
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     borderRadius: Radius.lg,
     borderWidth: 1.5,
-    borderColor: Colors.primaryLight,
+    borderColor: colors.primaryLight,
     padding: Spacing.md,
     flexDirection: "row",
     alignItems: "center",
@@ -315,14 +332,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   revenueLabel: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: "800",
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   revenueValue: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 32,
     fontWeight: "900",
     marginTop: 4,
@@ -331,11 +348,11 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: Radius.pill,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: Colors.primaryLight,
+    borderColor: colors.primaryLight,
     ...Shadow,
   },
   statsRow: {
@@ -344,10 +361,10 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.lg,
     borderWidth: 1.5,
-    borderColor: Colors.divider,
+    borderColor: colors.divider,
     padding: Spacing.md,
     justifyContent: "space-between",
     minHeight: 104,
@@ -366,12 +383,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   statValue: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 24,
     fontWeight: "900",
   },
   statLabel: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 13,
     fontWeight: "750",
     marginTop: Spacing.sm,
@@ -383,7 +400,7 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   sectionTitle: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 16,
     fontWeight: "800",
     textTransform: "uppercase",
@@ -396,10 +413,10 @@ const styles = StyleSheet.create({
   actionCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.md,
     borderWidth: 1.5,
-    borderColor: Colors.divider,
+    borderColor: colors.divider,
     padding: Spacing.md,
     ...Shadow,
   },
@@ -412,14 +429,14 @@ const styles = StyleSheet.create({
   },
   actionCardText: {
     flex: 1,
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 15,
     fontWeight: "800",
     marginLeft: Spacing.md,
   },
   actionCardPressed: {
     opacity: 0.8,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
   pressed: {
     opacity: 0.7,

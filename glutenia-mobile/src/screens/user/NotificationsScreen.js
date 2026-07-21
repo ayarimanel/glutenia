@@ -8,7 +8,8 @@ import EmptyState from "../../components/EmptyState";
 import AppIcon from "../../components/AppIcon";
 import { IconButton } from "../../components/Buttons";
 import { useNotifications } from "../../context/NotificationContext";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 const TYPE_ICONS = {
   event_join: "checkmark-circle",
@@ -21,6 +22,8 @@ const TYPE_ICONS = {
 
 export default function NotificationsScreen({ navigation }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { notifications, refresh, markRead, markAllRead, unreadCount } =
     useNotifications() ?? {};
   const [refreshing, setRefreshing] = useState(false);
@@ -71,7 +74,7 @@ export default function NotificationsScreen({ navigation }) {
                 <AppIcon
                   name={TYPE_ICONS[item.type] || "bell"}
                   size={18}
-                  color={Colors.primary}
+                  color={colors.primary}
                 />
               </View>
               <View style={styles.textWrap}>
@@ -90,7 +93,7 @@ export default function NotificationsScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: Spacing.md,
@@ -100,7 +103,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end",
   },
   markAllText: {
-    color: Colors.secondary,
+    color: colors.secondary,
     fontSize: 13,
     fontWeight: "800",
   },
@@ -113,20 +116,20 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     gap: 12,
     borderRadius: Radius.lg,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: Spacing.md,
     ...Shadow,
   },
   cardUnread: {
     borderWidth: 1,
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primaryPale,
+    borderColor: colors.primary,
+    backgroundColor: colors.primaryPale,
   },
   iconWrap: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -135,17 +138,17 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   cardTitle: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 15,
     fontWeight: "800",
   },
   cardBody: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 13,
     lineHeight: 18,
   },
   cardTime: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 11,
     marginTop: 2,
   },
@@ -153,7 +156,7 @@ const styles = StyleSheet.create({
     width: 9,
     height: 9,
     borderRadius: 5,
-    backgroundColor: Colors.secondary,
+    backgroundColor: colors.secondary,
     marginTop: 4,
   },
 });

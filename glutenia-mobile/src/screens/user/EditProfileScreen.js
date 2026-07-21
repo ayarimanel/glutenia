@@ -19,12 +19,15 @@ import { PrimaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { isValidPhone } from "../../utils/validation";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 const MAX_IMAGE_DATA_URL_LENGTH = 3000000;
 
 export default function EditProfileScreen({ navigation }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { user, token, updateUser } = useAuth();
 
   const [name, setName] = useState(user?.name || "");
@@ -118,7 +121,7 @@ export default function EditProfileScreen({ navigation }) {
     <Screen>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerBtn} activeOpacity={0.7}>
-          <AppIcon name="arrow-back" size={22} color={Colors.textDark} />
+          <AppIcon name="arrow-back" size={22} color={colors.textDark} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t("settings.editProfileScreen.title")}</Text>
         <View style={styles.headerBtn} />
@@ -139,7 +142,7 @@ export default function EditProfileScreen({ navigation }) {
                 <Image source={{ uri: avatar }} style={styles.avatarImage} />
               ) : (
                 <View style={styles.avatarPlaceholder}>
-                  <AppIcon name="person" size={40} color={Colors.primary} />
+                  <AppIcon name="person" size={40} color={colors.primary} />
                 </View>
               )}
               <View style={styles.avatarEditBadge}>
@@ -195,7 +198,7 @@ export default function EditProfileScreen({ navigation }) {
   );
 }
 
-const styles = {
+const getStyles = (colors) => ({
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -208,7 +211,7 @@ const styles = {
     textAlign: "center",
     fontSize: 18,
     fontWeight: "700",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
   container: {
     padding: Spacing.md,
@@ -222,7 +225,7 @@ const styles = {
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -233,21 +236,21 @@ const styles = {
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: Colors.surface,
+    borderColor: colors.surface,
   },
-  changePhotoText: { color: Colors.primary, fontWeight: "700", fontSize: 14 },
+  changePhotoText: { color: colors.primary, fontWeight: "700", fontSize: 14 },
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.lg,
     padding: Spacing.md,
     gap: Spacing.md,
     ...Shadow,
   },
   disabledField: { opacity: 0.6 },
-  disabledInput: { backgroundColor: Colors.background },
+  disabledInput: { backgroundColor: colors.background },
   saveButton: { marginTop: Spacing.sm },
-};
+});

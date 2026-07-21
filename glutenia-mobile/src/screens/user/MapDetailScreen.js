@@ -9,13 +9,14 @@ import {
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 import AppIcon from "../../components/AppIcon";
 
 const STARS_FULL = "★★★★★";
 const STARS_EMPTY = "☆☆☆☆☆";
 
-function StarRating({ rating }) {
+function StarRating({ rating, styles }) {
   const full = Math.floor(rating);
   const half = rating - full >= 0.5;
   return (
@@ -30,6 +31,8 @@ function StarRating({ rating }) {
 export default function MapDetailScreen({ route, navigation }) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { spot } = route.params;
 
   const handleContact = () => {
@@ -54,7 +57,7 @@ export default function MapDetailScreen({ route, navigation }) {
           onPress={() => navigation.goBack()}
           activeOpacity={0.8}
         >
-          <AppIcon name="arrow-back" size={20} color={Colors.textDark} />
+          <AppIcon name="arrow-back" size={20} color={colors.textDark} />
         </TouchableOpacity>
 
         {/* Hero emoji */}
@@ -94,7 +97,7 @@ export default function MapDetailScreen({ route, navigation }) {
 
         {/* Rating row */}
         <View style={styles.ratingRow}>
-          <StarRating rating={spot.rating} />
+          <StarRating rating={spot.rating} styles={styles} />
           <Text style={styles.ratingNum}>{spot.rating}</Text>
           <Text style={styles.ratingReviews}>({spot.reviews} {t("mapDetail.reviews")})</Text>
         </View>
@@ -102,11 +105,11 @@ export default function MapDetailScreen({ route, navigation }) {
         {/* Distance + price row */}
         <View style={styles.metaRow}>
           <View style={styles.metaChip}>
-            <AppIcon name="location" size={14} color={Colors.primary} />
+            <AppIcon name="location" size={14} color={colors.primary} />
             <Text style={styles.metaChipText}>{spot.distance}</Text>
           </View>
           <View style={styles.metaChip}>
-            <AppIcon name="cash" size={14} color={Colors.primary} />
+            <AppIcon name="cash" size={14} color={colors.primary} />
             <Text style={styles.metaChipText}>{spot.avgPrice} {t("mapDetail.avg")}</Text>
           </View>
         </View>
@@ -116,7 +119,7 @@ export default function MapDetailScreen({ route, navigation }) {
 
         {/* Address */}
         <View style={styles.addressRow}>
-          <AppIcon name="map-pin" size={15} color={Colors.textMuted} />
+          <AppIcon name="map-pin" size={15} color={colors.textMuted} />
           <Text style={styles.addressText}>{spot.address}</Text>
         </View>
 
@@ -129,7 +132,7 @@ export default function MapDetailScreen({ route, navigation }) {
         <View style={styles.tagRow}>
           {spot.tags.map((tag) => (
             <View key={tag} style={styles.tag}>
-              <AppIcon name="checkmark" size={12} color={Colors.primary} />
+              <AppIcon name="checkmark" size={12} color={colors.primary} />
               <Text style={styles.tagText}>{tag}</Text>
             </View>
           ))}
@@ -166,10 +169,10 @@ export default function MapDetailScreen({ route, navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
   },
 
   // ── Hero ──────────────────────────────────────────────────────────────────
@@ -213,7 +216,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: Radius.pill,
     paddingHorizontal: 14,
     paddingVertical: 5,
@@ -245,7 +248,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 22,
     fontWeight: "900",
-    color: Colors.textDark,
+    color: colors.textDark,
     lineHeight: 28,
   },
   typeBadge: {
@@ -266,17 +269,17 @@ const styles = StyleSheet.create({
   },
   stars: {
     fontSize: 16,
-    color: "#F59E0B",
+    color: colors.warning,
     letterSpacing: 1,
   },
   ratingNum: {
     fontSize: 15,
     fontWeight: "900",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
   ratingReviews: {
     fontSize: 13,
-    color: Colors.textMuted,
+    color: colors.textMuted,
   },
   metaRow: {
     flexDirection: "row",
@@ -287,7 +290,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     borderRadius: Radius.pill,
     paddingHorizontal: 14,
     paddingVertical: 7,
@@ -295,11 +298,11 @@ const styles = StyleSheet.create({
   metaChipText: {
     fontSize: 13,
     fontWeight: "800",
-    color: Colors.primary,
+    color: colors.primary,
   },
   divider: {
     height: 1,
-    backgroundColor: Colors.divider,
+    backgroundColor: colors.divider,
     marginVertical: 4,
   },
   addressRow: {
@@ -309,20 +312,20 @@ const styles = StyleSheet.create({
   },
   addressText: {
     fontSize: 13,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     flex: 1,
   },
   sectionLabel: {
     fontSize: 13,
     fontWeight: "900",
-    color: Colors.textMuted,
+    color: colors.textMuted,
     textTransform: "uppercase",
     letterSpacing: 0.8,
     marginTop: 8,
   },
   description: {
     fontSize: 14,
-    color: Colors.textDark,
+    color: colors.textDark,
     lineHeight: 22,
   },
   tagRow: {
@@ -334,7 +337,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     borderRadius: Radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -342,15 +345,15 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 12,
     fontWeight: "700",
-    color: Colors.primary,
+    color: colors.primary,
   },
   hoursBlock: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.lg,
     padding: Spacing.md,
     gap: 8,
     borderWidth: 1,
-    borderColor: Colors.divider,
+    borderColor: colors.divider,
   },
   hoursRow: {
     flexDirection: "row",
@@ -358,13 +361,13 @@ const styles = StyleSheet.create({
   },
   hoursDay: {
     fontSize: 13,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontWeight: "600",
   },
   hoursTime: {
     fontSize: 13,
     fontWeight: "800",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
 
   // ── CTA ──────────────────────────────────────────────────────────────────
@@ -375,19 +378,19 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
-    backgroundColor: Colors.background,
+    backgroundColor: colors.background,
     borderTopWidth: 1,
-    borderTopColor: Colors.divider,
+    borderTopColor: colors.divider,
   },
   ctaBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: Radius.xl,
     height: 52,
-    shadowColor: Colors.primary,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

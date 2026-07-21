@@ -6,11 +6,14 @@ import Field from "../../components/Field";
 import { PrimaryButton, SecondaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
 import { isValidPhone } from "../../utils/validation";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function RegisterScreen({ navigation }) {
   const { register } = useAuth();
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -161,7 +164,7 @@ export default function RegisterScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
@@ -176,18 +179,18 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   title: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 34,
     fontWeight: "900",
   },
   subtitle: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 15,
     lineHeight: 22,
   },
   card: {
     borderRadius: Radius.xl,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     padding: Spacing.lg,
     gap: Spacing.md,
     ...Shadow,
@@ -196,7 +199,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   roleLabel: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 13,
     fontWeight: "700",
   },
@@ -204,7 +207,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: 4,
     borderRadius: Radius.md,
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
   },
   segmentButton: {
     flex: 1,
@@ -214,14 +217,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   segmentActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
   },
   segmentText: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontWeight: "900",
     textTransform: "capitalize",
   },
   segmentTextActive: {
-    color: Colors.surface,
+    color: colors.surface,
   },
 });

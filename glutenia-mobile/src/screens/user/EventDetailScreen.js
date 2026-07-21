@@ -13,10 +13,13 @@ import AppIcon from "../../components/AppIcon";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { notifyGamification } from "../../context/GamificationContext";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function EventDetailScreen({ route, navigation }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { token } = useAuth();
   const { event } = route.params;
   const [going, setGoing] = useState(event.isGoing ?? false);
@@ -47,7 +50,7 @@ export default function EventDetailScreen({ route, navigation }) {
         {/* Hero */}
         <View style={[styles.hero, { backgroundColor: event.color }]}>
           <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <AppIcon name="arrow-back" size={20} color={Colors.textDark} />
+            <AppIcon name="arrow-back" size={20} color={colors.textDark} />
           </Pressable>
           <Text style={styles.heroEmoji}>{event.emoji}</Text>
           <View style={styles.categoryBadge}>
@@ -62,21 +65,21 @@ export default function EventDetailScreen({ route, navigation }) {
           <View style={styles.metaCard}>
             <View style={styles.metaRow}>
               <View style={styles.metaIcon}>
-                <AppIcon name="calendar" size={18} color={Colors.primary} />
+                <AppIcon name="calendar" size={18} color={colors.primary} />
               </View>
               <Text style={styles.metaText}>{event.date}</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.metaRow}>
               <View style={styles.metaIcon}>
-                <AppIcon name="location" size={18} color={Colors.primary} />
+                <AppIcon name="location" size={18} color={colors.primary} />
               </View>
               <Text style={styles.metaText}>{event.location}</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.metaRow}>
               <View style={styles.metaIcon}>
-                <AppIcon name="people" size={18} color={Colors.primary} />
+                <AppIcon name="people" size={18} color={colors.primary} />
               </View>
               <Text style={styles.metaText}>
                 {t("eventDetail.going", { count: attendeeCount })}
@@ -91,7 +94,7 @@ export default function EventDetailScreen({ route, navigation }) {
           {/* Price + RSVP row */}
           <View style={styles.rsvpRow}>
             <View style={styles.priceBox}>
-              <AppIcon name="cash" size={16} color={Colors.primary} />
+              <AppIcon name="cash" size={16} color={colors.primary} />
               <Text style={styles.priceText}>
                 {event.price === 0 ? t("eventDetail.free") : `${event.price} TND`}
               </Text>
@@ -105,7 +108,7 @@ export default function EventDetailScreen({ route, navigation }) {
               <AppIcon
                 name={going ? "checkmark-circle" : "people"}
                 size={20}
-                color={going ? Colors.primary : "#fff"}
+                color={going ? colors.primary : "#fff"}
               />
               <Text style={[styles.rsvpText, going && styles.rsvpTextActive]}>
                 {going ? t("eventDetail.rsvpGoing") : t("eventDetail.rsvpJoin")}
@@ -118,7 +121,7 @@ export default function EventDetailScreen({ route, navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   hero: {
     height: 240,
     alignItems: "center",
@@ -142,7 +145,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 16,
     left: 16,
-    backgroundColor: Colors.secondary,
+    backgroundColor: colors.secondary,
     borderRadius: Radius.pill,
     paddingHorizontal: 14,
     paddingVertical: 6,
@@ -159,11 +162,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "900",
-    color: Colors.textDark,
+    color: colors.textDark,
     lineHeight: 30,
   },
   metaCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.lg,
     padding: Spacing.md,
     ...Shadow,
@@ -178,29 +181,29 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     alignItems: "center",
     justifyContent: "center",
   },
   metaText: {
     fontSize: 14,
-    color: Colors.textDark,
+    color: colors.textDark,
     fontWeight: "600",
     flex: 1,
   },
   divider: {
     height: 1,
-    backgroundColor: Colors.divider,
+    backgroundColor: colors.divider,
     marginVertical: 8,
   },
   sectionTitle: {
     fontSize: 17,
     fontWeight: "900",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
   description: {
     fontSize: 14,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     lineHeight: 22,
   },
   rsvpRow: {
@@ -213,7 +216,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     borderRadius: Radius.md,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -221,7 +224,7 @@ const styles = StyleSheet.create({
   priceText: {
     fontSize: 15,
     fontWeight: "800",
-    color: Colors.primary,
+    color: colors.primary,
   },
   rsvpBtn: {
     flex: 1,
@@ -229,14 +232,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     borderRadius: Radius.lg,
     paddingVertical: 16,
   },
   rsvpBtnActive: {
-    backgroundColor: Colors.primaryPale,
+    backgroundColor: colors.primaryPale,
     borderWidth: 2,
-    borderColor: Colors.primary,
+    borderColor: colors.primary,
   },
   rsvpText: {
     color: "#fff",
@@ -244,6 +247,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   rsvpTextActive: {
-    color: Colors.primary,
+    color: colors.primary,
   },
 });

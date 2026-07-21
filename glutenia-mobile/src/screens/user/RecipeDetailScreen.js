@@ -11,11 +11,14 @@ import Screen from "../../components/Screen";
 import AppHeader from "../../components/AppHeader";
 import AppIcon from "../../components/AppIcon";
 import { useAuth } from "../../context/AuthContext";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function RecipeDetailScreen({ navigation, route }) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const { recipe } = route.params;
 
   const stats = [
@@ -37,7 +40,7 @@ export default function RecipeDetailScreen({ navigation, route }) {
         {/* Back + title */}
         <View style={styles.titleRow}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} activeOpacity={0.7}>
-            <AppIcon name="arrow-back" size={22} color={Colors.textDark} />
+            <AppIcon name="arrow-back" size={22} color={colors.textDark} />
           </TouchableOpacity>
           <Text style={styles.title} numberOfLines={2}>
             {recipe.name}
@@ -85,7 +88,7 @@ export default function RecipeDetailScreen({ navigation, route }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   scroll: {
     paddingHorizontal: Spacing.md,
   },
@@ -102,13 +105,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "800",
-    color: Colors.textDark,
+    color: colors.textDark,
     flex: 1,
   },
   sectionTitle: {
     fontSize: 22,
     fontWeight: "800",
-    color: Colors.textDark,
+    color: colors.textDark,
     marginBottom: Spacing.md,
   },
   nutritionRow: {
@@ -129,7 +132,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: Colors.primary,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     zIndex: 1,
@@ -140,19 +143,19 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   statLabelBox: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.pill,
     paddingHorizontal: 22,
     paddingVertical: 10,
     marginLeft: -16,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
     ...Shadow,
   },
   statLabel: {
     fontSize: 14,
     fontWeight: "600",
-    color: Colors.textDark,
+    color: colors.textDark,
     marginLeft: 8,
   },
   nutritionImage: {
@@ -172,18 +175,18 @@ const styles = StyleSheet.create({
   },
   bullet: {
     fontSize: 18,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     lineHeight: 26,
   },
   ingredientText: {
     fontSize: 16,
-    color: Colors.textDark,
+    color: colors.textDark,
     lineHeight: 26,
     flex: 1,
   },
   prepText: {
     fontSize: 15,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     lineHeight: 25,
   },
 });

@@ -15,13 +15,16 @@ import AppHeader from "../../components/AppHeader";
 import AppIcon from "../../components/AppIcon";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 const FILTERS = ["Tunisian", "Easy", "Quick"];
 
 export default function RecipesScreen({ navigation }) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const [activeFilter, setActiveFilter] = useState("Tunisian");
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -93,7 +96,7 @@ export default function RecipesScreen({ navigation }) {
         </ScrollView>
 
         {loading && recipes.length === 0 ? (
-          <ActivityIndicator color={Colors.primary} style={styles.loading} />
+          <ActivityIndicator color={colors.primary} style={styles.loading} />
         ) : null}
 
         {/* 2-column featured grid */}
@@ -145,19 +148,19 @@ export default function RecipesScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   scroll: {
     paddingHorizontal: Spacing.md,
   },
   title: {
     fontSize: 28,
     fontWeight: "800",
-    color: Colors.textDark,
+    color: colors.textDark,
     marginTop: Spacing.md,
   },
   subtitle: {
     fontSize: 15,
-    color: Colors.secondary,
+    color: colors.secondary,
     fontWeight: "600",
     marginTop: 4,
     marginBottom: Spacing.md,
@@ -180,18 +183,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: Radius.pill,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: colors.border,
   },
   chipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   chipText: {
     fontSize: 14,
     fontWeight: "600",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
   chipTextActive: {
     color: "#fff",
@@ -203,7 +206,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.lg,
     overflow: "hidden",
     ...Shadow,
@@ -219,12 +222,12 @@ const styles = StyleSheet.create({
   cardName: {
     fontSize: 15,
     fontWeight: "700",
-    color: Colors.secondary,
+    color: colors.secondary,
     marginBottom: 4,
   },
   cardDesc: {
     fontSize: 12,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     lineHeight: 17,
   },
   sectionRow: {
@@ -234,17 +237,17 @@ const styles = StyleSheet.create({
   sectionBlack: {
     fontSize: 22,
     fontWeight: "800",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
   sectionGreen: {
     fontSize: 22,
     fontWeight: "800",
-    color: Colors.primary,
+    color: colors.primary,
   },
   popularCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.lg,
     marginBottom: 14,
     overflow: "hidden",
@@ -265,12 +268,12 @@ const styles = StyleSheet.create({
   popularName: {
     fontSize: 16,
     fontWeight: "700",
-    color: Colors.secondary,
+    color: colors.secondary,
     marginBottom: 5,
   },
   popularDesc: {
     fontSize: 13,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     lineHeight: 18,
   },
 });

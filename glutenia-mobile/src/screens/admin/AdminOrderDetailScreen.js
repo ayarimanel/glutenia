@@ -2,10 +2,13 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-nati
 import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
-import { Colors, Radius, Shadow, Spacing } from "../../theme/colors";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme } from "../../context/ThemeContext";
 
 export default function AdminOrderDetailScreen({ navigation, route }) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
   const order = route.params?.order;
 
   if (!order) {
@@ -13,7 +16,7 @@ export default function AdminOrderDetailScreen({ navigation, route }) {
       <Screen>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} activeOpacity={0.7}>
-            <AppIcon name="arrow-back" size={22} color={Colors.textDark} />
+            <AppIcon name="arrow-back" size={22} color={colors.textDark} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{t("admin.orders.detailTitle")}</Text>
           <View style={styles.headerSpacer} />
@@ -32,7 +35,7 @@ export default function AdminOrderDetailScreen({ navigation, route }) {
     <Screen>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} activeOpacity={0.7}>
-          <AppIcon name="arrow-back" size={22} color={Colors.textDark} />
+          <AppIcon name="arrow-back" size={22} color={colors.textDark} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t("admin.orders.detailTitle")}</Text>
         <View style={styles.headerSpacer} />
@@ -52,13 +55,13 @@ export default function AdminOrderDetailScreen({ navigation, route }) {
         <Text style={styles.sectionLabel}>{t("admin.orders.account")}</Text>
         <View style={styles.card}>
           <View style={styles.infoRow}>
-            <AppIcon name="person" size={16} color={Colors.secondary} />
+            <AppIcon name="person" size={16} color={colors.secondary} />
             <Text style={styles.infoText}>
               {order.user?.name || t("admin.orders.customer")}
             </Text>
           </View>
           <View style={styles.infoRow}>
-            <AppIcon name="info" size={16} color={Colors.secondary} />
+            <AppIcon name="info" size={16} color={colors.secondary} />
             <Text style={styles.infoText}>
               {order.user?.email || t("admin.orders.noEmail")}
             </Text>
@@ -68,17 +71,17 @@ export default function AdminOrderDetailScreen({ navigation, route }) {
         <Text style={styles.sectionLabel}>{t("admin.orders.deliveryAddress")}</Text>
         <View style={styles.card}>
           <View style={styles.infoRow}>
-            <AppIcon name="person" size={16} color={Colors.secondary} />
+            <AppIcon name="person" size={16} color={colors.secondary} />
             <Text style={styles.infoText}>{order.address.fullName}</Text>
           </View>
           <View style={styles.infoRow}>
-            <AppIcon name="location" size={16} color={Colors.secondary} />
+            <AppIcon name="location" size={16} color={colors.secondary} />
             <Text style={styles.infoText}>
               {order.address.addressLine}, {order.address.city}
             </Text>
           </View>
           <View style={styles.infoRow}>
-            <AppIcon name="phone" size={16} color={Colors.secondary} />
+            <AppIcon name="phone" size={16} color={colors.secondary} />
             <Text style={styles.infoText}>{order.address.phone}</Text>
           </View>
         </View>
@@ -116,7 +119,7 @@ export default function AdminOrderDetailScreen({ navigation, route }) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -129,7 +132,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 18,
     fontWeight: "700",
-    color: Colors.textDark,
+    color: colors.textDark,
   },
   headerSpacer: { width: 30 },
   scroll: {
@@ -143,36 +146,36 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   id: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 22,
     fontWeight: "900",
   },
   statusPill: {
-    backgroundColor: Colors.secondaryPale,
+    backgroundColor: colors.secondaryPale,
     borderRadius: Radius.pill,
     paddingHorizontal: 12,
     paddingVertical: 5,
   },
   statusText: {
-    color: Colors.secondary,
+    color: colors.secondary,
     fontWeight: "900",
     fontSize: 12,
     textTransform: "uppercase",
   },
   placedOn: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontSize: 13,
   },
   sectionLabel: {
     fontSize: 12,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontWeight: "700",
     textTransform: "uppercase",
     letterSpacing: 0.5,
     marginTop: Spacing.sm,
   },
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.lg,
     padding: Spacing.md,
     gap: 12,
@@ -185,7 +188,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     flex: 1,
-    color: Colors.textDark,
+    color: colors.textDark,
     fontSize: 14,
     fontWeight: "600",
   },
@@ -198,32 +201,32 @@ const styles = StyleSheet.create({
   },
   itemBorder: {
     borderTopWidth: 1,
-    borderTopColor: Colors.divider,
+    borderTopColor: colors.divider,
   },
   itemName: {
     flex: 1,
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontWeight: "700",
   },
   itemPrice: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontWeight: "900",
   },
   totalsLabel: {
-    color: Colors.textMuted,
+    color: colors.textMuted,
     fontWeight: "700",
   },
   totalsValue: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontWeight: "800",
   },
   grandLabel: {
-    color: Colors.textDark,
+    color: colors.textDark,
     fontWeight: "900",
     fontSize: 16,
   },
   grandValue: {
-    color: Colors.primary,
+    color: colors.primary,
     fontWeight: "900",
     fontSize: 18,
   },
