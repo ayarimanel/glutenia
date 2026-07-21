@@ -12,11 +12,11 @@ const CATEGORY_FIELD_BY_TYPE = {
   event_new: "notifyEvents",
 };
 
-const notify = async (userId, { type, title, body = "" }) => {
+const notify = async (userId, { type, title, body = "", referenceId = null }) => {
   if (!userId) return null;
 
   try {
-    const record = await Notification.create({ user: userId, type, title, body });
+    const record = await Notification.create({ user: userId, type, title, body, referenceId });
 
     const categoryField = CATEGORY_FIELD_BY_TYPE[type];
     const user = await User.findById(userId).select(
@@ -35,12 +35,12 @@ const notify = async (userId, { type, title, body = "" }) => {
 };
 
 // Fan-out variant for broadcasts (e.g. a new event posted to every customer).
-const notifyBroadcast = async (userIds, { type, title, body = "" }) => {
+const notifyBroadcast = async (userIds, { type, title, body = "", referenceId = null }) => {
   if (!userIds?.length) return;
 
   try {
     await Notification.insertMany(
-      userIds.map((user) => ({ user, type, title, body })),
+      userIds.map((user) => ({ user, type, title, body, referenceId })),
       { ordered: false }
     );
   } catch (error) {

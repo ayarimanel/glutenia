@@ -194,6 +194,7 @@ exports.updateOrderStatus = async (req, res, next) => {
       type: "order_status",
       title: "Order update",
       body: STATUS_NOTIFICATIONS[order.status] || `Your order status changed to ${order.status}.`,
+      referenceId: order._id.toString(),
     });
 
     return res.json({

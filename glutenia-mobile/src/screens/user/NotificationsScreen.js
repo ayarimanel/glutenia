@@ -8,8 +8,12 @@ import EmptyState from "../../components/EmptyState";
 import AppIcon from "../../components/AppIcon";
 import { IconButton } from "../../components/Buttons";
 import { useNotifications } from "../../context/NotificationContext";
+import { useAuth } from "../../context/AuthContext";
+import { api } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme } from "../../context/ThemeContext";
+
+const EVENT_TYPES = new Set(["event_join", "event_leave", "event_new"]);
 
 const TYPE_ICONS = {
   event_join: "checkmark-circle",
@@ -26,6 +30,7 @@ export default function NotificationsScreen({ navigation }) {
   const styles = getStyles(colors);
   const { notifications, refresh, markRead, markAllRead, unreadCount } =
     useNotifications() ?? {};
+  const { token } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
@@ -38,6 +43,23 @@ export default function NotificationsScreen({ navigation }) {
     setRefreshing(true);
     await refresh?.();
     setRefreshing(false);
+  };
+
+  // Takes the user to whatever the notification is actually about, instead
+  // of just marking it read and leaving them to go find it themselves.
+  const handlePress = async (item) => {
+    if (!item.read) markRead(item._id);
+
+    if (EVENT_TYPES.has(item.type) && item.referenceId) {
+      try {
+        const event = await api.event(item.referenceId, token);
+        navigation.navigate("EventDetail", { event });
+      } catch (_) {
+        // Event may no longer exist — nothing to open.
+      }
+    } else if (item.type === "order_status") {
+      navigation.navigate("Orders");
+    }
   };
 
   return (
@@ -68,7 +90,7 @@ export default function NotificationsScreen({ navigation }) {
           renderItem={({ item }) => (
             <Pressable
               style={[styles.card, !item.read && styles.cardUnread]}
-              onPress={() => !item.read && markRead(item._id)}
+              onPress={() => handlePress(item)}
             >
               <View style={styles.iconWrap}>
                 <AppIcon

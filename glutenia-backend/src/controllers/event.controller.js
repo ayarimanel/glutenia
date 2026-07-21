@@ -61,6 +61,7 @@ exports.createEvent = async (req, res, next) => {
             type: "event_new",
             title: "New event posted 🎉",
             body: `${event.title} was just added — check it out!`,
+            referenceId: event._id.toString(),
           }
         )
       )
@@ -120,6 +121,7 @@ exports.rsvp = async (req, res, next) => {
       body: isJoining
         ? `You're all set for ${event.title}.`
         : `You're no longer attending ${event.title}.`,
+      referenceId: event._id.toString(),
     });
 
     const gamification = isJoining
