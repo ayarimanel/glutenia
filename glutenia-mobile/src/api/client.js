@@ -196,6 +196,9 @@ export const api = {
     return request(`/establishments${query ? `?${query}` : ""}`);
   },
   establishment: (id) => request(`/establishments/${id}`),
+  getFavoriteSpots: (token) => request("/users/me/favorites", { token }),
+  updateFavoriteSpots: (token, favorites) =>
+    request("/users/me/favorites", { method: "PUT", token, body: { favorites } }),
   myEstablishment: (token) => request("/establishments/mine", { token }),
   upsertMyEstablishment: (token, body) =>
     request("/establishments/mine", { method: "PUT", token, body }),

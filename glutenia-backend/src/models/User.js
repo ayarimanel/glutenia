@@ -104,6 +104,13 @@ const userSchema = new mongoose.Schema({
     enum: ["rarely", "few_times_month", "weekly", "multiple_week"],
     default: null,
   },
+  // Snapshots of favorited map spots (static demo spots + real establishments
+  // both flow through here), so the favorites list can render without having
+  // to re-resolve against two different data sources.
+  favoriteSpots: {
+    type: [mongoose.Schema.Types.Mixed],
+    default: [],
+  },
   confidence_identifying_gf: {
     type: String,
     enum: ["low", "medium", "high"],

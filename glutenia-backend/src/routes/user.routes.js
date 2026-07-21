@@ -11,6 +11,11 @@ const idValidator = [param("id").isMongoId().withMessage("Invalid user id")];
 
 router.get("/", verifyToken, isAdmin, userController.getUsers);
 router.get("/analytics", verifyToken, isAdmin, userController.getUserAnalytics);
+
+// Current user's favorite map spots
+router.get("/me/favorites", verifyToken, userController.getFavorites);
+router.put("/me/favorites", verifyToken, userController.updateFavorites);
+
 router.get(
   "/:id/orders",
   verifyToken,

@@ -23,13 +23,14 @@ const tally = (map, key) => {
 exports.getUserAnalytics = async (req, res, next) => {
   try {
     const users = await User.find().select(
-      "role role_type experience_level primary_goal confidence_identifying_gf createdAt"
+      "role role_type experience_level primary_goal eating_out_frequency confidence_identifying_gf createdAt"
     );
 
     const byRole = {};
     const byRoleType = {};
     const byExperienceLevel = {};
     const byPrimaryGoal = {};
+    const byEatingOutFrequency = {};
     const byConfidence = {};
     const signupsByDay = {};
 
@@ -40,6 +41,7 @@ exports.getUserAnalytics = async (req, res, next) => {
         tally(byRoleType, user.role_type || "unset");
         tally(byExperienceLevel, user.experience_level || "unset");
         tally(byPrimaryGoal, user.primary_goal || "unset");
+        tally(byEatingOutFrequency, user.eating_out_frequency || "unset");
         tally(byConfidence, user.confidence_identifying_gf || "unset");
       }
 
@@ -63,10 +65,37 @@ exports.getUserAnalytics = async (req, res, next) => {
         byRoleType,
         byExperienceLevel,
         byPrimaryGoal,
+        byEatingOutFrequency,
         byConfidence,
         signupTrend,
       },
     });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.getFavorites = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id).select("favoriteSpots");
+    return res.json({ success: true, data: user?.favoriteSpots || [] });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.updateFavorites = async (req, res, next) => {
+  try {
+    const { favorites } = req.body;
+    if (!Array.isArray(favorites)) {
+      return res.status(400).json({ success: false, message: "favorites must be an array" });
+    }
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { favoriteSpots: favorites },
+      { new: true }
+    ).select("favoriteSpots");
+    return res.json({ success: true, data: user.favoriteSpots });
   } catch (error) {
     return next(error);
   }

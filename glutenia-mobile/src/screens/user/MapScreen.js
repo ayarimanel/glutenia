@@ -10,7 +10,6 @@ import {
   Image,
 } from "react-native";
 import { WebView } from "react-native-webview";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BottomSheet, {
@@ -267,7 +266,6 @@ const getCategoryVisual = (colors) => ({
 });
 
 const MAP_CENTER = { latitude: 36.82, longitude: 10.2 };
-const FAVORITES_KEY = "glutenia.mapFavorites";
 
 function haversineKm(lat1, lon1, lat2, lon2) {
   const R = 6371;
@@ -464,7 +462,7 @@ function buildLeafletHTML(spots) {
 export default function MapScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const { colors } = useTheme();
   const styles = useMemo(() => getStyles(colors), [colors]);
   const categoryVisual = useMemo(() => getCategoryVisual(colors), [colors]);
@@ -507,7 +505,7 @@ export default function MapScreen({ navigation }) {
   const [sheetIndex, setSheetIndex] = useState(-1);
   const [realSpots, setRealSpots] = useState([]);
   const [mapWebViewReady, setMapWebViewReady] = useState(false);
-  const [favoriteIds, setFavoriteIds] = useState([]);
+  const [favorites, setFavorites] = useState([]);
 
   const snapPoints = useMemo(() => ["55%", "90%"], []);
   const leafletHTML = useMemo(() => buildLeafletHTML(SPOTS), [SPOTS]);
@@ -517,22 +515,28 @@ export default function MapScreen({ navigation }) {
   }, [leafletHTML]);
 
   useEffect(() => {
-    AsyncStorage.getItem(FAVORITES_KEY)
-      .then((raw) => {
-        if (raw) setFavoriteIds(JSON.parse(raw));
-      })
+    if (!token) return;
+    api
+      .getFavoriteSpots(token)
+      .then((list) => setFavorites(list || []))
       .catch(() => {});
-  }, []);
+  }, [token]);
 
-  const toggleFavorite = useCallback((spotId) => {
-    setFavoriteIds((current) => {
-      const next = current.includes(spotId)
-        ? current.filter((id) => id !== spotId)
-        : [...current, spotId];
-      AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(next)).catch(() => {});
-      return next;
-    });
-  }, []);
+  const toggleFavorite = useCallback(
+    (spot) => {
+      setFavorites((current) => {
+        const isFavorited = current.some((f) => f.id === spot.id);
+        const next = isFavorited
+          ? current.filter((f) => f.id !== spot.id)
+          : [...current, spot];
+        if (token) {
+          api.updateFavoriteSpots(token, next).catch(() => {});
+        }
+        return next;
+      });
+    },
+    [token]
+  );
 
   const allSpots = useMemo(() => [...SPOTS, ...realSpots], [SPOTS, realSpots]);
 
@@ -769,6 +773,14 @@ export default function MapScreen({ navigation }) {
           <AppIcon name="list" size={15} color="#2E2E2E" />
           <Text style={styles.filterIconLabel}>{t("map.filter")}</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.favoritesEntryBtn}
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate("FavoritePlaces")}
+        >
+          <AppIcon name="heart" size={16} color="#C8102E" fill={favorites.length > 0 ? "#C8102E" : "none"} strokeWidth={2.5} />
+        </TouchableOpacity>
       </View>
 
       {/* ── Layer 4: Bottom info card (single selected spot - Glassmorphic) ────── */}
@@ -792,13 +804,13 @@ export default function MapScreen({ navigation }) {
                 <TouchableOpacity
                   style={styles.favoriteBtn}
                   activeOpacity={0.7}
-                  onPress={() => toggleFavorite(selectedSpot.id)}
+                  onPress={() => toggleFavorite(selectedSpot)}
                 >
                   <AppIcon
                     name="heart"
                     size={16}
                     color="#C8102E"
-                    fill={favoriteIds.includes(selectedSpot.id) ? "#C8102E" : "none"}
+                    fill={favorites.some((f) => f.id === selectedSpot.id) ? "#C8102E" : "none"}
                     strokeWidth={2.5}
                   />
                 </TouchableOpacity>
@@ -1110,6 +1122,17 @@ const getStyles = (colors) =>
       fontSize: 13,
       fontWeight: "700",
       color: colors.textDark,
+    },
+
+    favoritesEntryBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: colors.surface,
+      alignItems: "center",
+      justifyContent: "center",
+      borderWidth: 1,
+      borderColor: colors.border,
     },
 
     infoCard: {
