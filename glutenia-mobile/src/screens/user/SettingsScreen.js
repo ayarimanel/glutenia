@@ -155,10 +155,6 @@ export default function SettingsScreen({ navigation }) {
     ]);
   };
 
-  const comingSoon = (feature) => {
-    Alert.alert(t("settings.comingSoon"), t("settings.comingSoonMsg", { feature }));
-  };
-
   const appVersion = Constants.expoConfig?.version || "1.0.0";
 
   const reportBug = () => {
@@ -305,6 +301,7 @@ export default function SettingsScreen({ navigation }) {
             icon="settings"
             label={t("settings.darkMode")}
             isFirst
+            isLast
             colors={colors}
             right={
               <Switch
@@ -313,22 +310,6 @@ export default function SettingsScreen({ navigation }) {
                 trackColor={{ false: colors.divider, true: colors.primary }}
                 thumbColor={colors.surface}
               />
-            }
-          />
-          <Divider colors={colors} />
-          <SettingRow
-            icon="info"
-            label={t("settings.textSize")}
-            isLast
-            colors={colors}
-            onPress={() => comingSoon(t("settings.textSize"))}
-            right={
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                <Text style={{ fontSize: 14, color: colors.textMuted, fontWeight: "500" }}>
-                  {t("settings.textSizeMedium")}
-                </Text>
-                <AppIcon name="chevron-right" size={18} color={colors.textMuted} />
-              </View>
             }
           />
         </View>
