@@ -5,6 +5,7 @@
   "main": "expo/AppEntry.js",
   "scripts": {
     "start": "expo start --lan",
+    "web": "expo start --web",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "assets:placeholder": "node scripts/generate-brand-assets.js",
@@ -15,6 +16,7 @@
     "postinstall": "patch-package"
   },
   "dependencies": {
+    "@expo/metro-runtime": "~5.0.5",
     "@expo/vector-icons": "14.1.0",
     "@google/generative-ai": "^0.24.1",
     "@gorhom/bottom-sheet": "^5.2.14",
@@ -36,6 +38,7 @@
     "i18next": "^26.3.2",
     "lucide-react-native": "^1.17.0",
     "react": "19.0.0",
+    "react-dom": "19.0.0",
     "react-i18next": "^17.0.8",
     "react-native": "0.79.6",
     "react-native-gesture-handler": "~2.24.0",
@@ -43,6 +46,7 @@
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "4.11.1",
     "react-native-svg": "15.11.2",
+    "react-native-web": "^0.20.0",
     "react-native-webview": "13.13.5"
   },
   "devDependencies": {

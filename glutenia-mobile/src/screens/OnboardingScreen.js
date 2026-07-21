@@ -16,6 +16,8 @@ import { useTheme } from "../context/ThemeContext";
 import { Spacing } from "../theme/colors";
 import LanguageSelector from "../components/LanguageSelector";
 
+const VIEWABILITY_CONFIG = { viewAreaCoveragePercentThreshold: 50 };
+
 const SLIDE_ASSETS = [
   { id: "1", image: require("../../assets/onboarding/scan.png") },
   { id: "2", image: require("../../assets/onboarding/discover.png") },
@@ -73,6 +75,7 @@ export default function OnboardingScreen() {
 
       <FlatList
         ref={flatListRef}
+        style={styles.list}
         data={SLIDES}
         keyExtractor={(item) => item.id}
         horizontal
@@ -80,7 +83,7 @@ export default function OnboardingScreen() {
         showsHorizontalScrollIndicator={false}
         bounces={false}
         onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
+        viewabilityConfig={VIEWABILITY_CONFIG}
         renderItem={({ item }) => (
           <View style={[styles.slide, { width }]}>
             <View style={[styles.imageWrap, { width: IMAGE_SIZE, height: IMAGE_SIZE }]}>
@@ -137,6 +140,9 @@ const getStyles = (colors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  list: {
+    flex: 1,
   },
   langButton: {
     position: "absolute",
