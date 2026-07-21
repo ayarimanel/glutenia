@@ -78,15 +78,26 @@ export default function AccountScreen({ navigation }) {
       icon: "info",
       desc: t("account.roles.unset.desc"),
     },
+    admin: {
+      label: t("account.roles.admin.label"),
+      icon: "shield-check",
+      desc: t("account.roles.admin.desc"),
+    },
   };
 
   const { user, token, logout } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [profileData, setProfileData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!isAdmin);
   const [error, setError] = useState(null);
   const [events, setEvents] = useState([]);
 
   const fetchProfile = useCallback(async () => {
+    if (isAdmin) {
+      // Admins are staff accounts, not gamified end users — nothing to fetch.
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -97,13 +108,14 @@ export default function AccountScreen({ navigation }) {
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, isAdmin]);
 
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
 
   useEffect(() => {
+    if (isAdmin) return;
     let cancelled = false;
     api
       .events(token)
@@ -114,7 +126,7 @@ export default function AccountScreen({ navigation }) {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [token, isAdmin]);
 
   const handleLogout = () => {
     Alert.alert(t("account.logoutTitle"), t("account.logoutMsg"), [
@@ -157,9 +169,13 @@ export default function AccountScreen({ navigation }) {
 
   const isProfessional = user?.role === "professional";
   const roleType = user?.role_type;
-  const roleMeta = isProfessional ? ROLE_META.professional : ROLE_META[roleType] || ROLE_META.unset;
-  const accentColor = isProfessional ? colors.secondary : colors.primary;
-  const accentPale = isProfessional ? colors.secondaryPale : colors.primaryPale;
+  const roleMeta = isAdmin
+    ? ROLE_META.admin
+    : isProfessional
+      ? ROLE_META.professional
+      : ROLE_META[roleType] || ROLE_META.unset;
+  const accentColor = isAdmin || isProfessional ? colors.secondary : colors.primary;
+  const accentPale = isAdmin || isProfessional ? colors.secondaryPale : colors.primaryPale;
   const currentTitle = gamification?.currentTitle || t("account.newcomer");
   const level = gamification?.currentLevel ?? 1;
   const totalXp = gamification?.totalXp ?? 0;
@@ -198,7 +214,9 @@ export default function AccountScreen({ navigation }) {
           </Pressable>
           <Text style={styles.userName}>{user?.name}</Text>
           <View style={[styles.titlePill, { backgroundColor: accentColor }]}>
-            <Text style={styles.titlePillText}>{isProfessional ? roleMeta.label : currentTitle}</Text>
+            <Text style={styles.titlePillText}>
+              {isAdmin || isProfessional ? roleMeta.label : currentTitle}
+            </Text>
           </View>
           {timeAgo ? (
             <Text style={styles.timeText}>
@@ -208,8 +226,8 @@ export default function AccountScreen({ navigation }) {
           ) : null}
         </View>
 
-        {/* ── B. XP / Level card (not applicable to professional/seller accounts) ── */}
-        {!isProfessional && (
+        {/* ── B. XP / Level card (not applicable to professional/seller or admin accounts) ── */}
+        {!isProfessional && !isAdmin && (
           <View style={styles.xpCard}>
             <View style={styles.xpRow}>
               <View>
@@ -234,8 +252,8 @@ export default function AccountScreen({ navigation }) {
           </View>
         )}
 
-        {/* ── C. Stats row (not applicable to professional/seller accounts) ── */}
-        {!isProfessional && (
+        {/* ── C. Stats row (not applicable to professional/seller or admin accounts) ── */}
+        {!isProfessional && !isAdmin && (
           <View style={styles.statsCard}>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>🔥 {currentStreak}</Text>
@@ -266,50 +284,42 @@ export default function AccountScreen({ navigation }) {
           </View>
         </View>
 
-        {/* ── E. Journey (not applicable to professional/seller accounts) ──── */}
-        {!isProfessional && (
+        {/* ── E. Journey (not applicable to professional/seller or admin accounts) ──── */}
+        {!isProfessional && !isAdmin && (
           <>
             <Text style={[styles.sectionLabel, styles.mt]}>{t("account.yourJourney")}</Text>
             <View style={styles.journeyCard}>
-              <View style={styles.journeyRow}>
-                {JOURNEY_STEPS.map((step, index) => {
+              <View style={styles.journeyTrack}>
+                {JOURNEY_STEPS.flatMap((step, index) => {
                   const isDone = index <= activeStep;
-                  const isCurrent = index === activeStep;
-                  return (
-                    <View key={step.key} style={styles.stepItem}>
-                      <View style={styles.stepTrack}>
-                        {index > 0 && (
-                          <View
-                            style={[
-                              styles.trackLine,
-                              isDone ? styles.lineDone : styles.lineGray,
-                            ]}
-                          />
-                        )}
-                        <View
-                          style={[
-                            styles.stepCircle,
-                            isDone ? styles.circleDone : styles.circleGray,
-                          ]}
-                        />
-                        {index < JOURNEY_STEPS.length - 1 && (
-                          <View
-                            style={[
-                              styles.trackLine,
-                              index < activeStep ? styles.lineDone : styles.lineGray,
-                            ]}
-                          />
-                        )}
-                      </View>
-                      <Text
-                        style={[styles.stepLbl, isCurrent && styles.stepLblActive]}
-                        numberOfLines={1}
-                      >
-                        {step.label}
-                      </Text>
-                    </View>
+                  const nodes = [];
+                  if (index > 0) {
+                    nodes.push(
+                      <View
+                        key={`line-${step.key}`}
+                        style={[styles.trackLine, isDone ? styles.lineDone : styles.lineGray]}
+                      />
+                    );
+                  }
+                  nodes.push(
+                    <View
+                      key={`dot-${step.key}`}
+                      style={[styles.stepCircle, isDone ? styles.circleDone : styles.circleGray]}
+                    />
                   );
+                  return nodes;
                 })}
+              </View>
+              <View style={styles.journeyLabels}>
+                {JOURNEY_STEPS.map((step, index) => (
+                  <Text
+                    key={step.key}
+                    style={[styles.stepLbl, index === activeStep && styles.stepLblActive]}
+                    numberOfLines={1}
+                  >
+                    {step.label}
+                  </Text>
+                ))}
               </View>
             </View>
           </>
@@ -442,13 +452,15 @@ export default function AccountScreen({ navigation }) {
           </>
         )}
 
-        {/* ── H. Ecosystem card ──────────────────────────────────────────── */}
-        <View style={styles.ecoCard}>
-          <Image source={mascot} style={styles.mascot} resizeMode="contain" />
-          <Text style={styles.ecoText}>
-            {t("account.ecoText")}
-          </Text>
-        </View>
+        {/* ── H. Ecosystem card (not applicable to admin accounts) ─────────── */}
+        {!isAdmin && (
+          <View style={styles.ecoCard}>
+            <Image source={mascot} style={styles.mascot} resizeMode="contain" />
+            <Text style={styles.ecoText}>
+              {t("account.ecoText")}
+            </Text>
+          </View>
+        )}
 
         {/* ── I. Events attending ────────────────────────────────────────── */}
         {attendingEvents.length > 0 && (
@@ -478,32 +490,36 @@ export default function AccountScreen({ navigation }) {
 
         {/* ── J. Orders + Settings ───────────────────────────────────────── */}
         <View style={styles.settingsList}>
-          <Pressable style={styles.settingsRow} onPress={() => navigation.navigate("Orders")}>
-            <View style={styles.settingsLeft}>
-              <View style={[styles.iconWrap, { backgroundColor: colors.primaryPale }]}>
-                <AppIcon name="receipt" size={20} color={colors.primary} />
-              </View>
-              <Text style={styles.settingsLabel}>{t("account.myOrders")}</Text>
-            </View>
-            <AppIcon name="chevron-right" size={20} color={colors.textMuted} />
-          </Pressable>
+          {!isAdmin && (
+            <>
+              <Pressable style={styles.settingsRow} onPress={() => navigation.navigate("Orders")}>
+                <View style={styles.settingsLeft}>
+                  <View style={[styles.iconWrap, { backgroundColor: colors.secondaryPale }]}>
+                    <AppIcon name="receipt" size={20} color={colors.secondary} />
+                  </View>
+                  <Text style={styles.settingsLabel}>{t("account.myOrders")}</Text>
+                </View>
+                <AppIcon name="chevron-right" size={20} color={colors.textMuted} />
+              </Pressable>
 
-          <View style={styles.divider} />
+              <View style={styles.divider} />
 
-          <Pressable
-            style={styles.settingsRow}
-            onPress={() => navigation.navigate("PatientResources")}
-          >
-            <View style={styles.settingsLeft}>
-              <View style={[styles.iconWrap, { backgroundColor: colors.primaryPale }]}>
-                <AppIcon name="activity" size={20} color={colors.primary} />
-              </View>
-              <Text style={styles.settingsLabel}>{t("home.patientResources")}</Text>
-            </View>
-            <AppIcon name="chevron-right" size={20} color={colors.textMuted} />
-          </Pressable>
+              <Pressable
+                style={styles.settingsRow}
+                onPress={() => navigation.navigate("PatientResources")}
+              >
+                <View style={styles.settingsLeft}>
+                  <View style={[styles.iconWrap, { backgroundColor: colors.secondaryPale }]}>
+                    <AppIcon name="activity" size={20} color={colors.secondary} />
+                  </View>
+                  <Text style={styles.settingsLabel}>{t("home.patientResources")}</Text>
+                </View>
+                <AppIcon name="chevron-right" size={20} color={colors.textMuted} />
+              </Pressable>
 
-          <View style={styles.divider} />
+              <View style={styles.divider} />
+            </>
+          )}
 
           <Pressable style={styles.settingsRow} onPress={() => navigation.navigate("Settings")}>
             <View style={styles.settingsLeft}>
@@ -712,16 +728,15 @@ const getStyles = (colors) => StyleSheet.create({
     marginHorizontal: Spacing.md,
     ...Shadow,
   },
-  journeyRow: { flexDirection: "row" },
-  stepItem: { flex: 1, alignItems: "center" },
-  stepTrack: { flexDirection: "row", alignItems: "center", width: "100%" },
+  journeyTrack: { flexDirection: "row", alignItems: "center", width: "100%" },
+  journeyLabels: { flexDirection: "row", marginTop: 6 },
   trackLine: { flex: 1, height: 2 },
   lineDone: { backgroundColor: colors.primary },
   lineGray: { backgroundColor: colors.divider },
   stepCircle: { width: 14, height: 14, borderRadius: 7 },
   circleDone: { backgroundColor: colors.primary },
   circleGray: { backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.divider },
-  stepLbl: { fontSize: 10, color: colors.textMuted, marginTop: 6, textAlign: "center" },
+  stepLbl: { flex: 1, fontSize: 10, color: colors.textMuted, textAlign: "center" },
   stepLblActive: { color: colors.primary, fontWeight: "700" },
 
   // ── F. Badges ─────────────────────────────────────────────────────────────

@@ -238,8 +238,10 @@ async function getProfileGamificationData(userId) {
       await checkLazyJourneyBadges(userId, user.createdAt);
     }
 
-    const gamification = await UserGamification.findOne({ userId });
-    if (!gamification) return null;
+    let gamification = await UserGamification.findOne({ userId });
+    if (!gamification) {
+      gamification = await UserGamification.create({ userId });
+    }
 
     const levelInfo = getLevelInfo(gamification.totalXp);
     const gamificationWithLevel = {

@@ -4,7 +4,7 @@ import { useTheme } from "../context/ThemeContext";
 
 const LOGO_ASPECT_RATIO = 1043 / 459;
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const LOGO_WIDTH = Math.min(SCREEN_WIDTH * 0.78, 460);
+const LOGO_WIDTH = Math.min(SCREEN_WIDTH * 0.92, 560);
 
 export default function SplashScreen() {
   const { t } = useTranslation();

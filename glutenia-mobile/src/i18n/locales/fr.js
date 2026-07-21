@@ -130,6 +130,10 @@ export default {
         label: "Pas encore défini",
         desc: "Complétez votre profil pour personnaliser votre parcours sans gluten.",
       },
+      admin: {
+        label: "Administrateur",
+        desc: "Vous gérez les produits, événements et la communauté de Glutenia.",
+      },
     },
     journey: {
       beginner: "Débutant",
@@ -737,7 +741,7 @@ export default {
     rsvpJoin: "Je participe",
     loginRequired: "Connexion requise",
     loginMsg: "Veuillez vous connecter pour participer aux événements.",
-    rsvpError: "Échec de la participation",
+    rsvpError: "Impossible de mettre à jour votre participation",
   },
   recipeDetail: {
     calories: "Calories",
@@ -1060,6 +1064,10 @@ export default {
       coverImage: "Photo de couverture",
       location: "Emplacement sur la carte",
       locationHint: "Touchez la carte pour placer votre commerce, ou faites glisser le repère pour l'ajuster.",
+      coordsLabel: "Ou collez les coordonnées depuis Google Maps",
+      coordsPlaceholder: "ex. 36.8065, 10.1815",
+      coordsApply: "Appliquer",
+      coordsTip: "Astuce : dans Google Maps, appuyez longuement sur l'emplacement de votre commerce, puis touchez les coordonnées affichées pour les copier — collez-les ensuite ici.",
       noLocation: "Aucun emplacement défini",
       save: "Enregistrer les infos",
       saved: "Enregistré",
@@ -1069,6 +1077,7 @@ export default {
       errors: {
         nameRequired: "Le nom du commerce est requis.",
         locationRequired: "Touchez la carte pour définir l'emplacement de votre commerce afin qu'il y apparaisse.",
+        coordsInvalid: "Entrez des coordonnées valides, par ex. 36.8065, 10.1815.",
       },
     },
   },

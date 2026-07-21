@@ -132,6 +132,10 @@ export default {
         label: "لم يتم التحديد بعد",
         desc: "أكمل ملفك الشخصي لتخصيص رحلتك الخالية من الغلوتين.",
       },
+      admin: {
+        label: "مسؤول",
+        desc: "تدير منتجات وفعاليات ومجتمع Glutenia.",
+      },
     },
     journey: {
       beginner: "مبتدئ",
@@ -739,7 +743,7 @@ export default {
     rsvpJoin: "سأحضر",
     loginRequired: "تسجيل الدخول مطلوب",
     loginMsg: "يرجى تسجيل الدخول للمشاركة في الفعاليات.",
-    rsvpError: "فشل تأكيد المشاركة",
+    rsvpError: "تعذّر تحديث مشاركتك",
   },
   recipeDetail: {
     calories: "سعرات حرارية",
@@ -1062,6 +1066,10 @@ export default {
       coverImage: "صورة الغلاف",
       location: "الموقع على الخريطة",
       locationHint: "اضغط على الخريطة لتحديد موقع متجرك، أو اسحب العلامة لضبطه.",
+      coordsLabel: "أو الصق الإحداثيات من Google Maps",
+      coordsPlaceholder: "مثال: 36.8065, 10.1815",
+      coordsApply: "تطبيق",
+      coordsTip: "نصيحة: في Google Maps، اضغط مطولاً على موقع متجرك، ثم اضغط على الإحداثيات التي تظهر لنسخها — ثم الصقها هنا.",
       noLocation: "لم يتم تحديد الموقع بعد",
       save: "حفظ معلومات المتجر",
       saved: "تم الحفظ",
@@ -1071,6 +1079,7 @@ export default {
       errors: {
         nameRequired: "اسم المتجر مطلوب.",
         locationRequired: "اضغط على الخريطة لتحديد موقع متجرك حتى يظهر عليها.",
+        coordsInvalid: "أدخل إحداثيات صحيحة، مثل 36.8065, 10.1815.",
       },
     },
   },

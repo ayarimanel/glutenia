@@ -49,6 +49,7 @@ export default function ShopScreen({ navigation }) {
     <Screen>
       <AppHeader
         userName={user?.name ?? ""}
+        avatarUri={user?.avatar}
         onCartPress={() => navigation.navigate("CartPage")}
       />
       <View style={styles.container}>

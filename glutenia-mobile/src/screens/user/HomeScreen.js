@@ -18,28 +18,15 @@ import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme } from "../../context/ThemeContext";
 import { useTranslation } from "react-i18next";
 
-const EVENTS_META = [
-  { id: "1", key: "e1", color: "#E8F5E9", emoji: "👨‍🍳", categoryKey: "workshops", going: 24 },
-  { id: "2", key: "e2", color: "#FFF8E1", emoji: "🧺",  categoryKey: "meetups",   going: 56 },
-  { id: "3", key: "e3", color: "#FCE4EC", emoji: "🧁",  categoryKey: "classes",   going: 18 },
-];
-
 export default function HomeScreen({ navigation }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
 
-  const EVENTS_PREVIEW = EVENTS_META.map((e) => ({
-    ...e,
-    title: t(`homeEvents.${e.key}.title`),
-    date: t(`homeEvents.${e.key}.date`),
-    location: t(`homeEvents.${e.key}.location`),
-    description: t(`homeEvents.${e.key}.description`),
-    category: t(`events.${e.categoryKey}`),
-  }));
   const { user, token } = useAuth();
   const { addItem } = useCart();
   const [products, setProducts] = useState([]);
+  const [events, setEvents] = useState([]);
   const [scanHistory, setScanHistory] = useState([]);
   const [homeGamification, setHomeGamification] = useState(null);
   const isProfessional = user?.role === "professional";
@@ -49,6 +36,12 @@ export default function HomeScreen({ navigation }) {
       .then((data) => setProducts(data.slice(0, 8)))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    api.events(token)
+      .then((data) => setEvents(data.slice(0, 6)))
+      .catch(() => {});
+  }, [token]);
 
   useEffect(() => {
     api.scanHistory(token)
@@ -74,6 +67,7 @@ export default function HomeScreen({ navigation }) {
     <Screen>
       <AppHeader
         userName={user?.name ?? ""}
+        avatarUri={user?.avatar}
         onCartPress={() => navigation.navigate("CartPage")}
       />
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -227,51 +221,55 @@ export default function HomeScreen({ navigation }) {
         </ScrollView>
 
         {/* ── Check Events ── */}
-        <View style={styles.sectionRow}>
-          <Text style={styles.sectionLabel}>{t("home.checkEvents")}</Text>
-          <Pressable
-            style={styles.seeAll}
-            onPress={() => navigation.navigate("Events")}
-          >
-            <Text style={styles.seeAllText}>{t("home.seeAll")}</Text>
-            <AppIcon name="chevron-right" size={15} color={colors.secondary} />
-          </Pressable>
-        </View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.hList}
-        >
-          {EVENTS_PREVIEW.map((event) => (
-            <Pressable
-              key={event.id}
-              style={styles.eventCard}
-              onPress={() => navigation.navigate("EventDetail", { event })}
+        {events.length > 0 && (
+          <>
+            <View style={styles.sectionRow}>
+              <Text style={styles.sectionLabel}>{t("home.checkEvents")}</Text>
+              <Pressable
+                style={styles.seeAll}
+                onPress={() => navigation.navigate("Events")}
+              >
+                <Text style={styles.seeAllText}>{t("home.seeAll")}</Text>
+                <AppIcon name="chevron-right" size={15} color={colors.secondary} />
+              </Pressable>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.hList}
             >
-              <View style={[styles.eventImg, { backgroundColor: event.color }]}>
-                <Text style={styles.eventEmoji}>{event.emoji}</Text>
-                <View style={styles.eventBadge}>
-                  <Text style={styles.eventBadgeText}>{event.category}</Text>
-                </View>
-              </View>
-              <View style={styles.eventBody}>
-                <Text style={styles.eventTitle} numberOfLines={2}>
-                  {event.title}
-                </Text>
-                <View style={styles.eventMeta}>
-                  <AppIcon name="location" size={12} color={colors.textMuted} />
-                  <Text style={styles.eventMetaText} numberOfLines={1}>
-                    {event.location}
-                  </Text>
-                </View>
-                <View style={styles.eventMeta}>
-                  <AppIcon name="calendar" size={12} color={colors.textMuted} />
-                  <Text style={styles.eventMetaText}>{event.date}</Text>
-                </View>
-              </View>
-            </Pressable>
-          ))}
-        </ScrollView>
+              {events.map((event) => (
+                <Pressable
+                  key={event._id}
+                  style={styles.eventCard}
+                  onPress={() => navigation.navigate("EventDetail", { event })}
+                >
+                  <View style={[styles.eventImg, { backgroundColor: event.color }]}>
+                    <Text style={styles.eventEmoji}>{event.emoji}</Text>
+                    <View style={styles.eventBadge}>
+                      <Text style={styles.eventBadgeText}>{event.category}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.eventBody}>
+                    <Text style={styles.eventTitle} numberOfLines={2}>
+                      {event.title}
+                    </Text>
+                    <View style={styles.eventMeta}>
+                      <AppIcon name="location" size={12} color={colors.textMuted} />
+                      <Text style={styles.eventMetaText} numberOfLines={1}>
+                        {event.location}
+                      </Text>
+                    </View>
+                    <View style={styles.eventMeta}>
+                      <AppIcon name="calendar" size={12} color={colors.textMuted} />
+                      <Text style={styles.eventMetaText}>{event.date}</Text>
+                    </View>
+                  </View>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </>
+        )}
 
         <View style={{ height: 100 }} />
       </ScrollView>

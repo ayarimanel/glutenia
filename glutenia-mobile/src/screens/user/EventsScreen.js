@@ -56,6 +56,7 @@ export default function EventsScreen({ navigation }) {
     <Screen>
       <AppHeader
         userName={user?.name ?? ""}
+        avatarUri={user?.avatar}
         onCartPress={() => navigation.navigate("CartPage")}
       />
       <View style={styles.container}>

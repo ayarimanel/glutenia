@@ -130,6 +130,10 @@ export default {
         label: "Not set yet",
         desc: "Complete your profile to personalize your gluten-free journey.",
       },
+      admin: {
+        label: "Administrator",
+        desc: "You manage Glutenia's products, events, and community.",
+      },
     },
     journey: {
       beginner: "Beginner",
@@ -737,7 +741,7 @@ export default {
     rsvpJoin: "I'm going",
     loginRequired: "Login required",
     loginMsg: "Please log in to RSVP for events.",
-    rsvpError: "RSVP failed",
+    rsvpError: "Couldn't update your RSVP",
   },
   recipeDetail: {
     calories: "Calories",
@@ -1060,6 +1064,10 @@ export default {
       coverImage: "Cover photo",
       location: "Location on the map",
       locationHint: "Tap the map to place your business, or drag the pin to fine-tune it.",
+      coordsLabel: "Or paste coordinates from Google Maps",
+      coordsPlaceholder: "e.g. 36.8065, 10.1815",
+      coordsApply: "Apply",
+      coordsTip: "Tip: in Google Maps, long-press your business location, then tap the coordinates that pop up to copy them — then paste them here.",
       noLocation: "No location set yet",
       save: "Save business info",
       saved: "Saved",
@@ -1069,6 +1077,7 @@ export default {
       errors: {
         nameRequired: "Business name is required.",
         locationRequired: "Tap the map to set your business location so it can appear there.",
+        coordsInvalid: "Enter valid coordinates, like 36.8065, 10.1815.",
       },
     },
   },

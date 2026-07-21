@@ -4,7 +4,7 @@ import { useTheme } from "../../context/ThemeContext";
 
 const CHART_HEIGHT = 100; // slightly shorter for better proportions inside cards
 
-function AnimatedBar({ height, color }) {
+function AnimatedBar({ height, color, barStyle }) {
   const animHeight = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -19,7 +19,7 @@ function AnimatedBar({ height, color }) {
   return (
     <Animated.View
       style={[
-        styles.bar,
+        barStyle,
         { height: animHeight, backgroundColor: color },
       ]}
     />
@@ -40,7 +40,7 @@ export default function BarChartView({ data, color }) {
           <View key={item.label} style={styles.col}>
             <Text style={styles.value}>{item.value}</Text>
             <View style={styles.barTrack}>
-              <AnimatedBar height={barHeight} color={item.color || barColor} />
+              <AnimatedBar height={barHeight} color={item.color || barColor} barStyle={styles.bar} />
             </View>
             <Text style={styles.label} numberOfLines={2}>
               {item.label}

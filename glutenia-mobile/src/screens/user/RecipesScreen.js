@@ -62,6 +62,7 @@ export default function RecipesScreen({ navigation }) {
     <Screen>
       <AppHeader
         userName={user?.name ?? ""}
+        avatarUri={user?.avatar}
         onCartPress={() => navigation.navigate("CartPage")}
       />
       <ScrollView

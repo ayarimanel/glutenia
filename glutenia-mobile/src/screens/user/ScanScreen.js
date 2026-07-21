@@ -111,6 +111,7 @@ export default function ScanScreen({ navigation }) {
       <View style={styles.root}>
         <AppHeader
           userName={user?.name ?? ""}
+          avatarUri={user?.avatar}
           onCartPress={handleCartPress}
           safeTop
         />
@@ -150,6 +151,7 @@ export default function ScanScreen({ navigation }) {
       <View style={styles.root}>
         <AppHeader
           userName={user?.name ?? ""}
+          avatarUri={user?.avatar}
           onCartPress={handleCartPress}
           safeTop
         />
@@ -167,6 +169,7 @@ export default function ScanScreen({ navigation }) {
       <View style={styles.root}>
         <AppHeader
           userName={user?.name ?? ""}
+          avatarUri={user?.avatar}
           onCartPress={handleCartPress}
           safeTop
         />
@@ -221,6 +224,7 @@ export default function ScanScreen({ navigation }) {
       <View style={styles.root}>
         <AppHeader
           userName={user?.name ?? ""}
+          avatarUri={user?.avatar}
           onCartPress={handleCartPress}
           safeTop
         />

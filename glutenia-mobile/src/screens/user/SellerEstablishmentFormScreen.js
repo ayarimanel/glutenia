@@ -1,4 +1,4 @@
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { WebView } from "react-native-webview";
 import * as ImagePicker from "expo-image-picker";
@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import Field from "../../components/Field";
-import TimePickerModal from "../../components/TimePickerModal";
+import TimeRangeSlider from "../../components/TimeRangeSlider";
 import AppIcon from "../../components/AppIcon";
 import { IconButton, PrimaryButton, SecondaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
@@ -20,6 +20,30 @@ const DEFAULT_CENTER = { latitude: 36.82, longitude: 10.2 };
 const HOURS_PATTERN = /^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})$/;
 const DEFAULT_OPEN_TIME = { hour: "08", minute: "00" };
 const DEFAULT_CLOSE_TIME = { hour: "19", minute: "00" };
+
+// Matches "36.8065, 10.1815" pasted directly, and also finds the same pattern
+// inside a full Google Maps URL (e.g. ".../@36.8065,10.1815,17z" or "?q=36.8065,10.1815").
+const COORDS_PATTERN = /(-?\d{1,3}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)/;
+
+function parseCoordinatesInput(value) {
+  const match = COORDS_PATTERN.exec((value || "").trim());
+  if (!match) return null;
+
+  const latitude = Number(match[1]);
+  const longitude = Number(match[2]);
+  if (
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
+  ) {
+    return null;
+  }
+
+  return { latitude, longitude };
+}
 
 function parseHoursString(value) {
   const match = HOURS_PATTERN.exec((value || "").trim());
@@ -108,6 +132,11 @@ function buildPickerHTML(lat, lng) {
   map.on('click', function(e) {
     placeMarker(e.latlng.lat, e.latlng.lng);
   });
+
+  window.placeFromRN = function(lat, lng) {
+    placeMarker(lat, lng, true);
+    map.flyTo([lat, lng], 16, { animate: true, duration: 0.5 });
+  };
 </script>
 </body>
 </html>`;
@@ -126,16 +155,17 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
   const [phone, setPhone] = useState("");
   const [openTime, setOpenTime] = useState(DEFAULT_OPEN_TIME);
   const [closeTime, setCloseTime] = useState(DEFAULT_CLOSE_TIME);
-  const [activeTimePicker, setActiveTimePicker] = useState(null);
   const [coverImageUrl, setCoverImageUrl] = useState("");
   const [imageStatus, setImageStatus] = useState("");
   const [removeImage, setRemoveImage] = useState(false);
   const [latitude, setLatitude] = useState(null);
   const [longitude, setLongitude] = useState(null);
+  const [coordsInput, setCoordsInput] = useState("");
   const [mapReady, setMapReady] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [imageProcessing, setImageProcessing] = useState(false);
+  const mapWebViewRef = useRef(null);
 
   const categoryLabels = {
     Supermarket: t("map.supermarket"),
@@ -187,6 +217,22 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
         setErrors((current) => ({ ...current, location: "" }));
       }
     } catch (_) {}
+  };
+
+  const applyPastedCoordinates = () => {
+    const parsed = parseCoordinatesInput(coordsInput);
+    if (!parsed) {
+      setErrors((current) => ({ ...current, location: t("seller.form.errors.coordsInvalid") }));
+      return;
+    }
+
+    setLatitude(parsed.latitude);
+    setLongitude(parsed.longitude);
+    setErrors((current) => ({ ...current, location: "" }));
+    setCoordsInput("");
+    mapWebViewRef.current?.injectJavaScript(
+      `if (window.placeFromRN) { window.placeFromRN(${parsed.latitude}, ${parsed.longitude}); } true;`
+    );
   };
 
   const pickImage = async () => {
@@ -356,32 +402,14 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
         />
         <View style={styles.hoursWrap}>
           <Text style={styles.label}>{t("seller.form.hours")}</Text>
-          <View style={styles.split}>
-            <Pressable
-              style={styles.timeChip}
-              onPress={() => setActiveTimePicker("open")}
-            >
-              <AppIcon name="clock" size={14} color={colors.secondary} />
-              <View>
-                <Text style={styles.timeChipLabel}>{t("seller.form.openTime")}</Text>
-                <Text style={styles.timeChipValue}>
-                  {openTime.hour}:{openTime.minute}
-                </Text>
-              </View>
-            </Pressable>
-            <Pressable
-              style={styles.timeChip}
-              onPress={() => setActiveTimePicker("close")}
-            >
-              <AppIcon name="clock" size={14} color={colors.secondary} />
-              <View>
-                <Text style={styles.timeChipLabel}>{t("seller.form.closeTime")}</Text>
-                <Text style={styles.timeChipValue}>
-                  {closeTime.hour}:{closeTime.minute}
-                </Text>
-              </View>
-            </Pressable>
-          </View>
+          <TimeRangeSlider
+            openTime={openTime}
+            closeTime={closeTime}
+            onChange={(nextOpen, nextClose) => {
+              setOpenTime(nextOpen);
+              setCloseTime(nextClose);
+            }}
+          />
         </View>
 
         <View style={styles.imageSection}>
@@ -428,6 +456,7 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
           <View style={[styles.mapBox, errors.location && styles.mapBoxError]}>
             {mapReady ? (
               <WebView
+                ref={mapWebViewRef}
                 style={StyleSheet.absoluteFillObject}
                 source={{ html: leafletHTML }}
                 onMessage={handleMapMessage}
@@ -446,6 +475,32 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
             </Text>
           </View>
           {errors.location ? <Text style={styles.error}>{errors.location}</Text> : null}
+
+          <View style={styles.coordsPasteBlock}>
+            <Text style={styles.coordsPasteLabel}>{t("seller.form.coordsLabel")}</Text>
+            <View style={styles.coordsPasteRow}>
+              <TextInput
+                value={coordsInput}
+                onChangeText={setCoordsInput}
+                placeholder={t("seller.form.coordsPlaceholder")}
+                placeholderTextColor={colors.textMuted}
+                style={styles.coordsPasteInput}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <Pressable
+                style={[styles.coordsApplyBtn, !coordsInput.trim() && styles.coordsApplyBtnDisabled]}
+                onPress={applyPastedCoordinates}
+                disabled={!coordsInput.trim()}
+              >
+                <Text style={styles.coordsApplyBtnText}>{t("seller.form.coordsApply")}</Text>
+              </Pressable>
+            </View>
+            <View style={styles.coordsTipRow}>
+              <AppIcon name="info" size={13} color={colors.textMuted} />
+              <Text style={styles.coordsTipText}>{t("seller.form.coordsTip")}</Text>
+            </View>
+          </View>
         </View>
 
         <PrimaryButton
@@ -456,25 +511,6 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
           onPress={save}
         />
       </ScrollView>
-      <TimePickerModal
-        visible={activeTimePicker != null}
-        title={
-          activeTimePicker === "open" ? t("seller.form.openTime") : t("seller.form.closeTime")
-        }
-        hour={activeTimePicker === "open" ? openTime.hour : closeTime.hour}
-        minute={activeTimePicker === "open" ? openTime.minute : closeTime.minute}
-        doneLabel={t("seller.form.done")}
-        cancelLabel={t("seller.form.cancel")}
-        onCancel={() => setActiveTimePicker(null)}
-        onConfirm={(hour, minute) => {
-          if (activeTimePicker === "open") {
-            setOpenTime({ hour, minute });
-          } else if (activeTimePicker === "close") {
-            setCloseTime({ hour, minute });
-          }
-          setActiveTimePicker(null);
-        }}
-      />
     </Screen>
   );
 }
@@ -484,13 +520,6 @@ const getStyles = (colors) => StyleSheet.create({
     padding: Spacing.md,
     gap: Spacing.md,
   },
-  split: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  flex: {
-    flex: 1,
-  },
   label: {
     color: colors.textDark,
     fontSize: 13,
@@ -498,28 +527,6 @@ const getStyles = (colors) => StyleSheet.create({
   },
   hoursWrap: {
     gap: 8,
-  },
-  timeChip: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    minHeight: 48,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: Radius.md,
-    backgroundColor: colors.surface,
-    paddingHorizontal: 14,
-  },
-  timeChipLabel: {
-    color: colors.textMuted,
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  timeChipValue: {
-    color: colors.textDark,
-    fontSize: 15,
-    fontWeight: "800",
   },
   error: {
     color: colors.danger,
@@ -608,5 +615,56 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.textDark,
     fontSize: 12,
     fontWeight: "700",
+  },
+  coordsPasteBlock: {
+    gap: 8,
+    marginTop: 4,
+  },
+  coordsPasteLabel: {
+    color: colors.textDark,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  coordsPasteRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  coordsPasteInput: {
+    flex: 1,
+    minHeight: 44,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: Radius.md,
+    backgroundColor: colors.surface,
+    color: colors.textDark,
+    paddingHorizontal: 14,
+    fontSize: 14,
+  },
+  coordsApplyBtn: {
+    minHeight: 44,
+    borderRadius: Radius.md,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  coordsApplyBtnDisabled: {
+    opacity: 0.5,
+  },
+  coordsApplyBtnText: {
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: 13,
+  },
+  coordsTipRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+  },
+  coordsTipText: {
+    flex: 1,
+    color: colors.textMuted,
+    fontSize: 11,
+    lineHeight: 15,
   },
 });

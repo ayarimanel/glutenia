@@ -700,6 +700,7 @@ export default function MapScreen({ navigation }) {
         <AppHeader
           safeTop
           userName={user?.name ?? ""}
+          avatarUri={user?.avatar}
           onCartPress={() => navigation.navigate("CartPage")}
         />
       </View>
@@ -956,41 +957,6 @@ export default function MapScreen({ navigation }) {
                     ))}
                   </View>
                 )}
-              </View>
-
-              {/* Section 6: Customer Reviews */}
-              <View style={styles.sectionCard}>
-                <View style={styles.sectionHeader}>
-                  <AppIcon name="person" size={16} color="#8BC34A" strokeWidth={2.5} />
-                  <Text style={styles.sectionTitle}>{t("map.customerReviews")}</Text>
-                </View>
-                <View style={styles.reviewsContainer}>
-                  <View style={styles.reviewItem}>
-                    <View style={styles.reviewHeader}>
-                      <Text style={styles.reviewAuthor}>{t("map.review1Author")}</Text>
-                      <View style={styles.reviewStars}>
-                        <AppIcon name="star" size={11} color="#F59E0B" fill="#F59E0B" />
-                        <Text style={styles.reviewRating}>5.0</Text>
-                      </View>
-                    </View>
-                    <Text style={styles.reviewText}>
-                      {t("map.review1Text")}
-                    </Text>
-                  </View>
-                  <View style={styles.reviewDivider} />
-                  <View style={styles.reviewItem}>
-                    <View style={styles.reviewHeader}>
-                      <Text style={styles.reviewAuthor}>{t("map.review2Author")}</Text>
-                      <View style={styles.reviewStars}>
-                        <AppIcon name="star" size={11} color="#F59E0B" fill="#F59E0B" />
-                        <Text style={styles.reviewRating}>4.8</Text>
-                      </View>
-                    </View>
-                    <Text style={styles.reviewText}>
-                      {t("map.review2Text")}
-                    </Text>
-                  </View>
-                </View>
               </View>
 
               {/* Section 7: Location */}
