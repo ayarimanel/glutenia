@@ -37,7 +37,7 @@ The project is a two-package monorepo: `glutenia-backend` (Express REST API) and
 
 ### Product discovery & scanning
 - Barcode scanner (EAN-13/EAN-8/UPC-A/UPC-E/Code128) against the product catalog.
-- AI ingredient-label scanner: photograph a label → Groq-hosted Llama 4 vision model returns a gluten-safety verdict (`safe`/`caution`/`unsafe`/`error`), flagged ingredients with reasons, safe-ingredient highlights, raw OCR'd text, and a confidence level. Multilingual (Arabic/French/English) prompt handling.
+- AI ingredient-label scanner: photograph a label → Groq-hosted Qwen 3.6 27B vision model returns a gluten-safety verdict (`safe`/`caution`/`unsafe`/`error`), flagged ingredients with reasons, safe-ingredient highlights, raw OCR'd text, and a confidence level. Multilingual (Arabic/French/English) prompt handling.
 - Product catalog browsing with search (name/description) and category filters (Bread, Pasta, Snacks, Flour, Sweets, Other).
 - Product detail view with gluten-free badge.
 
@@ -470,7 +470,7 @@ i18n via `i18next`/`react-i18next`, three languages (fr default/fallback, en, ar
 
 ### Current implementation (as of the latest commit)
 - **Endpoint**: `POST /api/scan/label` (auth required, any role).
-- **Provider**: **Groq**, model **`meta-llama/llama-4-scout-17b-16e-instruct`** (a vision-capable Llama 4 model), `temperature: 0.1`, `max_tokens: 1024`.
+- **Provider**: **Groq**, model **`qwen/qwen3.6-27b`** (a vision-capable Qwen model, `reasoning_effort: "none"` to keep thinking-mode reasoning text out of the parsed response), `temperature: 0.1`, `max_tokens: 1024`. Migrated from `meta-llama/llama-4-scout-17b-16e-instruct` after Groq retired that model on 2026-07-17.
 - **Input**: `{ imageBase64, mimeType }` (a photographed ingredient label, client-compressed to ~800px/0.7 quality JPEG before upload).
 - **Prompt design**: instructs the model to act as "a celiac disease specialist," handle labels in Arabic/French/English/mixed text, extract all label text, and identify gluten-containing/possibly-containing ingredients against an explicit multilingual keyword list (wheat/blé/قمح, barley/orge/شعير, rye/seigle/جاودار, spelt, kamut, malt, malt extract, semolina, durum, farro, triticale, seitan, hydrolyzed wheat protein, explicit "gluten" mentions, "may contain wheat"/"peut contenir du blé", "traces de gluten", facility cross-contact disclaimers), with ambiguous "modified starch"/"amidon modifié" flagged **only if the source is unspecified** (not explicitly corn/potato).
 - **Output contract** (strict JSON, no markdown fences): `{ verdict: "safe"|"caution"|"unsafe"|"error", flagged: [{ingredient, reason}], safe_highlights: [...], raw_text, confidence: "high"|"medium"|"low", confidence_note, error }`.
@@ -482,8 +482,9 @@ i18n via `i18next`/`react-i18next`, three languages (fr default/fallback, en, ar
 The AI feature went through substantial iteration before settling on its current form:
 1. First implemented against **Google Gemini** (`gemini-1.5-flash`), commit `5811579`.
 2. A full day (2026-06-29) of rapid provider/version churn chasing free-tier API quota and endpoint-compatibility issues: `gemini-2.0-flash-lite` → `gemini-1.5-flash` (revert) → `@google/genai` SDK → forcing v1 endpoint → `gemini-2.0-flash` → back to `gemini-1.5-flash` → `gemini-2.0-flash-lite` again, interleaved with unrelated bug fixes (lazy client init to stop server crashes, corrected middleware import).
-3. Finally switched to **Groq (Llama 4 vision)**, commit `9e6a436`, which is the AI provider used in the current codebase.
-4. Leftover artifacts: `@google/genai` and `@google/generative-ai` remain as **unused dependencies** in `glutenia-backend/package.json` despite the code no longer calling them (**INFERRED**: cleanup oversight after the provider switch — worth noting in a "lessons learned"/technical debt section of a report).
+3. Finally switched to **Groq (Llama 4 vision)**, commit `9e6a436`.
+4. Groq retired `meta-llama/llama-4-scout-17b-16e-instruct` on 2026-07-17, so the code was migrated to **`qwen/qwen3.6-27b`** (also Groq-hosted, vision-capable), which is the AI provider/model used in the current codebase.
+5. Leftover artifacts: `@google/genai` and `@google/generative-ai` remain as **unused dependencies** in `glutenia-backend/package.json` despite the code no longer calling them (**INFERRED**: cleanup oversight after the provider switch — worth noting in a "lessons learned"/technical debt section of a report).
 
 This history is a strong, genuine "engineering decision-making under real-world constraints" narrative for a report — the free-tier Gemini quota/API-version instability was a real blocker that motivated the switch to Groq.
 
@@ -600,7 +601,7 @@ Client-side admin screens: `AdminDashboardScreen` (aggregate metrics + action gr
 | Password hashing | bcryptjs | 2.4.3 |
 | Validation | express-validator | 7.2.1 |
 | File upload | multer (memory storage) | 2.1.1 |
-| AI (active) | groq-sdk (Llama 4 vision via Groq) | 1.3.0 |
+| AI (active) | groq-sdk (Qwen 3.6 27B vision via Groq) | 1.3.0 |
 | AI (leftover/unused) | @google/genai, @google/generative-ai | 2.10.0 / 0.24.1 |
 | CORS | cors | 2.8.5 |
 | Env config | dotenv | 16.4.7 |
