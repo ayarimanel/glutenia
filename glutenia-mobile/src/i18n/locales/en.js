@@ -67,6 +67,8 @@ export default {
     level: "Level {{level}}",
     heroSub: "Instantly Check For Gluten & Find Safe Alternatives",
     tapToScan: "Tap to Scan",
+    eatingOutTitle: "Eating out today?",
+    eatingOutBody: "Find gluten-free-friendly places near you on the map.",
     quickAccess: "Quick Access",
     productsShop: "Products Shop",
     checkEvents: "Check Events",
@@ -214,6 +216,11 @@ export default {
         preparation: "Preheat oven to 180°C. Whisk eggs with milk, salt, and pepper. Fold in spinach, feta, and tomatoes. Pour into a greased muffin tin. Bake for 18 minutes until set and lightly golden on top.",
       },
     },
+  },
+  favorites: {
+    title: "My Favorite Places",
+    empty: "No favorites yet",
+    emptyBody: "Tap the heart on a place in the Map to save it here.",
   },
   map: {
     all: "All",
@@ -584,7 +591,7 @@ export default {
   },
   profileOnboarding: {
     role: {
-      step: "Step 1 of 4",
+      step: "Step 1 of 5",
       question: "Which best describes you?",
       warrior: "Gluten-Free Warrior",
       warriorSub: "I'm living gluten-free myself",
@@ -593,7 +600,7 @@ export default {
       continue: "Continue",
     },
     journey: {
-      step: "Step 2 of 4",
+      step: "Step 2 of 5",
       questionWarrior: "How long have you been gluten-free?",
       questionSupporter: "How long have you been supporting someone?",
       justStarted: "Just getting started",
@@ -603,7 +610,7 @@ export default {
       moreThanThreeYears: "More than 3 years",
     },
     goal: {
-      step: "Step 3 of 4",
+      step: "Step 3 of 5",
       question: "What's your main reason for using Glutenia?",
       manage_celiac: "Managing celiac disease",
       manage_intolerance: "Managing gluten intolerance",
@@ -613,8 +620,17 @@ export default {
       exploring: "Just exploring",
       continue: "Continue",
     },
+    eatingOut: {
+      step: "Step 4 of 5",
+      question: "How often do you eat out at restaurants?",
+      rarely: "Rarely",
+      fewTimesMonth: "A few times a month",
+      weekly: "About once a week",
+      multipleWeek: "Multiple times a week",
+      continue: "Continue",
+    },
     confidence: {
-      step: "Step 4 of 4",
+      step: "Step 5 of 5",
       question: "How confident are you at identifying gluten?",
       still_learning: "Still learning",
       still_learningSub: "I'm never quite sure",
@@ -889,6 +905,7 @@ export default {
     subtitle: "AI-powered gluten detection from any label",
     instructions: "Take a clear photo of the ingredient list on the packaging",
     tip: "Hold still • Good lighting • Focus on the text",
+    beginnerTip: "New to reading labels? Look for words like \"wheat\", \"barley\", \"rye\", or \"may contain gluten\" — we'll flag anything risky for you.",
     takePhoto: "Take Photo",
     retake: "Retake",
     analyzing: "Analyzing ingredients…",
@@ -962,6 +979,7 @@ export default {
       byRoleType: "Warrior vs Supporter",
       byExperience: "Gluten-Free Journey Stage",
       byGoal: "Primary Goal",
+      byEatingOut: "Eating Out Frequency",
       byConfidence: "Confidence Identifying GF",
       roleCustomer: "Customers",
       roleProfessional: "Professionals",

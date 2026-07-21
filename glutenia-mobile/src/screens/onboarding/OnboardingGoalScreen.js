@@ -22,7 +22,7 @@ export default function OnboardingGoalScreen({ navigation, route }) {
   ];
 
   const handleContinue = () => {
-    navigation.navigate("OnboardingConfidence", {
+    navigation.navigate("OnboardingEatingOut", {
       ...route.params,
       primaryGoal: selected,
     });
@@ -43,7 +43,7 @@ export default function OnboardingGoalScreen({ navigation, route }) {
       </View>
 
       <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: "75%" }]} />
+        <View style={[styles.progressFill, { width: "60%" }]} />
       </View>
 
       <ScrollView

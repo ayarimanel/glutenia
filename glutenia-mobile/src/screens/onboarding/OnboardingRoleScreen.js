@@ -33,7 +33,7 @@ export default function OnboardingRoleScreen({ navigation }) {
       </View>
 
       <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: "25%" }]} />
+        <View style={[styles.progressFill, { width: "20%" }]} />
       </View>
 
       <ScrollView

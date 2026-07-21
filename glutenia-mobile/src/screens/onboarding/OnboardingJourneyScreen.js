@@ -58,7 +58,7 @@ export default function OnboardingJourneyScreen({ navigation, route }) {
       </View>
 
       <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: "50%" }]} />
+        <View style={[styles.progressFill, { width: "40%" }]} />
       </View>
 
       <ScrollView

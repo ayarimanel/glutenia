@@ -64,6 +64,7 @@ export default function EditJourneyScreen({ navigation }) {
   const [roleType, setRoleType] = useState(user?.role_type || "warrior");
   const [experienceLevel, setExperienceLevel] = useState(user?.experience_level || "just_started");
   const [primaryGoal, setPrimaryGoal] = useState(user?.primary_goal || "exploring");
+  const [eatingOutFrequency, setEatingOutFrequency] = useState(user?.eating_out_frequency || "rarely");
   const [confidence, setConfidence] = useState(user?.confidence_identifying_gf || "medium");
   const [saving, setSaving] = useState(false);
 
@@ -89,6 +90,13 @@ export default function EditJourneyScreen({ navigation }) {
     { value: "exploring", label: t("profileOnboarding.goal.exploring") },
   ];
 
+  const eatingOutOptions = [
+    { value: "rarely", label: t("profileOnboarding.eatingOut.rarely") },
+    { value: "few_times_month", label: t("profileOnboarding.eatingOut.fewTimesMonth") },
+    { value: "weekly", label: t("profileOnboarding.eatingOut.weekly") },
+    { value: "multiple_week", label: t("profileOnboarding.eatingOut.multipleWeek") },
+  ];
+
   const confidenceOptions = [
     { value: "low", label: t("profileOnboarding.confidence.still_learning"), subtitle: t("profileOnboarding.confidence.still_learningSub") },
     { value: "medium", label: t("profileOnboarding.confidence.getting_there"), subtitle: t("profileOnboarding.confidence.getting_thereSub") },
@@ -110,6 +118,7 @@ export default function EditJourneyScreen({ navigation }) {
         glutenFreeSince,
         experienceLevel,
         primaryGoal,
+        eatingOutFrequency,
         confidenceIdentifyingGf: confidence,
       });
       await updateUser(result.user);
@@ -148,6 +157,9 @@ export default function EditJourneyScreen({ navigation }) {
 
         <Text style={styles.sectionTitle}>{t("profileOnboarding.goal.question")}</Text>
         <OptionGroup options={goalOptions} selected={primaryGoal} onSelect={setPrimaryGoal} styles={styles} />
+
+        <Text style={styles.sectionTitle}>{t("profileOnboarding.eatingOut.question")}</Text>
+        <OptionGroup options={eatingOutOptions} selected={eatingOutFrequency} onSelect={setEatingOutFrequency} styles={styles} />
 
         <Text style={styles.sectionTitle}>{t("profileOnboarding.confidence.question")}</Text>
         <OptionGroup options={confidenceOptions} selected={confidence} onSelect={setConfidence} styles={styles} />

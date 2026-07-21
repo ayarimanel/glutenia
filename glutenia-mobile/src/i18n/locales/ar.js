@@ -69,6 +69,8 @@ export default {
     level: "المستوى {{level}}",
     heroSub: "تحقق فورًا من الغلوتين وابحث عن بدائل آمنة",
     tapToScan: "انقر للمسح",
+    eatingOutTitle: "هل ستأكل بالخارج اليوم؟",
+    eatingOutBody: "اعثر على أماكن مناسبة للخالين من الغلوتين بالقرب منك على الخريطة.",
     quickAccess: "وصول سريع",
     productsShop: "متجر المنتجات",
     checkEvents: "تصفح الفعاليات",
@@ -216,6 +218,11 @@ export default {
         preparation: "Preheat oven to 180°C. Whisk eggs with milk, salt, and pepper. Fold in spinach, feta, and tomatoes. Pour into a greased muffin tin. Bake for 18 minutes until set and lightly golden on top.",
       },
     },
+  },
+  favorites: {
+    title: "أماكني المفضلة",
+    empty: "لا توجد أماكن مفضلة بعد",
+    emptyBody: "اضغط على أيقونة القلب في أي مكان على الخريطة لحفظه هنا.",
   },
   map: {
     all: "الكل",
@@ -586,7 +593,7 @@ export default {
   },
   profileOnboarding: {
     role: {
-      step: "الخطوة 1 من 4",
+      step: "الخطوة 1 من 5",
       question: "أيٌّ من هذه الأوصاف ينطبق عليك؟",
       warrior: "محارب بدون غلوتين",
       warriorSub: "أنا أعيش بدون غلوتين بنفسي",
@@ -595,7 +602,7 @@ export default {
       continue: "متابعة",
     },
     journey: {
-      step: "الخطوة 2 من 4",
+      step: "الخطوة 2 من 5",
       questionWarrior: "منذ متى وأنت تتبع نظاماً خالياً من الغلوتين؟",
       questionSupporter: "منذ متى وأنت تدعم شخصاً ما؟",
       justStarted: "بدأت للتو",
@@ -605,7 +612,7 @@ export default {
       moreThanThreeYears: "أكثر من 3 سنوات",
     },
     goal: {
-      step: "الخطوة 3 من 4",
+      step: "الخطوة 3 من 5",
       question: "ما السبب الرئيسي لاستخدامك Glutenia؟",
       manage_celiac: "إدارة مرض الاضطرابات الهضمية",
       manage_intolerance: "إدارة عدم تحمل الغلوتين",
@@ -615,8 +622,17 @@ export default {
       exploring: "مجرد استكشاف",
       continue: "متابعة",
     },
+    eatingOut: {
+      step: "الخطوة 4 من 5",
+      question: "كم مرة تتناول الطعام خارج المنزل؟",
+      rarely: "نادرًا",
+      fewTimesMonth: "بضع مرات في الشهر",
+      weekly: "مرة واحدة تقريبًا في الأسبوع",
+      multipleWeek: "عدة مرات في الأسبوع",
+      continue: "متابعة",
+    },
     confidence: {
-      step: "الخطوة 4 من 4",
+      step: "الخطوة 5 من 5",
       question: "ما مدى ثقتك في تحديد الغلوتين؟",
       still_learning: "لا أزال أتعلم",
       still_learningSub: "لست متأكدًا دائمًا",
@@ -891,6 +907,7 @@ export default {
     subtitle: "كشف الغلوتين بالذكاء الاصطناعي من أي ملصق",
     instructions: "التقط صورة واضحة لقائمة المكونات على العبوة",
     tip: "ثبّت يدك • إضاءة جيدة • نص واضح",
+    beginnerTip: "جديد في قراءة الملصقات؟ ابحث عن كلمات مثل \"قمح\" أو \"شعير\" أو \"جاودار\" أو \"قد يحتوي على غلوتين\" — سنُنبّهك لأي شيء قد يكون خطيرًا.",
     takePhoto: "التقاط صورة",
     retake: "إعادة الالتقاط",
     analyzing: "جارٍ تحليل المكونات…",
@@ -964,6 +981,7 @@ export default {
       byRoleType: "محارب مقابل مساند",
       byExperience: "مرحلة الرحلة الخالية من الغلوتين",
       byGoal: "الهدف الأساسي",
+      byEatingOut: "تكرار تناول الطعام بالخارج",
       byConfidence: "الثقة في تحديد الغلوتين",
       roleCustomer: "العملاء",
       roleProfessional: "المحترفون",

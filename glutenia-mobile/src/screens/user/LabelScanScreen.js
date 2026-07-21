@@ -217,6 +217,12 @@ export default function LabelScanScreen({ navigation }) {
           <AppIcon name="info" size={15} color={colors.warning} />
           <Text style={styles.tipText}>{t("labelScan.tip")}</Text>
         </View>
+        {user?.confidence_identifying_gf === "low" && (
+          <View style={styles.beginnerBox}>
+            <AppIcon name="compass" size={15} color={colors.primary} />
+            <Text style={styles.beginnerText}>{t("labelScan.beginnerTip")}</Text>
+          </View>
+        )}
         <Pressable style={styles.primaryBtn} onPress={handleTakePhoto}>
           <AppIcon name="image" size={20} color="#fff" />
           <Text style={styles.primaryBtnText}>{t("labelScan.takePhoto")}</Text>
@@ -283,6 +289,22 @@ const getStyles = (colors) => StyleSheet.create({
     flex: 1,
     fontSize: 13,
     color: "#92400E",
+    lineHeight: 18,
+  },
+  beginnerBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    backgroundColor: colors.primaryPale,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    alignSelf: "stretch",
+  },
+  beginnerText: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.primary,
     lineHeight: 18,
   },
   primaryBtn: {

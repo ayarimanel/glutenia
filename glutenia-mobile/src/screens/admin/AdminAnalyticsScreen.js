@@ -31,6 +31,7 @@ const GOAL_ORDER = [
   "unset",
 ];
 const CONFIDENCE_ORDER = ["low", "medium", "high", "unset"];
+const EATING_OUT_ORDER = ["rarely", "few_times_month", "weekly", "multiple_week", "unset"];
 
 export default function AdminAnalyticsScreen({ navigation }) {
   const { t } = useTranslation();
@@ -94,6 +95,13 @@ export default function AdminAnalyticsScreen({ navigation }) {
     low: t("profileOnboarding.confidence.still_learning"),
     medium: t("profileOnboarding.confidence.getting_there"),
     high: t("profileOnboarding.confidence.confident"),
+    unset: t("admin.analytics.unset"),
+  };
+  const eatingOutLabels = {
+    rarely: t("profileOnboarding.eatingOut.rarely"),
+    few_times_month: t("profileOnboarding.eatingOut.fewTimesMonth"),
+    weekly: t("profileOnboarding.eatingOut.weekly"),
+    multiple_week: t("profileOnboarding.eatingOut.multipleWeek"),
     unset: t("admin.analytics.unset"),
   };
 
@@ -194,6 +202,16 @@ export default function AdminAnalyticsScreen({ navigation }) {
             <View style={styles.card}>
               <BarChartView
                 data={toChartData(GOAL_ORDER, data.byPrimaryGoal, goalLabels)}
+                color={colors.secondary}
+              />
+            </View>
+          </View>
+
+          <View style={styles.sectionGroup}>
+            <Text style={styles.sectionLabel}>{t("admin.analytics.byEatingOut")}</Text>
+            <View style={styles.card}>
+              <BarChartView
+                data={toChartData(EATING_OUT_ORDER, data.byEatingOutFrequency, eatingOutLabels)}
                 color={colors.secondary}
               />
             </View>

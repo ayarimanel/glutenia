@@ -109,6 +109,20 @@ export default function HomeScreen({ navigation }) {
           </View>
         </Pressable>
 
+        {/* ── Eating-out nudge (frequent restaurant-goers only) ── */}
+        {(user?.eating_out_frequency === "weekly" || user?.eating_out_frequency === "multiple_week") && (
+          <Pressable style={styles.eatingOutCard} onPress={() => navigation.navigate("Map")}>
+            <View style={styles.eatingOutIconWrap}>
+              <AppIcon name="location" size={22} color={colors.primary} />
+            </View>
+            <View style={styles.eatingOutTextWrap}>
+              <Text style={styles.eatingOutTitle}>{t("home.eatingOutTitle")}</Text>
+              <Text style={styles.eatingOutBody}>{t("home.eatingOutBody")}</Text>
+            </View>
+            <AppIcon name="chevron-right" size={18} color={colors.textMuted} />
+          </Pressable>
+        )}
+
         {/* ── Recently Scanned ── */}
         {scanHistory.length > 0 && (
           <>
@@ -351,6 +365,28 @@ const getStyles = (colors) => StyleSheet.create({
     fontWeight: "800",
     fontSize: 15,
   },
+
+  eatingOutCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.lg,
+    backgroundColor: colors.primaryPale,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+  },
+  eatingOutIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: Radius.md,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  eatingOutTextWrap: { flex: 1 },
+  eatingOutTitle: { fontSize: 14, fontWeight: "800", color: colors.textDark, marginBottom: 2 },
+  eatingOutBody: { fontSize: 12, color: colors.textMuted, lineHeight: 17 },
 
   // ── Section labels & rows ──
   sectionLabel: {

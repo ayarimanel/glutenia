@@ -67,6 +67,8 @@ export default {
     level: "Niveau {{level}}",
     heroSub: "Vérifiez instantanément la présence de gluten et trouvez des alternatives sûres",
     tapToScan: "Appuyer pour scanner",
+    eatingOutTitle: "Vous mangez au restaurant aujourd'hui ?",
+    eatingOutBody: "Trouvez des endroits adaptés sans gluten près de vous sur la carte.",
     quickAccess: "Accès rapide",
     productsShop: "Boutique de produits",
     checkEvents: "Voir les événements",
@@ -214,6 +216,11 @@ export default {
         preparation: "Preheat oven to 180°C. Whisk eggs with milk, salt, and pepper. Fold in spinach, feta, and tomatoes. Pour into a greased muffin tin. Bake for 18 minutes until set and lightly golden on top.",
       },
     },
+  },
+  favorites: {
+    title: "Mes lieux favoris",
+    empty: "Aucun favori pour le moment",
+    emptyBody: "Appuyez sur le cœur d'un lieu sur la carte pour l'enregistrer ici.",
   },
   map: {
     all: "Tous",
@@ -584,7 +591,7 @@ export default {
   },
   profileOnboarding: {
     role: {
-      step: "Étape 1 sur 4",
+      step: "Étape 1 sur 5",
       question: "Laquelle de ces descriptions vous correspond le mieux ?",
       warrior: "Guerrier Sans Gluten",
       warriorSub: "Je vis moi-même sans gluten",
@@ -593,7 +600,7 @@ export default {
       continue: "Continuer",
     },
     journey: {
-      step: "Étape 2 sur 4",
+      step: "Étape 2 sur 5",
       questionWarrior: "Depuis combien de temps vivez-vous sans gluten ?",
       questionSupporter: "Depuis combien de temps soutenez-vous quelqu'un ?",
       justStarted: "Je commence tout juste",
@@ -603,7 +610,7 @@ export default {
       moreThanThreeYears: "Plus de 3 ans",
     },
     goal: {
-      step: "Étape 3 sur 4",
+      step: "Étape 3 sur 5",
       question: "Quelle est votre principale raison d'utiliser Glutenia ?",
       manage_celiac: "Gérer la maladie cœliaque",
       manage_intolerance: "Gérer l'intolérance au gluten",
@@ -613,8 +620,17 @@ export default {
       exploring: "Je découvre simplement",
       continue: "Continuer",
     },
+    eatingOut: {
+      step: "Étape 4 sur 5",
+      question: "À quelle fréquence mangez-vous au restaurant ?",
+      rarely: "Rarement",
+      fewTimesMonth: "Quelques fois par mois",
+      weekly: "Environ une fois par semaine",
+      multipleWeek: "Plusieurs fois par semaine",
+      continue: "Continuer",
+    },
     confidence: {
-      step: "Étape 4 sur 4",
+      step: "Étape 5 sur 5",
       question: "Êtes-vous à l'aise pour identifier le gluten ?",
       still_learning: "En apprentissage",
       still_learningSub: "Je ne suis jamais tout à fait sûr",
@@ -889,6 +905,7 @@ export default {
     subtitle: "Détection du gluten par IA sur n'importe quelle étiquette",
     instructions: "Prenez une photo nette de la liste des ingrédients sur l'emballage",
     tip: "Restez stable • Bonne lumière • Texte net",
+    beginnerTip: "Nouveau dans la lecture des étiquettes ? Repérez des mots comme « blé », « orge », « seigle » ou « peut contenir du gluten » — on signale pour vous tout ce qui est à risque.",
     takePhoto: "Prendre une photo",
     retake: "Reprendre",
     analyzing: "Analyse des ingrédients…",
@@ -962,6 +979,7 @@ export default {
       byRoleType: "Guerrier vs Accompagnateur",
       byExperience: "Étape du parcours sans gluten",
       byGoal: "Objectif principal",
+      byEatingOut: "Fréquence des repas au restaurant",
       byConfidence: "Confiance à identifier le gluten",
       roleCustomer: "Clients",
       roleProfessional: "Professionnels",

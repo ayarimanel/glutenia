@@ -23,6 +23,7 @@ import UserOrdersScreen from "../screens/user/UserOrdersScreen";
 import ScanScreen from "../screens/user/ScanScreen";
 import MapScreen from "../screens/user/MapScreen";
 import MapDetailScreen from "../screens/user/MapDetailScreen";
+import FavoritePlacesScreen from "../screens/user/FavoritePlacesScreen";
 import EventsScreen from "../screens/user/EventsScreen";
 import EventDetailScreen from "../screens/user/EventDetailScreen";
 import CreateEventScreen from "../screens/user/CreateEventScreen";
@@ -42,6 +43,7 @@ import OnboardingScreen from "../screens/OnboardingScreen";
 import OnboardingRoleScreen from "../screens/onboarding/OnboardingRoleScreen";
 import OnboardingJourneyScreen from "../screens/onboarding/OnboardingJourneyScreen";
 import OnboardingGoalScreen from "../screens/onboarding/OnboardingGoalScreen";
+import OnboardingEatingOutScreen from "../screens/onboarding/OnboardingEatingOutScreen";
 import OnboardingConfidenceScreen from "../screens/onboarding/OnboardingConfidenceScreen";
 import BadgeCollectionScreen from "../screens/user/BadgeCollectionScreen";
 import ShopScreen from "../screens/user/ShopScreen";
@@ -104,6 +106,7 @@ function UserStack({ bg }) {
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="BadgeCollection" component={BadgeCollectionScreen} />
       <Stack.Screen name="MapDetail" component={MapDetailScreen} />
+      <Stack.Screen name="FavoritePlaces" component={FavoritePlacesScreen} />
       <Stack.Screen name="ShopScreen" component={ShopScreen} />
       <Stack.Screen name="PatientResources" component={PatientResourcesScreen} />
       <Stack.Screen name="VideoPlayer" component={VideoPlayerScreen} />
@@ -173,6 +176,7 @@ function ProfileOnboardingStack() {
       <Stack.Screen name="OnboardingRole" component={OnboardingRoleScreen} />
       <Stack.Screen name="OnboardingJourney" component={OnboardingJourneyScreen} />
       <Stack.Screen name="OnboardingGoal" component={OnboardingGoalScreen} />
+      <Stack.Screen name="OnboardingEatingOut" component={OnboardingEatingOutScreen} />
       <Stack.Screen name="OnboardingConfidence" component={OnboardingConfidenceScreen} />
     </Stack.Navigator>
   );
