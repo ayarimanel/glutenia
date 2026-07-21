@@ -1,13 +1,13 @@
 diff --git a/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt b/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
-index 740c7a1..4b336e5 100644
+index 51338df..f35459c 100644
 --- a/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
 +++ b/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt
-@@ -345,7 +345,7 @@ class RNCWebViewManagerImpl(private val newArch: Boolean = false) {
-             throw RuntimeException("Arguments for loading an url are null!")
-           }
-           webView.progressChangedFilter.setWaitingForCommandLoadUrl(false)
--          webView.loadUrl(args.getString(0))
-+          webView.loadUrl(args.getString(0) ?: "")
+@@ -341,7 +341,7 @@ class RNCWebViewManagerImpl(private val newArch: Boolean = false) {
          }
-         "requestFocus" -> webView.requestFocus()
-         "clearFormData" -> webView.clearFormData()
+         "injectJavaScript" -> webView.evaluateJavascriptWithFallback(args.getString(0))
+         "loadUrl" -> {
+-          val url = args?.getString(0) ?: throw RuntimeException("Arguments for loading an url are null!")
++          val url = args?.getString(0) ?: ""
+           webView.progressChangedFilter.setWaitingForCommandLoadUrl(false)
+           webView.loadUrl(url)
+         }
