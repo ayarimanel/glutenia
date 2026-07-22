@@ -161,9 +161,6 @@ export default function SubmitProductScreen({ navigation, route }) {
                   <AppIcon name="image" size={32} color={colors.primary} />
                 </View>
               )}
-              <View style={styles.imageEditBadge}>
-                <AppIcon name="image" size={13} color="#fff" />
-              </View>
             </Pressable>
             <Pressable onPress={pickImage}>
               <Text style={styles.addPhotoText}>{t("submitProduct.addPhoto")}</Text>
@@ -281,19 +278,6 @@ const getStyles = (colors) => ({
     backgroundColor: colors.primaryPale,
     alignItems: "center",
     justifyContent: "center",
-  },
-  imageEditBadge: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: colors.surface,
   },
   addPhotoText: { color: colors.primary, fontWeight: "700", fontSize: 14 },
   photoError: { color: colors.danger, fontSize: 12, fontWeight: "700" },

@@ -64,7 +64,7 @@ export default function BadgeDetailModal({ visible, onClose, entry, navigation }
         style={[styles.backdrop, { backgroundColor: isDark ? "rgba(0,0,0,0.7)" : "rgba(0,0,0,0.5)" }]}
         onPress={dismiss}
       >
-        <Pressable onPress={() => {}}>
+        <Pressable style={styles.cardWrap} onPress={() => {}}>
           <Animated.View
             style={[
               styles.card,
@@ -158,6 +158,10 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
+  },
+  cardWrap: {
+    width: "100%",
+    alignItems: "center",
   },
   card: {
     width: "100%",

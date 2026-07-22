@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import Screen from "../components/Screen";
 import AppIcon from "../components/AppIcon";
 import BadgeIcon from "../components/BadgeIcon";
@@ -120,9 +121,11 @@ export default function AccountScreen({ navigation }) {
     }
   }, [token, isAdmin]);
 
-  useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfile();
+    }, [fetchProfile])
+  );
 
   useEffect(() => {
     if (isAdmin) return;
@@ -194,6 +197,15 @@ export default function AccountScreen({ navigation }) {
   const currentTitle = roleType
     ? t(`account.stageTitles.${titleTrack}.${user?.experience_level || "just_started"}`)
     : t("account.newcomer");
+  // Deliberately a different value from currentTitle above: this is purely
+  // activity/level-based (server-computed from currentLevel, see
+  // gamificationService.getEngagementTitle), while currentTitle is
+  // self-reported (role + experience). Keeping them visually distinct is
+  // what makes account.progressHint's "Level vs. Title & Journey" claim
+  // actually true instead of both showing the same string.
+  const engagementTitle = gamification?.engagementTitle
+    ? t(`account.engagementTitles.${gamification.engagementTitle.toLowerCase()}`)
+    : currentTitle;
   const level = gamification?.currentLevel ?? 1;
   const totalXp = gamification?.totalXp ?? 0;
   const currentStreak = gamification?.currentStreak ?? 0;
@@ -249,7 +261,7 @@ export default function AccountScreen({ navigation }) {
             <View style={styles.xpRow}>
               <View>
                 <Text style={styles.xpLevelNum}>{t("account.level", { level })}</Text>
-                <Text style={styles.xpTitleSub}>{currentTitle}</Text>
+                <Text style={styles.xpTitleSub}>{engagementTitle}</Text>
               </View>
               <View style={styles.xpChip}>
                 <Text style={styles.xpChipText}>{totalXp} {t("account.xp")}</Text>
