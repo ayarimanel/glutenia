@@ -17,6 +17,7 @@ import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme } from "../../context/ThemeContext";
+import { getRecipeDefaultFilter, rankRecipes } from "../../utils/personalization";
 
 const FILTERS = ["Tunisian", "Easy", "Quick"];
 
@@ -25,7 +26,7 @@ export default function RecipesScreen({ navigation }) {
   const { user } = useAuth();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const [activeFilter, setActiveFilter] = useState("Tunisian");
+  const [activeFilter, setActiveFilter] = useState(() => getRecipeDefaultFilter(user));
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,9 +38,8 @@ export default function RecipesScreen({ navigation }) {
           setLoading(true);
           const data = await api.recipes();
           if (!cancelled) {
-            setRecipes(
-              data.map((r) => ({ ...r, id: r._id, image: r.imageUrl }))
-            );
+            const mapped = data.map((r) => ({ ...r, id: r._id, image: r.imageUrl }));
+            setRecipes(rankRecipes(mapped, user));
           }
         } catch (error) {
           // Keep whatever was previously loaded; recipes are non-critical content.
@@ -50,7 +50,7 @@ export default function RecipesScreen({ navigation }) {
       return () => {
         cancelled = true;
       };
-    }, [])
+    }, [user])
   );
 
   const featured = recipes.filter((r) => r.category === activeFilter).slice(0, 2);

@@ -1,5 +1,5 @@
 import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppIcon from "../../components/AppIcon";
 import AppHeader from "../../components/AppHeader";
 import Screen from "../../components/Screen";
@@ -11,6 +11,7 @@ import { api } from "../../api/client";
 import { Radius, Spacing } from "../../theme/colors";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "../../context/ThemeContext";
+import { getShopCategoryOrder } from "../../utils/personalization";
 
 const categories = ["All", "Bread", "Pasta", "Snacks", "Flour", "Sweets"];
 
@@ -24,6 +25,10 @@ export default function ShopScreen({ navigation }) {
   const [category, setCategory] = useState("All");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const orderedCategories = useMemo(
+    () => getShopCategoryOrder(categories, user),
+    [user?.primary_goal]
+  );
 
   const loadProducts = async () => {
     try {
@@ -66,7 +71,7 @@ export default function ShopScreen({ navigation }) {
         </View>
 
         <View style={styles.categories}>
-          {categories.map((item) => (
+          {orderedCategories.map((item) => (
             <Pressable
               key={item}
               onPress={() => setCategory(item)}

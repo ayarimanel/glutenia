@@ -18,6 +18,14 @@ const badgeSchema = new mongoose.Schema(
     },
     targetMetric: { type: String, required: true },
     targetValue: { type: Number, required: true },
+    // Only set on "profile fact" badges (e.g. self-reported experience
+    // level or confidence) rather than activity-counter badges — an
+    // equality check against a User field, evaluated by
+    // gamificationService.checkProfileFactBadges instead of the normal
+    // targetMetric/targetValue threshold check. Left unset (null/undefined)
+    // on every counter-based badge.
+    targetField: { type: String, default: null },
+    targetEquals: { type: [String], default: undefined },
     xpReward: { type: Number, default: 0 },
   },
   { timestamps: true }

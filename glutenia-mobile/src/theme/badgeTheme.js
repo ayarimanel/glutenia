@@ -142,6 +142,9 @@ export const BADGE_TIER_MAP = {
   streak_100: "platinum",
   first_month: "bronze",
   one_year: "gold",
+  seasoned_veteran: "bronze",
+  confident_reader: "bronze",
+  dedicated_caregiver: "bronze",
 };
 
 export function getBadgeTier(slug) {

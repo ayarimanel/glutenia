@@ -17,6 +17,7 @@ import { api } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme } from "../../context/ThemeContext";
 import { useTranslation } from "react-i18next";
+import { getHomeQuickAccessOrder } from "../../utils/personalization";
 
 // Quick Access card catalog, keyed so the display order can be reordered
 // per-user without duplicating the card markup itself.
@@ -25,16 +26,6 @@ const QUICK_ACCESS_ITEMS = {
   events: { icon: "people", labelKey: "events.title", nav: "Events" },
   patientResources: { icon: "heart", labelKey: "home.patientResources", nav: "PatientResources" },
   map: { icon: "location", labelKey: "home.map", nav: "Map" },
-};
-const DEFAULT_QUICK_ACCESS_ORDER = ["recipes", "events", "patientResources", "map"];
-// Surface the most relevant card first based on why the user said they're
-// here (onboarding's primary_goal) — same four cards, just reordered.
-const QUICK_ACCESS_ORDER_BY_GOAL = {
-  manage_celiac: ["patientResources", "recipes", "map", "events"],
-  manage_intolerance: ["patientResources", "recipes", "map", "events"],
-  support_child: ["recipes", "patientResources", "events", "map"],
-  support_partner: ["recipes", "patientResources", "events", "map"],
-  dietary_choice: ["recipes", "map", "events", "patientResources"],
 };
 
 export default function HomeScreen({ navigation }) {
@@ -49,8 +40,7 @@ export default function HomeScreen({ navigation }) {
   const [scanHistory, setScanHistory] = useState([]);
   const [homeGamification, setHomeGamification] = useState(null);
   const isProfessional = user?.role === "professional";
-  const quickAccessOrder =
-    QUICK_ACCESS_ORDER_BY_GOAL[user?.primary_goal] || DEFAULT_QUICK_ACCESS_ORDER;
+  const quickAccessOrder = getHomeQuickAccessOrder(user?.primary_goal);
 
   useEffect(() => {
     api.products({})

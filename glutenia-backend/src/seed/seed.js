@@ -112,6 +112,14 @@ const seed = async () => {
       // Supporter-specific — the only role-restricted badge in the catalog;
       // everything else above applies equally to warriors and supporters.
       { slug: "community_contributor", name: "Community Contributor", description: "Reported a missing product to help the whole community stay safe", category: "community", track: "supporter", targetMetric: "productContributionCount", targetValue: 1, xpReward: 30 },
+      // Profile-fact badges — gated by a declared onboarding answer, not an
+      // activity counter (see Badge.targetField/targetEquals and
+      // gamificationService.checkProfileFactBadges). targetMetric/targetValue
+      // are unused placeholders here, kept only so every existing read path
+      // that assumes a positive numeric targetValue keeps working untouched.
+      { slug: "seasoned_veteran", name: "Seasoned Veteran", description: "Living gluten-free for 3+ years — a true expert", category: "journey", track: "both", targetMetric: "profile_fact", targetValue: 1, targetField: "experience_level", targetEquals: ["3_plus_years"], xpReward: 20 },
+      { slug: "confident_reader", name: "Confident Reader", description: "Told us you're highly confident spotting gluten-free products", category: "journey", track: "both", targetMetric: "profile_fact", targetValue: 1, targetField: "confidence_identifying_gf", targetEquals: ["high"], xpReward: 20 },
+      { slug: "dedicated_caregiver", name: "Dedicated Caregiver", description: "On Glutenia to support a loved one through their journey", category: "journey", track: "supporter", targetMetric: "profile_fact", targetValue: 1, targetField: "primary_goal", targetEquals: ["support_child", "support_partner"], xpReward: 20 },
     ];
 
     for (const badge of badgeCatalog) {

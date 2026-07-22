@@ -1,23 +1,5 @@
 const User = require("../models/User");
-const UserGamification = require("../models/UserGamification");
 const gamificationService = require("../services/gamificationService");
-
-const TITLE_MAP = {
-  warrior: {
-    just_started: "Newcomer",
-    "1_to_6_months": "Explorer",
-    "6_to_12_months": "Label Reader",
-    "1_to_3_years": "Safe Eater",
-    "3_plus_years": "Advocate",
-  },
-  supporter: {
-    just_started: "Ally",
-    "1_to_6_months": "Caregiver",
-    "6_to_12_months": "Protector",
-    "1_to_3_years": "Champion",
-    "3_plus_years": "Lifeline",
-  },
-};
 
 exports.completeProfileOnboarding = async (req, res, next) => {
   try {
@@ -47,21 +29,18 @@ exports.completeProfileOnboarding = async (req, res, next) => {
       runValidators: true,
     });
 
-    const currentTitle = (TITLE_MAP[roleType] || {})[experienceLevel] || "Newcomer";
-
     // The 50 XP onboarding bonus is a one-time reward — only grant it the first
     // time this user completes the journey survey, not on every later edit.
     if (isFirstCompletion) {
       await gamificationService.awardXP(user._id, 50, "onboarding_complete");
     }
 
-    const gamification = await UserGamification.findOneAndUpdate(
-      { userId: user._id },
-      { currentTitle },
-      { new: true, upsert: true }
-    );
+    // An edit can newly qualify someone for a profile-fact badge (e.g.
+    // raising experience_level to 3_plus_years), so re-check on every save,
+    // not just the first completion.
+    await gamificationService.checkProfileFactBadges(user._id);
 
-    return res.json({ success: true, data: { user, gamification } });
+    return res.json({ success: true, data: { user } });
   } catch (error) {
     return next(error);
   }

@@ -15,6 +15,9 @@ import {
   Sprout,
   Award,
   Lock,
+  GraduationCap,
+  Eye,
+  HeartHandshake,
 } from "lucide-react-native";
 import { useTheme } from "../context/ThemeContext";
 import { getBadgeVisualTokens, getBadgeTier } from "../theme/badgeTheme";
@@ -39,6 +42,9 @@ const BADGE_ICONS = {
   streak_100: Flame,
   first_month: Sprout,
   one_year: Award,
+  seasoned_veteran: GraduationCap,
+  confident_reader: Eye,
+  dedicated_caregiver: HeartHandshake,
 };
 
 export default function BadgeIcon({ badge, size = 64, locked = false, progressRatio = null }) {

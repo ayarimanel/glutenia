@@ -34,6 +34,25 @@ function getLevelInfo(totalXp) {
   return { currentLevel, currentLevelMinXp, nextLevelXp, xpToNextLevel, progressRatio };
 }
 
+const ENGAGEMENT_TITLE_BRACKETS = [
+  { max: 2, title: "Rookie" },
+  { max: 4, title: "Regular" },
+  { max: 6, title: "Enthusiast" },
+  { max: 8, title: "Veteran" },
+  { max: 10, title: "Master" },
+  { max: Infinity, title: "Legend" },
+];
+
+// Purely activity-based title for the XP/Level card — deliberately distinct
+// vocabulary from account.stageTitles.* (the role+experience-based title
+// shown in the profile pill and Journey tracker), so the two "what stage am
+// I at" surfaces on the profile actually mean different things instead of
+// both showing the same string.
+function getEngagementTitle(currentLevel) {
+  const bracket = ENGAGEMENT_TITLE_BRACKETS.find((b) => currentLevel <= b.max);
+  return bracket.title;
+}
+
 // Returns the number of whole days between two dates (ignoring time)
 function daysBetween(a, b) {
   const t1 = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
@@ -129,6 +148,58 @@ async function updateStreak(userId) {
   }
 }
 
+// Shared by every badge-checking path: given a candidate list already known
+// to be eligible, filters out ones already earned, inserts the rest, and
+// awards their XP. Only awards XP for records that actually inserted — with
+// {ordered:false}, a concurrent caller can race for the same badge (the
+// unique {userId,badgeId} index on UserBadge rejects the loser), and that
+// partial failure must not block XP for the ones that did land.
+async function _awardEligibleBadges(userId, eligibleBadges) {
+  if (eligibleBadges.length === 0) return [];
+
+  const existingRecords = await UserBadge.find({
+    userId,
+    badgeId: { $in: eligibleBadges.map((b) => b._id) },
+  }).select("badgeId");
+  const existingIds = new Set(existingRecords.map((ub) => ub.badgeId.toString()));
+
+  const newBadges = eligibleBadges.filter((b) => !existingIds.has(b._id.toString()));
+  if (newBadges.length === 0) return [];
+
+  let insertedIds = new Set(newBadges.map((b) => b._id.toString()));
+  try {
+    await UserBadge.insertMany(
+      newBadges.map((b) => ({ userId, badgeId: b._id, earnedAt: new Date() })),
+      { ordered: false }
+    );
+  } catch (err) {
+    const writeErrors = err?.writeErrors || err?.result?.result?.writeErrors || [];
+    const failedIndexes = new Set(writeErrors.map((we) => we.index));
+    insertedIds = new Set(
+      newBadges.filter((_, index) => !failedIndexes.has(index)).map((b) => b._id.toString())
+    );
+    if (insertedIds.size === 0) {
+      console.error("[gamificationService] _awardEligibleBadges insertMany error:", err.message);
+    }
+  }
+
+  const awardedBadges = newBadges.filter((b) => insertedIds.has(b._id.toString()));
+
+  for (const badge of awardedBadges) {
+    if (badge.xpReward > 0) {
+      await awardXP(userId, badge.xpReward, "badge_unlock", badge.slug);
+    }
+  }
+
+  return awardedBadges.map((b) => ({
+    slug: b.slug,
+    name: b.name,
+    description: b.description,
+    category: b.category,
+    xpReward: b.xpReward,
+  }));
+}
+
 async function checkAndAwardBadges(userId, metric, currentValue) {
   try {
     const user = await User.findById(userId).select("role_type");
@@ -144,37 +215,38 @@ async function checkAndAwardBadges(userId, metric, currentValue) {
       targetValue: { $lte: currentValue },
       track: trackFilter,
     });
-    if (eligibleBadges.length === 0) return [];
 
-    const existingRecords = await UserBadge.find({
-      userId,
-      badgeId: { $in: eligibleBadges.map((b) => b._id) },
-    }).select("badgeId");
-    const existingIds = new Set(existingRecords.map((ub) => ub.badgeId.toString()));
-
-    const newBadges = eligibleBadges.filter((b) => !existingIds.has(b._id.toString()));
-    if (newBadges.length === 0) return [];
-
-    await UserBadge.insertMany(
-      newBadges.map((b) => ({ userId, badgeId: b._id, earnedAt: new Date() })),
-      { ordered: false }
-    );
-
-    for (const badge of newBadges) {
-      if (badge.xpReward > 0) {
-        await awardXP(userId, badge.xpReward, "badge_unlock", badge.slug);
-      }
-    }
-
-    return newBadges.map((b) => ({
-      slug: b.slug,
-      name: b.name,
-      description: b.description,
-      category: b.category,
-      xpReward: b.xpReward,
-    }));
+    return await _awardEligibleBadges(userId, eligibleBadges);
   } catch (err) {
     console.error("[gamificationService] checkAndAwardBadges error:", err);
+    return [];
+  }
+}
+
+// Badges tied to a fact the user told us during onboarding (self-reported
+// experience, confidence, goal) rather than an activity counter — a
+// one-time eligibility check against a declared value, not a threshold
+// crossed by repeated action, so — like checkLazyJourneyBadges — it's
+// checked lazily (on profile view, and right after an onboarding save)
+// instead of through recordAction.
+async function checkProfileFactBadges(userId) {
+  try {
+    const user = await User.findById(userId).select(
+      "role_type experience_level primary_goal eating_out_frequency confidence_identifying_gf"
+    );
+    if (!user) return [];
+
+    const trackFilter = user.role_type ? { $in: [user.role_type, "both"] } : "both";
+    const candidates = await Badge.find({ targetField: { $ne: null }, track: trackFilter });
+
+    const eligibleBadges = candidates.filter((badge) => {
+      const userValue = user[badge.targetField];
+      return userValue != null && (badge.targetEquals || []).includes(userValue);
+    });
+
+    return await _awardEligibleBadges(userId, eligibleBadges);
+  } catch (err) {
+    console.error("[gamificationService] checkProfileFactBadges error:", err);
     return [];
   }
 }
@@ -237,6 +309,7 @@ async function getHomeGamificationData(userId) {
       xpToNextLevel,
       progressRatio,
       currentStreak: gamification.currentStreak,
+      engagementTitle: getEngagementTitle(currentLevel),
     };
   } catch (err) {
     console.error("[gamificationService] getHomeGamificationData error:", err);
@@ -250,6 +323,7 @@ async function getProfileGamificationData(userId) {
     if (user) {
       await checkLazyJourneyBadges(userId, user.createdAt);
     }
+    await checkProfileFactBadges(userId);
 
     let gamification = await UserGamification.findOne({ userId });
     if (!gamification) {
@@ -260,6 +334,7 @@ async function getProfileGamificationData(userId) {
     const gamificationWithLevel = {
       ...gamification.toObject(),
       ...levelInfo,
+      engagementTitle: getEngagementTitle(levelInfo.currentLevel),
     };
 
     const earnedBadges = await UserBadge.find({ userId })
@@ -309,9 +384,11 @@ module.exports = {
   awardXP,
   updateStreak,
   checkAndAwardBadges,
+  checkProfileFactBadges,
   recordAction,
   getHomeGamificationData,
   getProfileGamificationData,
   calculateLevel,
   getLevelInfo,
+  getEngagementTitle,
 };
