@@ -18,6 +18,25 @@ import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme } from "../../context/ThemeContext";
 import { useTranslation } from "react-i18next";
 
+// Quick Access card catalog, keyed so the display order can be reordered
+// per-user without duplicating the card markup itself.
+const QUICK_ACCESS_ITEMS = {
+  recipes: { icon: "utensils", labelKey: "home.recipes", nav: "Recipes" },
+  events: { icon: "people", labelKey: "events.title", nav: "Events" },
+  patientResources: { icon: "heart", labelKey: "home.patientResources", nav: "PatientResources" },
+  map: { icon: "location", labelKey: "home.map", nav: "Map" },
+};
+const DEFAULT_QUICK_ACCESS_ORDER = ["recipes", "events", "patientResources", "map"];
+// Surface the most relevant card first based on why the user said they're
+// here (onboarding's primary_goal) — same four cards, just reordered.
+const QUICK_ACCESS_ORDER_BY_GOAL = {
+  manage_celiac: ["patientResources", "recipes", "map", "events"],
+  manage_intolerance: ["patientResources", "recipes", "map", "events"],
+  support_child: ["recipes", "patientResources", "events", "map"],
+  support_partner: ["recipes", "patientResources", "events", "map"],
+  dietary_choice: ["recipes", "map", "events", "patientResources"],
+};
+
 export default function HomeScreen({ navigation }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -30,6 +49,8 @@ export default function HomeScreen({ navigation }) {
   const [scanHistory, setScanHistory] = useState([]);
   const [homeGamification, setHomeGamification] = useState(null);
   const isProfessional = user?.role === "professional";
+  const quickAccessOrder =
+    QUICK_ACCESS_ORDER_BY_GOAL[user?.primary_goal] || DEFAULT_QUICK_ACCESS_ORDER;
 
   useEffect(() => {
     api.products({})
@@ -164,42 +185,21 @@ export default function HomeScreen({ navigation }) {
         {/* ── Quick Access ── */}
         <Text style={styles.sectionLabel}>{t("home.quickAccess")}</Text>
         <View style={styles.quickGrid}>
-          <Pressable
-            style={styles.quickCard}
-            onPress={() => navigation.navigate("Recipes")}
-          >
-            <View style={styles.quickIcon}>
-              <AppIcon name="utensils" size={26} color={colors.secondary} />
-            </View>
-            <Text style={styles.quickLabel}>{t("home.recipes")}</Text>
-          </Pressable>
-          <Pressable
-            style={styles.quickCard}
-            onPress={() => navigation.navigate("Events")}
-          >
-            <View style={styles.quickIcon}>
-              <AppIcon name="people" size={26} color={colors.secondary} />
-            </View>
-            <Text style={styles.quickLabel}>{t("events.title")}</Text>
-          </Pressable>
-          <Pressable
-            style={styles.quickCard}
-            onPress={() => navigation.navigate("PatientResources")}
-          >
-            <View style={styles.quickIcon}>
-              <AppIcon name="heart" size={26} color={colors.secondary} />
-            </View>
-            <Text style={styles.quickLabel}>{t("home.patientResources")}</Text>
-          </Pressable>
-          <Pressable
-            style={styles.quickCard}
-            onPress={() => navigation.navigate("Map")}
-          >
-            <View style={styles.quickIcon}>
-              <AppIcon name="location" size={26} color={colors.secondary} />
-            </View>
-            <Text style={styles.quickLabel}>{t("home.map")}</Text>
-          </Pressable>
+          {quickAccessOrder.map((key) => {
+            const item = QUICK_ACCESS_ITEMS[key];
+            return (
+              <Pressable
+                key={key}
+                style={styles.quickCard}
+                onPress={() => navigation.navigate(item.nav)}
+              >
+                <View style={styles.quickIcon}>
+                  <AppIcon name={item.icon} size={26} color={colors.secondary} />
+                </View>
+                <Text style={styles.quickLabel}>{t(item.labelKey)}</Text>
+              </Pressable>
+            );
+          })}
         </View>
 
         {/* ── Products Shop ── */}
