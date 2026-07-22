@@ -25,35 +25,6 @@ const PRIMARY_GOALS = [
 const EATING_FREQUENCIES = ["rarely", "few_times_month", "weekly", "multiple_week"];
 const CONFIDENCE_LEVELS = ["low", "medium", "high"];
 
-router.post(
-  "/",
-  verifyToken,
-  [
-    body("role_type")
-      .isIn(ROLE_TYPES)
-      .withMessage(`role_type must be one of: ${ROLE_TYPES.join(", ")}`),
-    body("gluten_free_since")
-      .optional({ nullable: true })
-      .isISO8601()
-      .withMessage("gluten_free_since must be a valid ISO 8601 date")
-      .toDate(),
-    body("experience_level")
-      .isIn(EXPERIENCE_LEVELS)
-      .withMessage(`experience_level must be one of: ${EXPERIENCE_LEVELS.join(", ")}`),
-    body("primary_goal")
-      .isIn(PRIMARY_GOALS)
-      .withMessage(`primary_goal must be one of: ${PRIMARY_GOALS.join(", ")}`),
-    body("eating_out_frequency")
-      .isIn(EATING_FREQUENCIES)
-      .withMessage(`eating_out_frequency must be one of: ${EATING_FREQUENCIES.join(", ")}`),
-    body("confidence_identifying_gf")
-      .isIn(CONFIDENCE_LEVELS)
-      .withMessage(`confidence_identifying_gf must be one of: ${CONFIDENCE_LEVELS.join(", ")}`),
-  ],
-  validateRequest,
-  onboardingController.completeOnboarding
-);
-
 router.put(
   "/profile",
   verifyToken,

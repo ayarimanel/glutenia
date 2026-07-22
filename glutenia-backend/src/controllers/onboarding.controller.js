@@ -19,45 +19,6 @@ const TITLE_MAP = {
   },
 };
 
-exports.completeOnboarding = async (req, res, next) => {
-  try {
-    const {
-      role_type,
-      gluten_free_since,
-      experience_level,
-      primary_goal,
-      eating_out_frequency,
-      confidence_identifying_gf,
-    } = req.body;
-
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      {
-        role_type,
-        gluten_free_since: gluten_free_since || null,
-        experience_level,
-        primary_goal,
-        eating_out_frequency,
-        confidence_identifying_gf,
-      },
-      { new: true, runValidators: true }
-    );
-
-    if (!user) {
-      return res.status(404).json({ success: false, message: "User not found" });
-    }
-
-    const existing = await UserGamification.findOne({ userId: user._id });
-    if (!existing) {
-      await UserGamification.create({ userId: user._id });
-    }
-
-    return res.json({ success: true, data: user });
-  } catch (error) {
-    return next(error);
-  }
-};
-
 exports.completeProfileOnboarding = async (req, res, next) => {
   try {
     const {
