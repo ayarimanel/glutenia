@@ -40,6 +40,9 @@ export default function ScanScreen({ navigation }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [screenState, setScreenState] = useState(SCANNING);
   const [product, setProduct] = useState(null);
+  const [scannedBarcode, setScannedBarcode] = useState(null);
+  const [flagging, setFlagging] = useState(false);
+  const [flagged, setFlagged] = useState(false);
   const scanLock = useRef(false);
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
@@ -66,7 +69,21 @@ export default function ScanScreen({ navigation }) {
   const resetToScanning = () => {
     setProduct(null);
     setScreenState(SCANNING);
+    setFlagged(false);
     scanLock.current = false;
+  };
+
+  const handleFlagCommunityProduct = async () => {
+    if (!product?._id) return;
+    setFlagging(true);
+    try {
+      await api.flagCommunityProduct(token, product._id);
+      setFlagged(true);
+    } catch (error) {
+      Alert.alert(t("scan.flagFailed"), error.message);
+    } finally {
+      setFlagging(false);
+    }
   };
 
   const handleBarcodeScanned = async ({ data }) => {
@@ -76,6 +93,8 @@ export default function ScanScreen({ navigation }) {
     // Fix 4: transition to LOADING immediately so the user sees a
     // spinner instead of a frozen camera with no feedback.
     setScreenState(LOADING);
+    setScannedBarcode(data);
+    setFlagged(false);
 
     try {
       const { gamification, ...found } = await api.productByBarcode(data, token);
@@ -163,7 +182,68 @@ export default function ScanScreen({ navigation }) {
     );
   }
 
-  // State FOUND: product returned from API
+  // State FOUND, community-reported barcode: no price/stock, this isn't a
+  // sellable shop listing, just a shared "someone already confirmed this
+  // is/isn't gluten-free" flag — needs its own layout, not the shop card.
+  if (screenState === FOUND && product?.isCommunityReport) {
+    return (
+      <View style={styles.root}>
+        <AppHeader
+          userName={user?.name ?? ""}
+          avatarUri={user?.avatar}
+          onCartPress={handleCartPress}
+          safeTop
+        />
+        <ScrollView
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: bottomPad }]}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.card}>
+            <View
+              style={[
+                styles.glutenBadge,
+                !product.isGlutenFree && styles.glutenBadgeWarning,
+              ]}
+            >
+              <AppIcon
+                name={product.isGlutenFree ? "checkmark" : "close-circle"}
+                size={15}
+                color="#fff"
+              />
+              <Text style={styles.glutenBadgeText}>
+                {product.isGlutenFree ? t("scan.glutenFree") : t("scan.containsGluten")}
+              </Text>
+            </View>
+            <Text style={styles.productName}>{product.name}</Text>
+            {!!product.brand && <Text style={styles.productDesc}>{product.brand}</Text>}
+            <Text style={styles.productDesc}>{t("scan.communityReported")}</Text>
+            {product.disputed && (
+              <View style={styles.disputedBanner}>
+                <AppIcon name="info" size={14} color={colors.warning} />
+                <Text style={styles.disputedText}>{t("scan.disputedWarning")}</Text>
+              </View>
+            )}
+          </View>
+          <Pressable
+            style={styles.secondaryBtn}
+            onPress={handleFlagCommunityProduct}
+            disabled={flagging || flagged}
+          >
+            <AppIcon name="close-circle" size={18} color={flagged ? colors.textMuted : colors.primary} />
+            <Text style={styles.secondaryBtnText}>
+              {flagged ? t("scan.flagged") : t("scan.flagIncorrect")}
+            </Text>
+          </Pressable>
+          <Pressable style={styles.secondaryBtn} onPress={resetToScanning}>
+            <AppIcon name="scan" size={18} color={colors.primary} />
+            <Text style={styles.secondaryBtnText}>{t("scan.scanAnother")}</Text>
+          </Pressable>
+        </ScrollView>
+      </View>
+    );
+  }
+
+  // State FOUND: real shop product returned from API
   if (screenState === FOUND && product) {
     return (
       <View style={styles.root}>
@@ -246,6 +326,13 @@ export default function ScanScreen({ navigation }) {
           >
             <AppIcon name="image" size={18} color={colors.primary} />
             <Text style={styles.secondaryBtnText}>{t("labelScan.fromScan")}</Text>
+          </Pressable>
+          <Pressable
+            style={styles.secondaryBtn}
+            onPress={() => navigation.navigate("SubmitProduct", { barcode: scannedBarcode })}
+          >
+            <AppIcon name="add-circle" size={18} color={colors.primary} />
+            <Text style={styles.secondaryBtnText}>{t("scan.addThisProduct")}</Text>
           </Pressable>
         </View>
       </View>
@@ -391,6 +478,19 @@ const getStyles = (colors) => StyleSheet.create({
     paddingVertical: 5,
     paddingHorizontal: 12,
   },
+  glutenBadgeWarning: {
+    backgroundColor: colors.danger,
+  },
+  disputedBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 8,
+    padding: 8,
+    borderRadius: Radius.md,
+    backgroundColor: `${colors.warning}22`,
+  },
+  disputedText: { flex: 1, fontSize: 12, color: colors.textDark, fontWeight: "600" },
   glutenBadgeText: {
     color: "#fff",
     fontSize: 13,

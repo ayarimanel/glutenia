@@ -21,6 +21,7 @@ import CheckoutScreen from "../screens/user/CheckoutScreen";
 import OrderSuccessScreen from "../screens/user/OrderSuccessScreen";
 import UserOrdersScreen from "../screens/user/UserOrdersScreen";
 import ScanScreen from "../screens/user/ScanScreen";
+import SubmitProductScreen from "../screens/user/SubmitProductScreen";
 import MapScreen from "../screens/user/MapScreen";
 import MapDetailScreen from "../screens/user/MapDetailScreen";
 import FavoritePlacesScreen from "../screens/user/FavoritePlacesScreen";
@@ -117,6 +118,7 @@ function UserStack({ bg }) {
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       <Stack.Screen name="LabelScan" component={LabelScanScreen} />
+      <Stack.Screen name="SubmitProduct" component={SubmitProductScreen} />
       <Stack.Screen name="SellerProducts" component={AdminProductsScreen} />
       <Stack.Screen name="SellerProductForm" component={AdminProductFormScreen} />
       <Stack.Screen name="SellerVisibility" component={SellerVisibilityScreen} />

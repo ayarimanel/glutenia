@@ -82,9 +82,12 @@ const seed = async () => {
     );
 
     // --- Gamification seed ---
-    await Badge.deleteMany({});
-
-    await Badge.insertMany([
+    // Upsert-per-badge, not delete-all-then-recreate: earned UserBadge
+    // records reference a Badge by its _id, and wiping/recreating the
+    // collection would give every badge a new _id, orphaning every user's
+    // already-earned badges. Upserting by slug updates existing badges in
+    // place (same _id preserved) and only creates genuinely new ones.
+    const badgeCatalog = [
       // Scanner
       { slug: "first_scan", name: "First Scan", description: "Scanned your first product", category: "scanner", targetMetric: "scanCount", targetValue: 1, xpReward: 20 },
       { slug: "ten_scans", name: "10 Scans", description: "Scanned 10 products", category: "scanner", targetMetric: "scanCount", targetValue: 10, xpReward: 40 },
@@ -106,7 +109,17 @@ const seed = async () => {
       // Journey (account age — checked lazily, not via recordAction)
       { slug: "first_month", name: "First Month", description: "One month on Glutenia", category: "journey", targetMetric: "accountAgeDays", targetValue: 30, xpReward: 20 },
       { slug: "one_year", name: "One Year", description: "One year on Glutenia", category: "journey", targetMetric: "accountAgeDays", targetValue: 365, xpReward: 100 },
-    ]);
+      // Supporter-specific — the only role-restricted badge in the catalog;
+      // everything else above applies equally to warriors and supporters.
+      { slug: "community_contributor", name: "Community Contributor", description: "Reported a missing product to help the whole community stay safe", category: "community", track: "supporter", targetMetric: "productContributionCount", targetValue: 1, xpReward: 30 },
+    ];
+
+    for (const badge of badgeCatalog) {
+      await Badge.findOneAndUpdate({ slug: badge.slug }, badge, {
+        upsert: true,
+        setDefaultsOnInsert: true,
+      });
+    }
 
     console.log("Seed completed successfully");
   } catch (error) {

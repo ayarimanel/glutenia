@@ -149,6 +149,10 @@ export const api = {
     request(`/recipes/${id}`, { method: "DELETE", token }),
   productByBarcode: (barcode, token) =>
     request(`/products/barcode/${encodeURIComponent(barcode)}`, { token }),
+  submitCommunityProduct: (token, body) =>
+    request("/community-products", { method: "POST", token, body }),
+  flagCommunityProduct: (token, id) =>
+    request(`/community-products/${id}/flag`, { method: "POST", token }),
   createOrder: (token, body) =>
     request("/orders", { method: "POST", token, body }),
   myOrders: (token) => request("/orders/my", { token }),

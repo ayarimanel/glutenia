@@ -47,6 +47,7 @@ const ACTION_CONFIG = {
   label_scan: { counterField: "ingredientCheckCount", metric: "ingredientCheckCount", xp: 10 },
   event_rsvp: { counterField: "eventAttendanceCount", metric: "eventAttendanceCount", xp: 25 },
   order_placed: { counterField: "orderCount", metric: "orderCount", xp: 40 },
+  product_contribution: { counterField: "productContributionCount", metric: "productContributionCount", xp: 20 },
 };
 
 async function awardXP(userId, amount, sourceType, sourceId = null) {
@@ -130,7 +131,19 @@ async function updateStreak(userId) {
 
 async function checkAndAwardBadges(userId, metric, currentValue) {
   try {
-    const eligibleBadges = await Badge.find({ targetMetric: metric, targetValue: { $lte: currentValue } });
+    const user = await User.findById(userId).select("role_type");
+    // Badges tagged for one role only are excluded for the other; "both"
+    // (the schema default) and unset role_type both fall through to the
+    // "both"-only badges so onboarding-incomplete accounts aren't blocked.
+    const trackFilter = user?.role_type
+      ? { $in: [user.role_type, "both"] }
+      : "both";
+
+    const eligibleBadges = await Badge.find({
+      targetMetric: metric,
+      targetValue: { $lte: currentValue },
+      track: trackFilter,
+    });
     if (eligibleBadges.length === 0) return [];
 
     const existingRecords = await UserBadge.find({

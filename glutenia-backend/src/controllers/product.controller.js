@@ -1,4 +1,5 @@
 const Product = require("../models/Product");
+const CommunityProduct = require("../models/CommunityProduct");
 const { recordScanEvent } = require("../services/scanService");
 
 const allowedProductFields = [
@@ -31,21 +32,40 @@ exports.getProductByBarcode = async (req, res, next) => {
   try {
     const product = await Product.findOne({ barcode: req.params.code });
 
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        message: "Product not found",
+    if (product) {
+      const { gamification } = await recordScanEvent(req.user.id, "barcode", {
+        summary: product.name,
+        product: product._id,
+      });
+
+      return res.json({
+        success: true,
+        data: { ...product.toObject(), gamification },
       });
     }
 
-    const { gamification } = await recordScanEvent(req.user.id, "barcode", {
-      summary: product.name,
-      product: product._id,
-    });
+    // Not in the real shop catalog — check community-reported barcodes
+    // before giving up. These aren't sellable listings, just a shared
+    // "someone already confirmed this is/isn't gluten-free" flag.
+    const communityEntry = await CommunityProduct.findOne({ barcode: req.params.code });
+    if (communityEntry) {
+      const { gamification } = await recordScanEvent(req.user.id, "barcode", {
+        summary: communityEntry.name,
+      });
 
-    return res.json({
-      success: true,
-      data: { ...product.toObject(), gamification },
+      return res.json({
+        success: true,
+        data: {
+          ...communityEntry.toObject(),
+          isCommunityReport: true,
+          gamification,
+        },
+      });
+    }
+
+    return res.status(404).json({
+      success: false,
+      message: "Product not found",
     });
   } catch (error) {
     return next(error);

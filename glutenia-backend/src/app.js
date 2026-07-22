@@ -3,6 +3,7 @@ const cors = require("cors");
 const errorHandler = require("./middleware/errorHandler");
 
 const authRoutes = require("./routes/auth.routes");
+const communityProductRoutes = require("./routes/communityProduct.routes");
 const establishmentRoutes = require("./routes/establishment.routes");
 const eventRoutes = require("./routes/event.routes");
 const gamificationRoutes = require("./routes/gamification.routes");
@@ -52,6 +53,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/community-products", communityProductRoutes);
 app.use("/api/establishments", establishmentRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/gamification", gamificationRoutes);

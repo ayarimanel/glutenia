@@ -19,6 +19,7 @@ const userGamificationSchema = new mongoose.Schema(
     ingredientCheckCount: { type: Number, default: 0 },
     eventAttendanceCount: { type: Number, default: 0 },
     orderCount: { type: Number, default: 0 },
+    productContributionCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
