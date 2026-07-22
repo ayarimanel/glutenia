@@ -769,11 +769,6 @@ export default function MapScreen({ navigation }) {
           })}
         </ScrollView>
 
-        <TouchableOpacity style={styles.filterIconBtn} activeOpacity={0.8}>
-          <AppIcon name="list" size={15} color="#2E2E2E" />
-          <Text style={styles.filterIconLabel}>{t("map.filter")}</Text>
-        </TouchableOpacity>
-
         <TouchableOpacity
           style={styles.favoritesEntryBtn}
           activeOpacity={0.8}
@@ -1102,28 +1097,6 @@ const getStyles = (colors) =>
     filterTextInactive: {
       color: colors.textMuted,
     },
-    filterIconBtn: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: colors.surface,
-      paddingHorizontal: 16,
-      borderWidth: 1,
-      borderColor: colors.border,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 4,
-      elevation: 2,
-    },
-    filterIconLabel: {
-      fontSize: 13,
-      fontWeight: "700",
-      color: colors.textDark,
-    },
-
     favoritesEntryBtn: {
       width: 40,
       height: 40,

@@ -2,7 +2,7 @@ import { StyleSheet, Text, TextInput, View } from "react-native";
 import { Radius } from "../theme/colors";
 import { useTheme } from "../context/ThemeContext";
 
-export default function Field({ label, error, multiline, style, inputStyle, ...props }) {
+export default function Field({ label, error, hint, multiline, style, inputStyle, ...props }) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   return (
@@ -19,7 +19,7 @@ export default function Field({ label, error, multiline, style, inputStyle, ...p
         ]}
         {...props}
       />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? <Text style={styles.error}>{error}</Text> : hint ? <Text style={styles.hint}>{hint}</Text> : null}
     </View>
   );
 }
@@ -56,5 +56,9 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.danger,
     fontSize: 12,
     fontWeight: "700",
+  },
+  hint: {
+    color: colors.textMuted,
+    fontSize: 12,
   },
 });

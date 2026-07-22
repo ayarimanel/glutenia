@@ -169,6 +169,7 @@ export default function EditProfileScreen({ navigation }) {
               label={t("settings.editProfileScreen.emailLabel")}
               value={user?.email || ""}
               editable={false}
+              hint={t("settings.editProfileScreen.emailLocked")}
               style={styles.disabledField}
               inputStyle={styles.disabledInput}
             />

@@ -9,7 +9,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Heart, MapPin } from "lucide-react-native";
+import { ArrowLeft, Heart, MapPin, Compass } from "lucide-react-native";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { useTheme } from "../../context/ThemeContext";
@@ -81,6 +81,14 @@ export default function FavoritePlacesScreen({ navigation }) {
           </View>
           <Text style={styles.emptyTitle}>{t("favorites.empty")}</Text>
           <Text style={styles.emptyBody}>{t("favorites.emptyBody")}</Text>
+          <TouchableOpacity
+            style={styles.browseMapBtn}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate("UserTabs", { screen: "Map" })}
+          >
+            <Compass size={16} color="#FFFFFF" strokeWidth={2.4} />
+            <Text style={styles.browseMapText}>{t("favorites.browseMap")}</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <FlatList
@@ -154,6 +162,17 @@ const getStyles = (colors) => ({
   },
   emptyTitle: { fontSize: 17, fontWeight: "700", color: colors.textDark, marginBottom: 6 },
   emptyBody: { fontSize: 14, color: colors.textMuted, textAlign: "center", lineHeight: 20 },
+  browseMapBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: colors.primary,
+    borderRadius: Radius.lg,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginTop: Spacing.lg,
+  },
+  browseMapText: { fontSize: 14, fontWeight: "700", color: "#FFFFFF" },
 
   list: { padding: Spacing.md, gap: Spacing.sm },
   card: {
