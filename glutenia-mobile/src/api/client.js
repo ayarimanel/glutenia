@@ -147,6 +147,19 @@ export const api = {
     request(`/recipes/${id}`, { method: "PUT", token, body, timeoutMs: 30000 }),
   deleteRecipe: (token, id) =>
     request(`/recipes/${id}`, { method: "DELETE", token }),
+  patientResources: (params = {}) => {
+    const query = new URLSearchParams(
+      Object.entries(params).filter(([, value]) => value)
+    ).toString();
+    return request(`/patient-resources${query ? `?${query}` : ""}`);
+  },
+  patientResource: (id) => request(`/patient-resources/${id}`),
+  createPatientResource: (token, body) =>
+    request("/patient-resources", { method: "POST", token, body }),
+  updatePatientResource: (token, id, body) =>
+    request(`/patient-resources/${id}`, { method: "PUT", token, body }),
+  deletePatientResource: (token, id) =>
+    request(`/patient-resources/${id}`, { method: "DELETE", token }),
   productByBarcode: (barcode, token) =>
     request(`/products/barcode/${encodeURIComponent(barcode)}`, { token }),
   submitCommunityProduct: (token, body) =>

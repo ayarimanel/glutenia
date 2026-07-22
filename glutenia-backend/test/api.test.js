@@ -15,6 +15,7 @@ const Cart = require("../src/models/Cart");
 const Event = require("../src/models/Event");
 const Notification = require("../src/models/Notification");
 const Order = require("../src/models/Order");
+const PatientResource = require("../src/models/PatientResource");
 const Product = require("../src/models/Product");
 const Recipe = require("../src/models/Recipe");
 const User = require("../src/models/User");
@@ -25,6 +26,7 @@ const resetDatabase = async () => {
     Event.deleteMany({}),
     Notification.deleteMany({}),
     Order.deleteMany({}),
+    PatientResource.deleteMany({}),
     Product.deleteMany({}),
     Recipe.deleteMany({}),
     User.deleteMany({}),
@@ -329,6 +331,63 @@ describe("Recipes", () => {
       .expect(200);
 
     await request(app).get(`/api/recipes/${ctx.recipeId}`).expect(404);
+  });
+});
+
+describe("Patient Resources", () => {
+  test("lets an admin create, update, and delete a patient resource; reads are public", async () => {
+    const blockedCreate = await request(app)
+      .post("/api/patient-resources")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .send({ title: "Blocked Resource" })
+      .expect(403);
+    assert.equal(blockedCreate.body.success, false);
+
+    const created = await request(app)
+      .post("/api/patient-resources")
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .send({
+        title: "Test Resource",
+        description: "A test patient resource.",
+        body: "Full article body.",
+        category: "diet",
+        readTimeMinutes: 5,
+        featured: true,
+      })
+      .expect(201);
+
+    assert.equal(created.body.data.title, "Test Resource");
+    assert.equal(created.body.data.featured, true);
+    ctx.patientResourceId = created.body.data._id;
+
+    const list = await request(app).get("/api/patient-resources").expect(200);
+    assert.equal(list.body.data.some((r) => r._id === ctx.patientResourceId), true);
+
+    const filtered = await request(app).get("/api/patient-resources?category=diet").expect(200);
+    assert.equal(filtered.body.data.every((r) => r.category === "diet"), true);
+
+    const detail = await request(app).get(`/api/patient-resources/${ctx.patientResourceId}`).expect(200);
+    assert.equal(detail.body.data.title, "Test Resource");
+
+    const updated = await request(app)
+      .put(`/api/patient-resources/${ctx.patientResourceId}`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .send({ title: "Updated Resource", featured: false })
+      .expect(200);
+    assert.equal(updated.body.data.title, "Updated Resource");
+    assert.equal(updated.body.data.featured, false);
+
+    await request(app)
+      .delete(`/api/patient-resources/${ctx.patientResourceId}`)
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .expect(403);
+
+    await request(app)
+      .delete(`/api/patient-resources/${ctx.patientResourceId}`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .expect(200);
+
+    await request(app).get(`/api/patient-resources/${ctx.patientResourceId}`).expect(404);
   });
 });
 

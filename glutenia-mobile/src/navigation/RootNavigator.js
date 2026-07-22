@@ -39,6 +39,8 @@ import AdminAnalyticsScreen from "../screens/admin/AdminAnalyticsScreen";
 import AdminProfessionalRequestsScreen from "../screens/admin/AdminProfessionalRequestsScreen";
 import AdminRecipesScreen from "../screens/admin/AdminRecipesScreen";
 import AdminRecipeFormScreen from "../screens/admin/AdminRecipeFormScreen";
+import AdminPatientResourcesScreen from "../screens/admin/AdminPatientResourcesScreen";
+import AdminPatientResourceFormScreen from "../screens/admin/AdminPatientResourceFormScreen";
 import AccountScreen from "../screens/AccountScreen";
 import OnboardingScreen from "../screens/OnboardingScreen";
 import OnboardingRoleScreen from "../screens/onboarding/OnboardingRoleScreen";
@@ -158,6 +160,8 @@ function AdminStack({ bg }) {
       <Stack.Screen name="AdminAnalytics" component={AdminAnalyticsScreen} />
       <Stack.Screen name="AdminRecipes" component={AdminRecipesScreen} />
       <Stack.Screen name="AdminRecipeForm" component={AdminRecipeFormScreen} />
+      <Stack.Screen name="AdminPatientResources" component={AdminPatientResourcesScreen} />
+      <Stack.Screen name="AdminPatientResourceForm" component={AdminPatientResourceFormScreen} />
       <Stack.Screen name="CreateEvent" component={CreateEventScreen} />
       <Stack.Screen name="Settings" component={AdminSettingsScreen} />
     </Stack.Navigator>

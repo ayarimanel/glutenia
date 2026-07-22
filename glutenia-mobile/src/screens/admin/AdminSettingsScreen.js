@@ -133,9 +133,17 @@ export default function AdminSettingsScreen({ navigation }) {
             icon="utensils"
             label={t("settings.manageRecipes")}
             isFirst
-            isLast
             colors={colors}
             onPress={() => navigation.navigate("AdminRecipes")}
+            right={<AppIcon name="chevron-right" size={18} color={colors.textMuted} />}
+          />
+          <Divider colors={colors} />
+          <SettingRow
+            icon="heart"
+            label={t("settings.managePatientResources")}
+            isLast
+            colors={colors}
+            onPress={() => navigation.navigate("AdminPatientResources")}
             right={<AppIcon name="chevron-right" size={18} color={colors.textMuted} />}
           />
         </View>
