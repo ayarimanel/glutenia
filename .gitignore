@@ -34,6 +34,9 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Database incident exports (real user data — never commit)
+glutenia-backend/orphaned-data-backup-*/
+
 # Internal working docs (not for public/professional viewing)
 PROJECT_ANALYSIS.md
 internship-report-tools-analysis.md
