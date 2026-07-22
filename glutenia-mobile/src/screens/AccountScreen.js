@@ -37,6 +37,13 @@ const EXPERIENCE_TO_STEP = {
   "1_to_3_years": 3,
   "3_plus_years": 4,
 };
+const EXPERIENCE_LEVEL_KEYS = [
+  "just_started",
+  "1_to_6_months",
+  "6_to_12_months",
+  "1_to_3_years",
+  "3_plus_years",
+];
 
 function daysSince(dateString) {
   if (!dateString) return 0;
@@ -49,14 +56,6 @@ export default function AccountScreen({ navigation }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-
-  const JOURNEY_STEPS = [
-    { key: "beginner", label: t("account.journey.beginner") },
-    { key: "aware", label: t("account.journey.aware") },
-    { key: "safeEater", label: t("account.journey.safeEater") },
-    { key: "fighter", label: t("account.journey.fighter") },
-    { key: "titan", label: t("account.journey.titan") },
-  ];
 
   const ROLE_META = {
     warrior: {
@@ -88,6 +87,16 @@ export default function AccountScreen({ navigation }) {
 
   const { user, token, logout } = useAuth();
   const isAdmin = user?.role === "admin";
+
+  // Title (the pill near the avatar) and the "Your Journey" tracker below it
+  // both describe the same underlying progression — role_type + experience_level
+  // — so they're derived from one shared, translated word list instead of two
+  // separate ones that could drift out of sync with each other.
+  const titleTrack = user?.role_type === "supporter" ? "supporter" : "warrior";
+  const JOURNEY_STEPS = EXPERIENCE_LEVEL_KEYS.map((key) => ({
+    key,
+    label: t(`account.stageTitles.${titleTrack}.${key}`),
+  }));
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(!isAdmin);
   const [error, setError] = useState(null);
@@ -177,7 +186,14 @@ export default function AccountScreen({ navigation }) {
       : ROLE_META[roleType] || ROLE_META.unset;
   const accentColor = isAdmin || isProfessional ? colors.secondary : colors.primary;
   const accentPale = isAdmin || isProfessional ? colors.secondaryPale : colors.primaryPale;
-  const currentTitle = gamification?.currentTitle || t("account.newcomer");
+  // Derived client-side from the same fields the "Your Journey" tracker
+  // uses below, instead of the server-stored gamification.currentTitle —
+  // that field only updated on save (via onboarding/Edit Journey) and was
+  // never translated, so it silently showed raw English text regardless of
+  // app language. This is always in sync and always in the right language.
+  const currentTitle = roleType
+    ? t(`account.stageTitles.${titleTrack}.${user?.experience_level || "just_started"}`)
+    : t("account.newcomer");
   const level = gamification?.currentLevel ?? 1;
   const totalXp = gamification?.totalXp ?? 0;
   const currentStreak = gamification?.currentStreak ?? 0;
