@@ -38,6 +38,7 @@ const productValidators = [
     .isBoolean()
     .withMessage("isGlutenFree must be true or false")
     .toBoolean(),
+  body("barcode").optional({ checkFalsy: true }).trim().isString(),
 ];
 
 const productUpdateValidators = [
@@ -67,6 +68,7 @@ const productUpdateValidators = [
     .isBoolean()
     .withMessage("isGlutenFree must be true or false")
     .toBoolean(),
+  body("barcode").optional({ checkFalsy: true }).trim().isString(),
 ];
 
 const idValidator = [

@@ -18,7 +18,7 @@ const categories = ["All", "Bread", "Pasta", "Snacks", "Flour", "Sweets"];
 export default function ShopScreen({ navigation }) {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { addItem } = useCart();
+  const { addItemWithStockCheck } = useCart();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const [products, setProducts] = useState([]);
@@ -109,10 +109,7 @@ export default function ShopScreen({ navigation }) {
             <ProductCard
               product={item}
               onPress={() => navigation.navigate("ProductDetail", { productId: item._id })}
-              onAdd={() => {
-                addItem(item, 1);
-                Alert.alert(t("shop.addedTitle"), t("shop.addedMsg", { name: item.name }));
-              }}
+              onAdd={() => addItemWithStockCheck(item, 1)}
             />
           )}
         />

@@ -1,5 +1,4 @@
 import {
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -34,8 +33,9 @@ export default function HomeScreen({ navigation }) {
   const styles = getStyles(colors);
 
   const { user, token } = useAuth();
-  const { addItem } = useCart();
+  const { addItemWithStockCheck } = useCart();
   const [products, setProducts] = useState([]);
+  const [productsError, setProductsError] = useState(false);
   const [events, setEvents] = useState([]);
   const [scanHistory, setScanHistory] = useState([]);
   const [homeGamification, setHomeGamification] = useState(null);
@@ -43,9 +43,10 @@ export default function HomeScreen({ navigation }) {
   const quickAccessOrder = getHomeQuickAccessOrder(user?.primary_goal);
 
   useEffect(() => {
+    setProductsError(false);
     api.products({})
       .then((data) => setProducts(data.slice(0, 8)))
-      .catch(() => {});
+      .catch(() => setProductsError(true));
   }, []);
 
   useEffect(() => {
@@ -203,6 +204,9 @@ export default function HomeScreen({ navigation }) {
             <AppIcon name="chevron-right" size={15} color={colors.secondary} />
           </Pressable>
         </View>
+        {productsError ? (
+          <Text style={styles.sectionError}>{t("home.productsError")}</Text>
+        ) : (
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -215,14 +219,12 @@ export default function HomeScreen({ navigation }) {
                 onPress={() =>
                   navigation.navigate("ProductDetail", { productId: item._id })
                 }
-                onAdd={() => {
-                  addItem(item, 1);
-                  Alert.alert(t("home.addedTitle"), t("home.addedMsg", { name: item.name }));
-                }}
+                onAdd={() => addItemWithStockCheck(item, 1)}
               />
             </View>
           ))}
         </ScrollView>
+        )}
 
         {/* ── Check Events ── */}
         {events.length > 0 && (
@@ -385,6 +387,12 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.textDark,
     marginHorizontal: Spacing.md,
     marginBottom: Spacing.sm,
+  },
+  sectionError: {
+    marginHorizontal: Spacing.md,
+    marginBottom: Spacing.lg,
+    color: colors.textMuted,
+    fontSize: 13,
   },
   sectionRow: {
     flexDirection: "row",

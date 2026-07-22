@@ -10,18 +10,29 @@ const allowedProductFields = [
   "imageUrl",
   "stock",
   "isGlutenFree",
+  "barcode",
 ];
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const pickProductFields = (body) => {
-  return allowedProductFields.reduce((fields, key) => {
+  const fields = allowedProductFields.reduce((acc, key) => {
     if (Object.prototype.hasOwnProperty.call(body, key)) {
-      fields[key] = body[key];
+      acc[key] = body[key];
     }
 
-    return fields;
+    return acc;
   }, {});
+
+  // barcode has a sparse unique index (Product.js) so multiple products can
+  // have "no barcode" — but that only works if "no barcode" is consistently
+  // null, not an empty string. An empty string is itself a value, so two
+  // products both saved with barcode: "" would collide on the unique index.
+  if (Object.prototype.hasOwnProperty.call(fields, "barcode") && !fields.barcode) {
+    fields.barcode = null;
+  }
+
+  return fields;
 };
 
 const canManageProduct = (req, product) =>

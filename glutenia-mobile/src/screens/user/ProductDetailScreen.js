@@ -1,4 +1,4 @@
-import { Alert, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
@@ -16,16 +16,17 @@ export default function ProductDetailScreen({ navigation, route }) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const { productId } = route.params;
-  const { addItem } = useCart();
+  const { addItemWithStockCheck } = useCart();
   const [product, setProduct] = useState(null);
   const [qty, setQty] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
         setProduct(await api.product(productId));
+        setQty(1);
       } catch (error) {
         Alert.alert(t("productDetail.errorTitle"), error.message);
         navigation.goBack();
@@ -36,9 +37,16 @@ export default function ProductDetailScreen({ navigation, route }) {
     load();
   }, [productId]);
 
-  if (!product) {
-    return <Screen />;
+  if (loading || !product) {
+    return (
+      <Screen style={styles.centered}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </Screen>
+    );
   }
+
+  const stock = product.stock ?? 0;
+  const outOfStock = stock <= 0;
 
   return (
     <Screen>
@@ -51,7 +59,7 @@ export default function ProductDetailScreen({ navigation, route }) {
         <View style={styles.card}>
           <View style={styles.header}>
             <View style={styles.titleWrap}>
-              <Text style={styles.name}>{product.name}</Text>
+              <Text style={styles.name} numberOfLines={3}>{product.name}</Text>
               <Text style={styles.category}>{product.category}</Text>
             </View>
             {product.isGlutenFree ? <GlutenFreeBadge /> : null}
@@ -59,17 +67,22 @@ export default function ProductDetailScreen({ navigation, route }) {
           <Text style={styles.description}>
             {product.description || t("productDetail.fallbackDesc")}
           </Text>
+          <Text style={outOfStock ? styles.stockOut : stock <= 5 ? styles.stockLow : styles.stockOk}>
+            {outOfStock
+              ? t("productDetail.outOfStock")
+              : stock <= 5
+                ? t("productDetail.lowStock", { stock })
+                : t("productDetail.inStock")}
+          </Text>
           <View style={styles.priceRow}>
             <Text style={styles.price}>{product.price.toFixed(2)} TND</Text>
-            <QuantityStepper value={qty} onChange={setQty} />
+            {!outOfStock && <QuantityStepper value={qty} onChange={setQty} max={stock} />}
           </View>
           <PrimaryButton
-            title={loading ? t("productDetail.loading") : t("productDetail.addToCart")}
+            title={outOfStock ? t("productDetail.outOfStock") : t("productDetail.addToCart")}
             icon="basket"
-            onPress={() => {
-              addItem(product, qty);
-              Alert.alert(t("productDetail.added"), t("productDetail.addedMsg", { qty, name: product.name }));
-            }}
+            disabled={outOfStock}
+            onPress={() => addItemWithStockCheck(product, qty)}
           />
         </View>
       </ScrollView>
@@ -78,9 +91,28 @@ export default function ProductDetailScreen({ navigation, route }) {
 }
 
 const getStyles = (colors) => StyleSheet.create({
+  centered: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
   container: {
     padding: Spacing.md,
     gap: Spacing.md,
+  },
+  stockOk: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  stockLow: {
+    color: colors.warning,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  stockOut: {
+    color: colors.danger,
+    fontSize: 13,
+    fontWeight: "700",
   },
   topRow: {
     flexDirection: "row",

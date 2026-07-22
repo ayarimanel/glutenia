@@ -520,6 +520,110 @@ describe("Orders", () => {
   });
 });
 
+describe("Orders - stock integrity", () => {
+  const createStockedProduct = async (stock, name = `Stock Test ${Date.now()}-${Math.random()}`) => {
+    const created = await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .send({ name, price: 3, category: "Bread", stock })
+      .expect(201);
+    return created.body.data._id;
+  };
+
+  const address = {
+    fullName: "Stock Tester",
+    addressLine: "1 Test Street",
+    city: "Tunis",
+    phone: "+21600000001",
+  };
+
+  test("decrements stock by the ordered quantity on success", async () => {
+    const productId = await createStockedProduct(2);
+
+    await request(app)
+      .post("/api/orders")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .send({ items: [{ productId, qty: 2 }], address })
+      .expect(201);
+
+    const product = await request(app).get(`/api/products/${productId}`).expect(200);
+    assert.equal(product.body.data.stock, 0);
+  });
+
+  test("rejects an order that exceeds available stock, leaving stock unchanged", async () => {
+    const productId = await createStockedProduct(1);
+
+    const rejected = await request(app)
+      .post("/api/orders")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .send({ items: [{ productId, qty: 2 }], address })
+      .expect(409);
+    assert.equal(rejected.body.success, false);
+    assert.match(rejected.body.message, /only 1/i);
+
+    const product = await request(app).get(`/api/products/${productId}`).expect(200);
+    assert.equal(product.body.data.stock, 1);
+  });
+
+  test("rejects ordering an out-of-stock product", async () => {
+    const productId = await createStockedProduct(0);
+
+    const rejected = await request(app)
+      .post("/api/orders")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .send({ items: [{ productId, qty: 1 }], address })
+      .expect(409);
+    assert.match(rejected.body.message, /out of stock/i);
+  });
+
+  test("rolls back the whole order when one of several items has insufficient stock", async () => {
+    const plentyId = await createStockedProduct(5);
+    const scarceId = await createStockedProduct(1);
+
+    await request(app)
+      .post("/api/orders")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .send({
+        items: [
+          { productId: plentyId, qty: 2 },
+          { productId: scarceId, qty: 5 },
+        ],
+        address,
+      })
+      .expect(409);
+
+    const plenty = await request(app).get(`/api/products/${plentyId}`).expect(200);
+    const scarce = await request(app).get(`/api/products/${scarceId}`).expect(200);
+    assert.equal(plenty.body.data.stock, 5, "unaffected item's stock must not be decremented when the order as a whole fails");
+    assert.equal(scarce.body.data.stock, 1);
+  });
+
+  test("returns 404 for a product that doesn't exist", async () => {
+    await request(app)
+      .post("/api/orders")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .send({ items: [{ productId: new mongoose.Types.ObjectId().toString(), qty: 1 }], address })
+      .expect(404);
+  });
+
+  test("lets only one of two concurrent orders win the last unit of stock", async () => {
+    const productId = await createStockedProduct(1);
+
+    const placeOrder = () =>
+      request(app)
+        .post("/api/orders")
+        .set("Authorization", `Bearer ${ctx.customerToken}`)
+        .send({ items: [{ productId, qty: 1 }], address });
+
+    const [first, second] = await Promise.all([placeOrder(), placeOrder()]);
+    const statuses = [first.status, second.status].sort();
+    assert.deepEqual(statuses, [201, 409], "exactly one concurrent order for the last unit should succeed");
+
+    const product = await request(app).get(`/api/products/${productId}`).expect(200);
+    assert.equal(product.body.data.stock, 0);
+  });
+});
+
 describe("AI endpoint", () => {
   test("rejects a scan request without an image", async () => {
     const response = await request(app)

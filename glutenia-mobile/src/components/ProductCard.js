@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 import AppIcon from "./AppIcon";
 import { Radius, Shadow } from "../theme/colors";
 import { useTheme } from "../context/ThemeContext";
@@ -6,11 +7,20 @@ import GlutenFreeBadge from "./GlutenFreeBadge";
 import ProductVisual from "./ProductVisual";
 
 export default function ProductCard({ product, onPress, onAdd }) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
+  const outOfStock = (product.stock ?? 0) <= 0;
   return (
     <Pressable style={({ pressed }) => [styles.card, pressed && styles.pressed]} onPress={onPress}>
-      <ProductVisual product={product} />
+      <View>
+        <ProductVisual product={product} />
+        {outOfStock && (
+          <View style={styles.outOfStockOverlay}>
+            <Text style={styles.outOfStockText}>{t("shop.outOfStock")}</Text>
+          </View>
+        )}
+      </View>
       <View style={styles.body}>
         <View style={styles.titleRow}>
           <Text style={styles.name} numberOfLines={2}>
@@ -21,7 +31,11 @@ export default function ProductCard({ product, onPress, onAdd }) {
         <Text style={styles.category}>{product.category}</Text>
         <View style={styles.bottom}>
           <Text style={styles.price}>{product.price.toFixed(2)} TND</Text>
-          <Pressable style={styles.addButton} onPress={onAdd}>
+          <Pressable
+            style={[styles.addButton, outOfStock && styles.addButtonDisabled]}
+            onPress={outOfStock ? undefined : onAdd}
+            disabled={outOfStock}
+          >
             <AppIcon name="add" size={20} color={colors.surface} />
           </Pressable>
         </View>
@@ -80,5 +94,22 @@ const getStyles = (colors) => StyleSheet.create({
     backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
+  },
+  addButtonDisabled: {
+    backgroundColor: colors.textMuted,
+  },
+  outOfStockOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    borderRadius: Radius.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  outOfStockText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "900",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
 });

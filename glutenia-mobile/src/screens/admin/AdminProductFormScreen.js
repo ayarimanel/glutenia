@@ -50,7 +50,8 @@ export default function AdminProductFormScreen({ navigation, route }) {
   const [imageUrl, setImageUrl] = useState("");
   const [imageStatus, setImageStatus] = useState("");
   const [removeImage, setRemoveImage] = useState(false);
-  const [stock, setStock] = useState("0");
+  const [stock, setStock] = useState("");
+  const [barcode, setBarcode] = useState("");
   const [isGlutenFree, setIsGlutenFree] = useState(true);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -81,7 +82,8 @@ export default function AdminProductFormScreen({ navigation, route }) {
         imageDataUrlRef.current = "";
         setImageStatus(product.imageUrl ? t("admin.form.currentImage") : "");
         setRemoveImage(false);
-        setStock(String(product.stock || 0));
+        setStock(String(product.stock ?? 0));
+        setBarcode(product.barcode || "");
         setIsGlutenFree(Boolean(product.isGlutenFree));
       } catch (error) {
         Alert.alert(t("admin.form.productErrorTitle"), error.message);
@@ -93,19 +95,25 @@ export default function AdminProductFormScreen({ navigation, route }) {
   }, [productId]);
 
   const save = async () => {
-    const numericPrice = Number(price);
-    const numericStock = Number(stock || 0);
+    const trimmedPrice = price.trim();
+    const trimmedStock = stock.trim();
+    const numericPrice = Number(trimmedPrice);
+    const numericStock = Number(trimmedStock);
     const nextErrors = {};
 
     if (!name.trim()) {
       nextErrors.name = t("admin.form.errors.nameRequired");
     }
 
-    if (Number.isNaN(numericPrice) || numericPrice < 0) {
+    if (!trimmedPrice) {
+      nextErrors.price = t("admin.form.errors.priceRequired");
+    } else if (Number.isNaN(numericPrice) || numericPrice < 0) {
       nextErrors.price = t("admin.form.errors.priceInvalid");
     }
 
-    if (!Number.isInteger(numericStock) || numericStock < 0) {
+    if (!trimmedStock) {
+      nextErrors.stock = t("admin.form.errors.stockRequired");
+    } else if (!Number.isInteger(numericStock) || numericStock < 0) {
       nextErrors.stock = t("admin.form.errors.stockInvalid");
     }
 
@@ -128,6 +136,7 @@ export default function AdminProductFormScreen({ navigation, route }) {
         price: numericPrice,
         category,
         stock: numericStock,
+        barcode: barcode.trim(),
         isGlutenFree,
       };
 
@@ -279,6 +288,12 @@ export default function AdminProductFormScreen({ navigation, route }) {
             style={styles.flex}
           />
         </View>
+        <Field
+          label={t("admin.form.barcode")}
+          value={barcode}
+          onChangeText={setBarcode}
+          keyboardType="number-pad"
+        />
         <View style={styles.categoryWrap}>
           <Text style={styles.label}>{t("admin.form.category")}</Text>
           <View style={styles.categories}>

@@ -269,22 +269,19 @@ export default function ScanScreen({ navigation }) {
             <Text style={styles.productPrice}>
               {product.price.toFixed(2)} TND
             </Text>
+            {(product.stock ?? 0) <= 0 && (
+              <Text style={styles.outOfStockText}>{t("shop.outOfStock")}</Text>
+            )}
             {!!product.description && (
               <Text style={styles.productDesc}>{product.description}</Text>
             )}
           </View>
           <Pressable
-            style={styles.primaryBtn}
+            style={[styles.primaryBtn, (product.stock ?? 0) <= 0 && styles.primaryBtnDisabled]}
             onPress={() => {
-              if (cart) {
-                cart.addItem(product, 1);
-                Alert.alert(
-                  t("scan.addedTitle"),
-                  t("scan.addedMsg", { name: product.name })
-                );
-              }
+              if (cart) cart.addItemWithStockCheck(product, 1);
             }}
-            disabled={!cart}
+            disabled={!cart || (product.stock ?? 0) <= 0}
           >
             <AppIcon name="basket" size={18} color="#fff" />
             <Text style={styles.primaryBtnText}>{t("scan.addToCart")}</Text>
@@ -432,6 +429,9 @@ const getStyles = (colors) => StyleSheet.create({
     alignSelf: "stretch",
     marginTop: Spacing.sm,
   },
+  primaryBtnDisabled: {
+    backgroundColor: colors.textMuted,
+  },
   primaryBtnText: {
     color: "#fff",
     fontSize: 15,
@@ -505,6 +505,12 @@ const getStyles = (colors) => StyleSheet.create({
     fontSize: 20,
     fontWeight: "800",
     color: colors.primary,
+  },
+  outOfStockText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: colors.danger,
+    marginTop: 4,
   },
   productDesc: {
     fontSize: 14,

@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Cart = require("../models/Cart");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
@@ -37,54 +38,86 @@ exports.getSellerOrders = async (req, res, next) => {
   }
 };
 
-const buildOrderItems = async (requestItems) => {
-  const productIds = requestItems.map((item) => item.productId);
-  const products = await Product.find({ _id: { $in: productIds } });
-  const productsById = new Map(
-    products.map((product) => [product._id.toString(), product])
+// Atomically reserves stock for a single line item: the $gte guard means the
+// update only applies (and only then does stock actually decrement) if
+// enough stock is still available at the moment this runs, so concurrent
+// checkouts for the same product can never both succeed for more than what's
+// really in stock. Combined with the transaction in createOrder, a failure
+// on any one item rolls back every decrement already made for earlier items
+// in the same order — an order is all-or-nothing, never partially reserved.
+const reserveStock = async (item, session) => {
+  const qty = item.qty;
+  const updated = await Product.findOneAndUpdate(
+    { _id: item.productId, stock: { $gte: qty } },
+    { $inc: { stock: -qty } },
+    { new: true, session }
   );
 
-  return requestItems.map((item) => {
-    const product = productsById.get(item.productId);
+  if (updated) {
+    return { product: updated._id, name: updated.name, qty, price: updated.price };
+  }
 
-    if (!product) {
-      const error = new Error(`Product not found: ${item.productId}`);
-      error.statusCode = 404;
-      throw error;
-    }
+  // The guarded update matched nothing — figure out whether that's because
+  // the product doesn't exist at all, or it exists but doesn't have enough
+  // stock left, so the error message actually tells the user what happened.
+  const product = await Product.findById(item.productId).session(session);
+  if (!product) {
+    const error = new Error(`Product not found: ${item.productId}`);
+    error.statusCode = 404;
+    throw error;
+  }
 
-    return {
-      product: product._id,
-      name: product.name,
-      qty: item.qty,
-      price: product.price,
-    };
-  });
+  const error = new Error(
+    product.stock > 0
+      ? `Only ${product.stock} of "${product.name}" left in stock (you requested ${qty}).`
+      : `"${product.name}" is out of stock.`
+  );
+  error.statusCode = 409;
+  throw error;
 };
 
 exports.createOrder = async (req, res, next) => {
+  const session = await mongoose.startSession();
   try {
-    const orderItems = await buildOrderItems(req.body.items);
-    const subtotal = orderItems.reduce(
-      (sum, item) => sum + item.qty * item.price,
-      0
-    );
-    const total = subtotal + DELIVERY_FEE;
+    let order;
 
-    const order = await Order.create({
-      user: req.user.id,
-      items: orderItems,
-      total,
-      deliveryFee: DELIVERY_FEE,
-      address: req.body.address,
-      status: "confirmed",
+    await session.withTransaction(async () => {
+      const orderItems = [];
+      for (const item of req.body.items) {
+        orderItems.push(await reserveStock(item, session));
+      }
+
+      const subtotal = orderItems.reduce(
+        (sum, item) => sum + item.qty * item.price,
+        0
+      );
+      const total = subtotal + DELIVERY_FEE;
+
+      const [createdOrder] = await Order.create(
+        [
+          {
+            user: req.user.id,
+            items: orderItems,
+            total,
+            deliveryFee: DELIVERY_FEE,
+            address: req.body.address,
+            status: "confirmed",
+          },
+        ],
+        { session }
+      );
+      order = createdOrder;
+
+      await Cart.findOneAndUpdate(
+        { user: req.user.id },
+        { items: [], updatedAt: new Date() },
+        { session }
+      );
     });
 
-    await Cart.findOneAndUpdate(
-      { user: req.user.id },
-      { items: [], updatedAt: new Date() }
-    );
-
+    // Gamification is a side effect of a successfully committed order, not
+    // part of its correctness — it already swallows its own errors, so it
+    // runs after the transaction instead of inside it.
     const gamification = await gamificationService.recordAction(req.user.id, "order_placed", {
       sourceId: order._id.toString(),
     });
@@ -95,6 +128,8 @@ exports.createOrder = async (req, res, next) => {
     });
   } catch (error) {
     return next(error);
+  } finally {
+    await session.endSession();
   }
 };
 

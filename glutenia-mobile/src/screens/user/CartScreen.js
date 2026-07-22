@@ -16,6 +16,9 @@ export default function CartScreen({ navigation }) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const { items, updateQty, removeItem, clearCart, total } = useCart();
+  const hasOutOfStockItem = items.some(
+    (item) => typeof item.stock === "number" && item.stock <= 0
+  );
 
   return (
     <Screen>
@@ -60,10 +63,18 @@ export default function CartScreen({ navigation }) {
                   {item.name}
                 </Text>
                 <Text style={styles.itemPrice}>{item.price.toFixed(2)} TND</Text>
+                {typeof item.stock === "number" && item.qty >= item.stock && (
+                  <Text style={item.stock <= 0 ? styles.stockOut : styles.stockLow}>
+                    {item.stock <= 0
+                      ? t("cart.itemOutOfStock")
+                      : t("cart.itemLowStock", { stock: item.stock })}
+                  </Text>
+                )}
                 <View style={styles.itemActions}>
                   <QuantityStepper
                     value={item.qty}
                     onChange={(qty) => updateQty(item.productId, qty)}
+                    max={item.stock}
                   />
                   <Pressable onPress={() => removeItem(item.productId)}>
                     <AppIcon name="close-circle" size={28} color={colors.danger} />
@@ -81,7 +92,7 @@ export default function CartScreen({ navigation }) {
           <PrimaryButton
             title={t("cart.checkout")}
             icon="card"
-            disabled={!items.length}
+            disabled={!items.length || hasOutOfStockItem}
             onPress={() => navigation.navigate("Checkout")}
             style={styles.checkout}
           />
@@ -134,6 +145,16 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.primary,
     fontSize: 14,
     fontWeight: "900",
+  },
+  stockOut: {
+    color: colors.danger,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  stockLow: {
+    color: colors.warning,
+    fontSize: 12,
+    fontWeight: "700",
   },
   itemActions: {
     flexDirection: "row",

@@ -1,4 +1,4 @@
-import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import AppIcon from "../../components/AppIcon";
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
@@ -21,6 +21,11 @@ export default function AdminProductsScreen({ navigation }) {
   const productFormRoute = isAdmin ? "AdminProductForm" : "SellerProductForm";
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
+  // Distinct from `loading` (which also drives pull-to-refresh): tracks
+  // whether we've completed the very first fetch yet, so the empty state
+  // doesn't flash "no products" while the initial request is still in
+  // flight.
+  const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   const loadProducts = async () => {
     if (!token) {
@@ -40,6 +45,7 @@ export default function AdminProductsScreen({ navigation }) {
       }
     } finally {
       setLoading(false);
+      setInitialLoadDone(true);
     }
   };
 
@@ -86,6 +92,9 @@ export default function AdminProductsScreen({ navigation }) {
             </Pressable>
           }
         />
+        {!initialLoadDone ? (
+          <ActivityIndicator color={colors.primary} style={styles.loading} />
+        ) : (
         <FlatList
           data={products}
           keyExtractor={(item) => item._id}
@@ -96,12 +105,22 @@ export default function AdminProductsScreen({ navigation }) {
             <View style={styles.productRow}>
               <View style={styles.visual}>
                 <ProductVisual product={item} />
+                {item.stock <= 0 && (
+                  <View style={styles.outOfStockBadge}>
+                    <Text style={styles.outOfStockBadgeText}>{t("admin.products.outOfStock")}</Text>
+                  </View>
+                )}
               </View>
               <View style={styles.productBody}>
                 <Text style={styles.name} numberOfLines={2}>
                   {item.name}
                 </Text>
-                <Text style={styles.meta}>
+                <Text
+                  style={[
+                    styles.meta,
+                    item.stock <= 0 ? styles.stockOut : item.stock <= 5 && styles.stockLow,
+                  ]}
+                >
                   {item.category} - {t("admin.products.stock")} {item.stock}
                 </Text>
                 <Text style={styles.price}>{item.price.toFixed(2)} TND</Text>
@@ -124,6 +143,7 @@ export default function AdminProductsScreen({ navigation }) {
             </View>
           )}
         />
+        )}
       </View>
     </Screen>
   );
@@ -143,6 +163,9 @@ const getStyles = (colors) => StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  loading: {
+    marginVertical: Spacing.xl,
+  },
   listContent: {
     gap: 12,
     paddingBottom: 24,
@@ -159,6 +182,23 @@ const getStyles = (colors) => StyleSheet.create({
   visual: {
     width: 82,
   },
+  outOfStockBadge: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.danger,
+    paddingVertical: 2,
+    borderBottomLeftRadius: Radius.md,
+    borderBottomRightRadius: Radius.md,
+  },
+  outOfStockBadgeText: {
+    color: "#fff",
+    fontSize: 9,
+    fontWeight: "900",
+    textAlign: "center",
+    textTransform: "uppercase",
+  },
   productBody: {
     flex: 1,
     gap: 5,
@@ -172,6 +212,12 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.textMuted,
     fontSize: 12,
     fontWeight: "700",
+  },
+  stockOut: {
+    color: colors.danger,
+  },
+  stockLow: {
+    color: colors.warning,
   },
   price: {
     color: colors.primary,
