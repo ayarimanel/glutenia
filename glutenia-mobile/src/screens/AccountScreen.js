@@ -541,21 +541,6 @@ export default function AccountScreen({ navigation }) {
               </Pressable>
 
               <View style={styles.divider} />
-
-              <Pressable
-                style={styles.settingsRow}
-                onPress={() => navigation.navigate("PatientResources")}
-              >
-                <View style={styles.settingsLeft}>
-                  <View style={[styles.iconWrap, { backgroundColor: colors.secondaryPale }]}>
-                    <AppIcon name="activity" size={20} color={colors.secondary} />
-                  </View>
-                  <Text style={styles.settingsLabel}>{t("home.patientResources")}</Text>
-                </View>
-                <AppIcon name="chevron-right" size={20} color={colors.textMuted} />
-              </Pressable>
-
-              <View style={styles.divider} />
             </>
           )}
 
