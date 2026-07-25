@@ -67,6 +67,10 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Always rendered under <NotificationProvider> in this app's tree (App.js) -
-// see the matching note on useAuth in AuthContext.tsx.
-export const useNotifications = () => useContext(NotificationContext) as NotificationContextValue;
+export const useNotifications = (): NotificationContextValue => {
+  const context = useContext(NotificationContext);
+  if (!context) {
+    throw new Error("useNotifications must be used within a NotificationProvider");
+  }
+  return context;
+};

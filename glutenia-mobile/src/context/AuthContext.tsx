@@ -179,8 +179,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-// Every consumer in this app renders under <AuthProvider> (it's the
-// outermost provider in App.js), so the context value is never actually
-// null at runtime - this cast just spares every call site an unnecessary
-// null-check for a case that can't happen here.
-export const useAuth = () => useContext(AuthContext) as AuthContextValue;
+export const useAuth = (): AuthContextValue => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
+};

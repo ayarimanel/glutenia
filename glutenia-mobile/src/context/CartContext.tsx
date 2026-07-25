@@ -172,6 +172,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
 
-// Always rendered under <CartProvider> in this app's tree (App.js) - see the
-// matching note on useAuth in AuthContext.tsx.
-export const useCart = () => useContext(CartContext) as CartContextValue;
+export const useCart = (): CartContextValue => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error("useCart must be used within a CartProvider");
+  }
+  return context;
+};
