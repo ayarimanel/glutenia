@@ -94,7 +94,7 @@ export default function AdminAnalyticsScreen({ navigation }: { navigation: AppNa
     counts: Record<string, number> | undefined,
     labels: L
   ) =>
-    (Object.keys(labels) as Array<keyof L & string>)
+    (Object.keys(labels) as (keyof L & string)[])
       .map((key) => ({ label: labels[key], value: counts?.[key] || 0 }))
       .filter((item) => item.value > 0);
 

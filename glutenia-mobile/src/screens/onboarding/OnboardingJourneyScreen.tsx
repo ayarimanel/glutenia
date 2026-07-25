@@ -12,7 +12,7 @@ import type { ExperienceLevel } from "../../types/models";
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const daysAgo = (n: number): string => new Date(Date.now() - n * MS_PER_DAY).toISOString();
 
-const OPTIONS_META: Array<{ key: string; value: ExperienceLevel; glutenFreeSince: string }> = [
+const OPTIONS_META: { key: string; value: ExperienceLevel; glutenFreeSince: string }[] = [
   { key: "justStarted",       value: "just_started",   glutenFreeSince: daysAgo(0)    },
   { key: "lessThan6Months",   value: "1_to_6_months",  glutenFreeSince: daysAgo(90)   },
   { key: "sixTo12Months",     value: "6_to_12_months", glutenFreeSince: daysAgo(270)  },

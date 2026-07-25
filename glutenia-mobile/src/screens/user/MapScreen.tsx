@@ -43,7 +43,7 @@ type CategoryVisual = { emoji: string; color: string; accentEmoji: string };
 type MapMessage =
   | {
       type: "updateSpots";
-      spots: Array<{ id: string; lat: number; lng: number; emoji: string; color: string; type: string }>;
+      spots: { id: string; lat: number; lng: number; emoji: string; color: string; type: string }[];
     }
   | { type: "flyTo"; spotId: string; lat: number; lng: number };
 

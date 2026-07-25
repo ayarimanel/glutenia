@@ -13,7 +13,7 @@ export default function OnboardingRoleScreen({ navigation }: { navigation: AppNa
   const styles = getStyles(colors);
   const [selected, setSelected] = useState<RoleType | null>(null);
 
-  const OPTIONS: Array<{ label: string; subtitle: string; value: RoleType }> = [
+  const OPTIONS: { label: string; subtitle: string; value: RoleType }[] = [
     {
       label: t("profileOnboarding.role.warrior"),
       subtitle: t("profileOnboarding.role.warriorSub"),

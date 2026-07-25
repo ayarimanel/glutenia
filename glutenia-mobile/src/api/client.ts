@@ -243,7 +243,7 @@ export type ProductScanResult =
 // order.controller.js's createOrder/reserveStock, not assumed from the
 // Order model.
 export interface CreateOrderBody {
-  items: Array<{ productId: string; name: string; qty: number; price: number }>;
+  items: { productId: string; name: string; qty: number; price: number }[];
   address: { fullName: string; addressLine: string; city: string; phone: string };
 }
 

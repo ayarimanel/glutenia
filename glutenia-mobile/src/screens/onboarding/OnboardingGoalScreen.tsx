@@ -20,7 +20,7 @@ export default function OnboardingGoalScreen({ navigation, route }: OnboardingGo
   const styles = getStyles(colors);
   const [selected, setSelected] = useState<PrimaryGoal | null>(null);
 
-  const OPTIONS: Array<{ label: string; value: PrimaryGoal }> = [
+  const OPTIONS: { label: string; value: PrimaryGoal }[] = [
     { label: t("profileOnboarding.goal.manage_celiac"), value: "manage_celiac" },
     { label: t("profileOnboarding.goal.manage_intolerance"), value: "manage_intolerance" },
     { label: t("profileOnboarding.goal.support_child"), value: "support_child" },

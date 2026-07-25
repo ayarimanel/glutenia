@@ -25,7 +25,7 @@ export default function OnboardingConfidenceScreen({ navigation, route }: Onboar
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const OPTIONS: Array<{ label: string; subtitle: string; value: ConfidenceLevel }> = [
+  const OPTIONS: { label: string; subtitle: string; value: ConfidenceLevel }[] = [
     {
       label: t("profileOnboarding.confidence.still_learning"),
       subtitle: t("profileOnboarding.confidence.still_learningSub"),

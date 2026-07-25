@@ -20,7 +20,7 @@ export default function OnboardingEatingOutScreen({ navigation, route }: Onboard
   const styles = getStyles(colors);
   const [selected, setSelected] = useState<EatingOutFrequency | null>(null);
 
-  const OPTIONS: Array<{ label: string; value: EatingOutFrequency }> = [
+  const OPTIONS: { label: string; value: EatingOutFrequency }[] = [
     { label: t("profileOnboarding.eatingOut.rarely"), value: "rarely" },
     { label: t("profileOnboarding.eatingOut.fewTimesMonth"), value: "few_times_month" },
     { label: t("profileOnboarding.eatingOut.weekly"), value: "weekly" },

@@ -329,7 +329,7 @@ export interface ScanHistoryEntry {
 
 export interface LabelScanResult {
   verdict: ScanVerdict;
-  flagged: Array<{ ingredient: string; reason: string }>;
+  flagged: { ingredient: string; reason: string }[];
   safe_highlights: string[];
   raw_text: string;
   confidence: "high" | "medium" | "low";
@@ -346,5 +346,5 @@ export interface UserAnalytics {
   byPrimaryGoal: Record<string, number>;
   byEatingOutFrequency: Record<string, number>;
   byConfidence: Record<string, number>;
-  signupTrend: Array<{ date: string; count: number }>;
+  signupTrend: { date: string; count: number }[];
 }

@@ -27,7 +27,7 @@ import type {
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const daysAgo = (n: number) => new Date(Date.now() - n * MS_PER_DAY).toISOString();
 
-const EXPERIENCE_META: Array<{ value: ExperienceLevel; days: number }> = [
+const EXPERIENCE_META: { value: ExperienceLevel; days: number }[] = [
   { value: "just_started", days: 0 },
   { value: "1_to_6_months", days: 90 },
   { value: "6_to_12_months", days: 270 },
@@ -41,7 +41,7 @@ function OptionGroup<T extends string>({
   onSelect,
   styles,
 }: {
-  options: Array<{ value: T; label: string; subtitle?: string }>;
+  options: { value: T; label: string; subtitle?: string }[];
   selected: T;
   onSelect: (value: T) => void;
   styles: ReturnType<typeof getStyles>;
@@ -86,12 +86,12 @@ export default function EditJourneyScreen({ navigation }: { navigation: AppNavig
   const [confidence, setConfidence] = useState<ConfidenceLevel>(user?.confidence_identifying_gf || "medium");
   const [saving, setSaving] = useState(false);
 
-  const roleOptions: Array<{ value: RoleType; label: string; subtitle: string }> = [
+  const roleOptions: { value: RoleType; label: string; subtitle: string }[] = [
     { value: "warrior", label: t("profileOnboarding.role.warrior"), subtitle: t("profileOnboarding.role.warriorSub") },
     { value: "supporter", label: t("profileOnboarding.role.supporter"), subtitle: t("profileOnboarding.role.supporterSub") },
   ];
 
-  const experienceOptions: Array<{ value: ExperienceLevel; label: string }> = [
+  const experienceOptions: { value: ExperienceLevel; label: string }[] = [
     { value: "just_started", label: t("profileOnboarding.journey.justStarted") },
     { value: "1_to_6_months", label: t("profileOnboarding.journey.lessThan6Months") },
     { value: "6_to_12_months", label: t("profileOnboarding.journey.sixTo12Months") },
@@ -99,7 +99,7 @@ export default function EditJourneyScreen({ navigation }: { navigation: AppNavig
     { value: "3_plus_years", label: t("profileOnboarding.journey.moreThanThreeYears") },
   ];
 
-  const goalOptions: Array<{ value: PrimaryGoal; label: string }> = [
+  const goalOptions: { value: PrimaryGoal; label: string }[] = [
     { value: "manage_celiac", label: t("profileOnboarding.goal.manage_celiac") },
     { value: "manage_intolerance", label: t("profileOnboarding.goal.manage_intolerance") },
     { value: "support_child", label: t("profileOnboarding.goal.support_child") },
@@ -108,14 +108,14 @@ export default function EditJourneyScreen({ navigation }: { navigation: AppNavig
     { value: "exploring", label: t("profileOnboarding.goal.exploring") },
   ];
 
-  const eatingOutOptions: Array<{ value: EatingOutFrequency; label: string }> = [
+  const eatingOutOptions: { value: EatingOutFrequency; label: string }[] = [
     { value: "rarely", label: t("profileOnboarding.eatingOut.rarely") },
     { value: "few_times_month", label: t("profileOnboarding.eatingOut.fewTimesMonth") },
     { value: "weekly", label: t("profileOnboarding.eatingOut.weekly") },
     { value: "multiple_week", label: t("profileOnboarding.eatingOut.multipleWeek") },
   ];
 
-  const confidenceOptions: Array<{ value: ConfidenceLevel; label: string; subtitle: string }> = [
+  const confidenceOptions: { value: ConfidenceLevel; label: string; subtitle: string }[] = [
     { value: "low", label: t("profileOnboarding.confidence.still_learning"), subtitle: t("profileOnboarding.confidence.still_learningSub") },
     { value: "medium", label: t("profileOnboarding.confidence.getting_there"), subtitle: t("profileOnboarding.confidence.getting_thereSub") },
     { value: "high", label: t("profileOnboarding.confidence.confident"), subtitle: t("profileOnboarding.confidence.confidentSub") },
