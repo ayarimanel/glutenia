@@ -166,7 +166,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const value = useMemo(
     () => ({ items, addItem, addItemWithStockCheck, updateQty, removeItem, clearCart, total, count }),
-    [items, total, count]
+    // `t` is included so a language switch alone refreshes
+    // addItemWithStockCheck's out-of-stock Alert text - without it, that
+    // closure keeps referencing the pre-switch `t` until the cart's items/
+    // total/count next change for an unrelated reason.
+    [items, total, count, t]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
