@@ -13,7 +13,8 @@
     "build:apk": "npm run prebuild:android && cd android && .\\gradlew.bat assembleRelease && cd .. && node scripts/finalize-apk.js",
     "check": "expo install --check",
     "doctor": "npx expo-doctor",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.5",
@@ -51,7 +52,10 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@types/react": "~19.0.10",
+    "@types/react-dom": "~19.0.4",
     "patch-package": "^8.0.1",
-    "sharp": "^0.34.5"
+    "sharp": "^0.34.5",
+    "typescript": "~5.8.3"
   }
 }
