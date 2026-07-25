@@ -18,16 +18,18 @@ import EmptyState from "../../components/EmptyState";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation } from "../../navigation/types";
+import type { Event } from "../../types/models";
 
 const CATEGORY_KEYS = ["all", "meetups", "classes", "markets", "workshops"];
 
-export default function EventsScreen({ navigation }) {
+export default function EventsScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const { user, token } = useAuth();
-  const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeCategory, setActiveCategory] = useState("all");
 
@@ -36,7 +38,7 @@ export default function EventsScreen({ navigation }) {
       const load = async () => {
         try {
           setLoading(true);
-          const data = await api.events(token);
+          const data = await api.events(token as string);
           setEvents(data);
         } catch {
           // leave previous data visible on error
@@ -57,7 +59,7 @@ export default function EventsScreen({ navigation }) {
     <Screen>
       <AppHeader
         userName={user?.name ?? ""}
-        avatarUri={user?.avatar}
+        avatarUri={user?.avatar ?? undefined}
         onCartPress={() => navigation.navigate("CartPage")}
       />
       <View style={styles.container}>
@@ -157,7 +159,7 @@ export default function EventsScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: Spacing.md,

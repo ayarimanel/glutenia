@@ -33,6 +33,7 @@ import type {
   LabelScanResult,
   ProfessionalStatus,
 } from "../types/models";
+import type { MapSpot } from "../navigation/types";
 
 const trimTrailingSlash = (value: string): string => value.replace(/\/+$/, "");
 const DEFAULT_TIMEOUT_MS = 20000;
@@ -404,9 +405,9 @@ export const api = {
     request<User>(`/professionals/requests/${id}/reject`, { method: "POST", token }),
   establishments: (params: ListParams = {}) => request<Establishment[]>(`/establishments${toQueryString(params)}`),
   establishment: (id: string) => request<Establishment>(`/establishments/${id}`),
-  getFavoriteSpots: (token: string) => request<unknown[]>("/users/me/favorites", { token }),
-  updateFavoriteSpots: (token: string, favorites: unknown[]) =>
-    request<unknown[]>("/users/me/favorites", { method: "PUT", token, body: { favorites } }),
+  getFavoriteSpots: (token: string) => request<MapSpot[]>("/users/me/favorites", { token }),
+  updateFavoriteSpots: (token: string, favorites: MapSpot[]) =>
+    request<MapSpot[]>("/users/me/favorites", { method: "PUT", token, body: { favorites } }),
   myEstablishment: (token: string) => request<Establishment | null>("/establishments/mine", { token }),
   upsertMyEstablishment: (token: string, body: EstablishmentInput) =>
     request<Establishment>("/establishments/mine", { method: "PUT", token, body }),

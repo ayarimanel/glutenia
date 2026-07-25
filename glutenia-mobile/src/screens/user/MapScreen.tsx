@@ -10,23 +10,46 @@ import {
   Image,
 } from "react-native";
 import { WebView } from "react-native-webview";
+import type { WebViewMessageEvent } from "react-native-webview";
 import { useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import BottomSheet, {
   BottomSheetScrollView,
   BottomSheetBackdrop,
+  type BottomSheetBackdropProps,
 } from "@gorhom/bottom-sheet";
 import { Radius, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
-import AppIcon from "../../components/AppIcon";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import AppIcon, { type IconName } from "../../components/AppIcon";
 import AppHeader from "../../components/AppHeader";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { useTranslation } from "react-i18next";
+import type { AppNavigation, MapSpot } from "../../navigation/types";
+import type { Establishment, EstablishmentCategory } from "../../types/models";
+import type { LayoutChangeEvent } from "react-native";
+
+// A demo/normalized spot that always has coordinates - unlike MapSpot's
+// coordinate, which is nullable to reflect establishments that never set
+// theirs. Both getSpots()'s static catalog and normalizeEstablishment()'s
+// output (only ever called on establishments pre-filtered for coordinates
+// in the useFocusEffect below) satisfy this narrower shape in practice.
+type PositionedSpot = MapSpot & { coordinate: NonNullable<MapSpot["coordinate"]> };
+
+const hasCoordinate = (s: MapSpot): s is PositionedSpot => s.coordinate != null;
+
+type CategoryVisual = { emoji: string; color: string; accentEmoji: string };
+
+type MapMessage =
+  | {
+      type: "updateSpots";
+      spots: Array<{ id: string; lat: number; lng: number; emoji: string; color: string; type: string }>;
+    }
+  | { type: "flyTo"; spotId: string; lat: number; lng: number };
 
 // ─── Color helper ─────────────────────────────────────────────────────────────
 
-function hexToRgba(hex, alpha) {
+function hexToRgba(hex: string, alpha: number): string {
   const h = hex.replace("#", "");
   const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
   const bigint = parseInt(full, 16);
@@ -38,7 +61,7 @@ function hexToRgba(hex, alpha) {
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
-const getSpots = (colors) => [
+const getSpots = (colors: ThemeColors): PositionedSpot[] => [
   {
     id: "1",
     name: "Ben Yaghlene Shops",
@@ -216,11 +239,11 @@ const FILTERS = ["All", "Supermarket", "Restaurant", "Health Store", "Bakery", "
 
 // ─── Star rating helper ───────────────────────────────────────────────────────
 
-function StarRating({ rating, styles }) {
+function StarRating({ rating }: { rating: number }) {
   const full = Math.floor(rating);
   const half = rating - full >= 0.5;
   return (
-    <Text style={styles.stars}>
+    <Text>
       {"★".repeat(full)}
       {half ? "½" : ""}
       {"☆".repeat(5 - full - (half ? 1 : 0))}
@@ -232,7 +255,7 @@ function StarRating({ rating, styles }) {
 
 // ─── Visual Mapping Helpers ──────────────────────────────────────────────────
 
-const SPOT_IMAGES = {
+const SPOT_IMAGES: Record<string, string> = {
   "1": "https://images.unsplash.com/photo-1542838132-92c53300491e?w=500", // Supermarket
   "2": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500", // Restaurant
   "3": "https://images.unsplash.com/photo-1506084868230-bb9d95c24759?w=500", // Health Store
@@ -245,7 +268,7 @@ const SPOT_IMAGES = {
   "10": "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=500", // Supermarket Centre Ville
 };
 
-const FILTER_ICONS = {
+const FILTER_ICONS: Record<string, IconName> = {
   All: "grid",
   Supermarket: "basket",
   Restaurant: "utensils",
@@ -256,7 +279,7 @@ const FILTER_ICONS = {
 
 // ─── Real (professional-submitted) establishments → map spot shape ──────────
 
-const getCategoryVisual = (colors) => ({
+const getCategoryVisual = (colors: ThemeColors): Record<EstablishmentCategory, CategoryVisual> => ({
   Supermarket: { emoji: "🛒", color: colors.primary, accentEmoji: "🛒" },
   Restaurant: { emoji: "🍽️", color: colors.secondary, accentEmoji: "🍽️" },
   "Health Store": { emoji: "🌿", color: colors.primary, accentEmoji: "🌿" },
@@ -267,7 +290,7 @@ const getCategoryVisual = (colors) => ({
 
 const MAP_CENTER = { latitude: 36.82, longitude: 10.2 };
 
-function haversineKm(lat1, lon1, lat2, lon2) {
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
@@ -277,7 +300,15 @@ function haversineKm(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function normalizeEstablishment(est, categoryVisual) {
+// Note: the useFocusEffect below only calls this on establishments already
+// filtered for non-null coordinates.latitude/longitude, so `coordinate` is
+// always set in practice - but the signature stays honest to what this
+// function alone can guarantee (see hasCoordinate/PositionedSpot below for
+// where that stronger guarantee actually gets used).
+function normalizeEstablishment(
+  est: Establishment,
+  categoryVisual: Record<EstablishmentCategory, CategoryVisual>
+): MapSpot {
   const visual = categoryVisual[est.category] || categoryVisual.Other;
   const lat = est.coordinates?.latitude;
   const lng = est.coordinates?.longitude;
@@ -311,7 +342,7 @@ function normalizeEstablishment(est, categoryVisual) {
 
 // ─── Leaflet HTML builder ─────────────────────────────────────────────────────
 
-function buildLeafletHTML(spots) {
+function buildLeafletHTML(spots: PositionedSpot[]): string {
   const data = spots.map((s) => ({
     id: s.id,
     lat: s.coordinate.latitude,
@@ -459,7 +490,7 @@ function buildLeafletHTML(spots) {
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
-export default function MapScreen({ navigation }) {
+export default function MapScreen({ navigation }: { navigation: AppNavigation }) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { user, token } = useAuth();
@@ -467,7 +498,7 @@ export default function MapScreen({ navigation }) {
   const styles = useMemo(() => getStyles(colors), [colors]);
   const categoryVisual = useMemo(() => getCategoryVisual(colors), [colors]);
   const SPOTS = useMemo(() => getSpots(colors), [colors]);
-  const filterLabels = {
+  const filterLabels: Record<string, string> = {
     All: t("map.all"),
     Supermarket: t("map.supermarket"),
     Restaurant: t("map.restaurant"),
@@ -482,7 +513,7 @@ export default function MapScreen({ navigation }) {
     { day: t("map.sunday"),   time: "10:00 – 16:00" },
   ];
 
-  const getFacilities = (type) => {
+  const getFacilities = (type: string) => {
     switch (type) {
       case "Restaurant":
         return [t("map.facR1"), t("map.facR2"), t("map.facR3"), t("map.facR4")];
@@ -496,16 +527,16 @@ export default function MapScreen({ navigation }) {
         return [t("map.facD1"), t("map.facD2"), t("map.facD3")];
     }
   };
-  const webViewRef = useRef(null);
-  const bottomSheetRef = useRef(null);
+  const webViewRef = useRef<WebView>(null);
+  const bottomSheetRef = useRef<BottomSheet>(null);
 
   const [activeFilter, setActiveFilter] = useState("All");
   const [selectedId, setSelectedId] = useState(SPOTS[0].id);
   const [headerHeight, setHeaderHeight] = useState(88);
   const [sheetIndex, setSheetIndex] = useState(-1);
-  const [realSpots, setRealSpots] = useState([]);
+  const [realSpots, setRealSpots] = useState<MapSpot[]>([]);
   const [mapWebViewReady, setMapWebViewReady] = useState(false);
-  const [favorites, setFavorites] = useState([]);
+  const [favorites, setFavorites] = useState<MapSpot[]>([]);
 
   const snapPoints = useMemo(() => ["55%", "90%"], []);
   const leafletHTML = useMemo(() => buildLeafletHTML(SPOTS), [SPOTS]);
@@ -523,7 +554,7 @@ export default function MapScreen({ navigation }) {
   }, [token]);
 
   const toggleFavorite = useCallback(
-    (spot) => {
+    (spot: MapSpot) => {
       setFavorites((current) => {
         const isFavorited = current.some((f) => f.id === spot.id);
         const next = isFavorited
@@ -567,7 +598,7 @@ export default function MapScreen({ navigation }) {
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
-  const sendToMap = useCallback((data) => {
+  const sendToMap = useCallback((data: MapMessage) => {
     webViewRef.current?.injectJavaScript(
       `if (window.handleFromRN) { window.handleFromRN(${JSON.stringify(data)}); } true;`
     );
@@ -580,7 +611,7 @@ export default function MapScreen({ navigation }) {
     sendToMap({
       type: "updateSpots",
       spots: next
-        .filter((s) => s.coordinate)
+        .filter(hasCoordinate)
         .map((s) => ({
           id: s.id,
           lat: s.coordinate.latitude,
@@ -593,8 +624,10 @@ export default function MapScreen({ navigation }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [realSpots, mapWebViewReady]);
 
+  // Unused elsewhere in this screen (markers are flown-to only via
+  // handleFilterChange/handleLocateMe), kept as-is from the JS version.
   const animateToSpot = useCallback(
-    (spot) => {
+    (spot: PositionedSpot) => {
       sendToMap({
         type: "flyTo",
         spotId: spot.id,
@@ -611,7 +644,7 @@ export default function MapScreen({ navigation }) {
   }, []);
 
   const handleWebViewMessage = useCallback(
-    (event) => {
+    (event: WebViewMessageEvent) => {
       try {
         const msg = JSON.parse(event.nativeEvent.data);
         if (msg.type === "markerPress") {
@@ -627,12 +660,12 @@ export default function MapScreen({ navigation }) {
   );
 
   const handleFilterChange = useCallback(
-    (f) => {
+    (f: string) => {
       bottomSheetRef.current?.close();
       setActiveFilter(f);
       const next = f === "All" ? allSpots : allSpots.filter((s) => s.type === f);
       const nextData = next
-        .filter((s) => s.coordinate)
+        .filter(hasCoordinate)
         .map((s) => ({
           id: s.id,
           lat: s.coordinate.latitude,
@@ -670,7 +703,7 @@ export default function MapScreen({ navigation }) {
   }, [selectedSpot]);
 
   const handleDirections = useCallback(() => {
-    if (!selectedSpot) return;
+    if (!selectedSpot?.coordinate) return;
     const url = `https://www.google.com/maps/dir/?api=1&destination=${selectedSpot.coordinate.latitude},${selectedSpot.coordinate.longitude}`;
     Linking.openURL(url).catch(() => {
       Alert.alert(t("map.errorTitle"), t("map.mapsError"));
@@ -688,7 +721,7 @@ export default function MapScreen({ navigation }) {
   }, [sendToMap, SPOTS]);
 
   const renderBackdrop = useCallback(
-    (props) => (
+    (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop
         {...props}
         appearsOnIndex={0}
@@ -720,12 +753,12 @@ export default function MapScreen({ navigation }) {
       {/* ── Layer 2: Header ──────────────────────────────────────────────────── */}
       <View
         style={styles.headerWrap}
-        onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
+        onLayout={(e: LayoutChangeEvent) => setHeaderHeight(e.nativeEvent.layout.height)}
       >
         <AppHeader
           safeTop
           userName={user?.name ?? ""}
-          avatarUri={user?.avatar}
+          avatarUri={user?.avatar ?? undefined}
           onCartPress={() => navigation.navigate("CartPage")}
         />
       </View>
@@ -1030,7 +1063,7 @@ export default function MapScreen({ navigation }) {
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
-const getStyles = (colors) =>
+const getLayoutStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     root: {
       flex: 1,
@@ -1107,7 +1140,10 @@ const getStyles = (colors) =>
       borderWidth: 1,
       borderColor: colors.border,
     },
+  });
 
+const getCardStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
     infoCard: {
       position: "absolute",
       left: 16,
@@ -1248,7 +1284,10 @@ const getStyles = (colors) =>
       elevation: 4,
       zIndex: 7,
     },
+  });
 
+const getSheetStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
     sheetBg: {
       backgroundColor: colors.background,
       borderTopLeftRadius: 32,
@@ -1341,7 +1380,10 @@ const getStyles = (colors) =>
       marginHorizontal: 8,
       fontSize: 12,
     },
+  });
 
+const getSectionStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
     sectionCard: {
       backgroundColor: colors.surface,
       borderRadius: 20,
@@ -1435,7 +1477,10 @@ const getStyles = (colors) =>
       color: colors.textMuted,
       fontWeight: "600",
     },
+  });
 
+const getReviewCtaStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
     reviewsContainer: {
       gap: 12,
     },
@@ -1526,3 +1571,12 @@ const getStyles = (colors) =>
       color: "#FFFFFF",
     },
   });
+
+const getStyles = (colors: ThemeColors) => {
+  const layoutStyles = getLayoutStyles(colors);
+  const cardStyles = getCardStyles(colors);
+  const sheetStyles = getSheetStyles(colors);
+  const sectionStyles = getSectionStyles(colors);
+  const reviewCtaStyles = getReviewCtaStyles(colors);
+  return { ...layoutStyles, ...cardStyles, ...sheetStyles, ...sectionStyles, ...reviewCtaStyles };
+};

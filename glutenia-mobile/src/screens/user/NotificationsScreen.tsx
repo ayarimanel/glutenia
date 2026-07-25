@@ -11,11 +11,14 @@ import { useNotifications } from "../../context/NotificationContext";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation } from "../../navigation/types";
+import type { Notification } from "../../types/models";
+import type { IconName } from "../../components/AppIcon";
 
 const EVENT_TYPES = new Set(["event_join", "event_leave", "event_new"]);
 
-const TYPE_ICONS = {
+const TYPE_ICONS: Record<string, IconName> = {
   event_join: "checkmark-circle",
   event_leave: "close-circle",
   event_new: "calendar",
@@ -24,12 +27,11 @@ const TYPE_ICONS = {
   professional_rejected: "close-circle",
 };
 
-export default function NotificationsScreen({ navigation }) {
+export default function NotificationsScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const { notifications, refresh, markRead, markAllRead, unreadCount } =
-    useNotifications() ?? {};
+  const { notifications, refresh, markRead, markAllRead, unreadCount } = useNotifications();
   const { token } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -47,12 +49,12 @@ export default function NotificationsScreen({ navigation }) {
 
   // Takes the user to whatever the notification is actually about, instead
   // of just marking it read and leaving them to go find it themselves.
-  const handlePress = async (item) => {
+  const handlePress = async (item: Notification) => {
     if (!item.read) markRead(item._id);
 
     if (EVENT_TYPES.has(item.type) && item.referenceId) {
       try {
-        const event = await api.event(item.referenceId, token);
+        const event = await api.event(item.referenceId, token as string);
         navigation.navigate("EventDetail", { event });
       } catch (_) {
         // Event may no longer exist — nothing to open.
@@ -115,7 +117,7 @@ export default function NotificationsScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: Spacing.md,

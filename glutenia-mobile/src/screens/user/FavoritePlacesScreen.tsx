@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -12,23 +13,24 @@ import { useTranslation } from "react-i18next";
 import { ArrowLeft, Heart, MapPin, Compass } from "lucide-react-native";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
+import type { AppNavigation, MapSpot } from "../../navigation/types";
 
-export default function FavoritePlacesScreen({ navigation }) {
+export default function FavoritePlacesScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const { token } = useAuth();
 
-  const [favorites, setFavorites] = useState([]);
+  const [favorites, setFavorites] = useState<MapSpot[]>([]);
   const [loading, setLoading] = useState(true);
-  const [removingId, setRemovingId] = useState(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
 
   const fetchFavorites = useCallback(async () => {
     setLoading(true);
     try {
-      const list = await api.getFavoriteSpots(token);
+      const list = await api.getFavoriteSpots(token as string);
       setFavorites(list || []);
     } catch (_) {
       // Non-critical — leave whatever was already loaded.
@@ -43,12 +45,12 @@ export default function FavoritePlacesScreen({ navigation }) {
     }, [fetchFavorites])
   );
 
-  const handleRemove = async (spot) => {
+  const handleRemove = async (spot: MapSpot) => {
     const next = favorites.filter((f) => f.id !== spot.id);
     setFavorites(next);
     setRemovingId(spot.id);
     try {
-      await api.updateFavoriteSpots(token, next);
+      await api.updateFavoriteSpots(token as string, next);
     } catch (_) {
       setFavorites(favorites);
     } finally {
@@ -129,7 +131,7 @@ export default function FavoritePlacesScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => ({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   centered: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: Spacing.xl },
 

@@ -9,15 +9,22 @@ import {
 } from "react-native";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { RouteProp } from "@react-navigation/native";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
+import { api, type ApiError } from "../../api/client";
 import { notifyGamification } from "../../context/GamificationContext";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation, RootParamList } from "../../navigation/types";
 
-export default function EventDetailScreen({ route, navigation }) {
+type Props = {
+  route: RouteProp<RootParamList, "EventDetail">;
+  navigation: AppNavigation;
+};
+
+export default function EventDetailScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -39,7 +46,7 @@ export default function EventDetailScreen({ route, navigation }) {
       setAttendeeCount(result.attendeeCount);
       notifyGamification(result.gamification);
     } catch (error) {
-      Alert.alert(t("eventDetail.rsvpError"), error.message);
+      Alert.alert(t("eventDetail.rsvpError"), (error as ApiError).message);
     } finally {
       setLoading(false);
     }
@@ -126,7 +133,7 @@ export default function EventDetailScreen({ route, navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   hero: {
     height: 240,
     alignItems: "center",

@@ -12,16 +12,19 @@ import {
 import { useEffect, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { useTranslation } from "react-i18next";
+import type { RouteProp } from "@react-navigation/native";
 import Screen from "../../components/Screen";
 import Field from "../../components/Field";
 import AppIcon from "../../components/AppIcon";
 import { SecondaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
+import { api, type ApiError } from "../../api/client";
 import { Radius, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation, RootParamList } from "../../navigation/types";
+import type { EventCategory } from "../../types/models";
 
-const CATEGORIES = ["Meetups", "Classes", "Markets", "Workshops"];
+const CATEGORIES: EventCategory[] = ["Meetups", "Classes", "Markets", "Workshops"];
 const MAX_IMAGE_DATA_URL_LENGTH = 3000000;
 
 const PRESET_EMOJIS = ["🎉", "👨‍🍳", "🧺", "🧁", "🛍️", "🥗", "🌿", "🍞", "🎪", "🏃"];
@@ -34,7 +37,19 @@ const PRESET_COLORS = [
   { value: "#F3E5F5", label: "Purple" },
 ];
 
-export default function CreateEventScreen({ navigation, route }) {
+type FormErrors = {
+  title?: string;
+  date?: string;
+  location?: string;
+  category?: string;
+};
+
+type Props = {
+  route: RouteProp<RootParamList, "CreateEvent">;
+  navigation: AppNavigation;
+};
+
+export default function CreateEventScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -45,19 +60,19 @@ export default function CreateEventScreen({ navigation, route }) {
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
   const [location, setLocation] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState<EventCategory | "">("");
   const [price, setPrice] = useState("0");
   const [emoji, setEmoji] = useState("🎉");
   const [color, setColor] = useState("#E8F5E9");
   const [imageUrl, setImageUrl] = useState("");
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!eventId) return;
     const loadEvent = async () => {
       try {
-        const event = await api.event(eventId, token);
+        const event = await api.event(eventId, token as string);
         setTitle(event.title);
         setDescription(event.description || "");
         setDate(event.date);
@@ -68,7 +83,7 @@ export default function CreateEventScreen({ navigation, route }) {
         setColor(event.color || "#E8F5E9");
         setImageUrl(event.imageUrl || "");
       } catch (error) {
-        Alert.alert(t("createEvent.loadError"), error.message);
+        Alert.alert(t("createEvent.loadError"), (error as ApiError).message);
         navigation.goBack();
       }
     };
@@ -109,7 +124,7 @@ export default function CreateEventScreen({ navigation, route }) {
   };
 
   const handleSubmit = async () => {
-    const nextErrors = {};
+    const nextErrors: FormErrors = {};
     if (!title.trim()) nextErrors.title = t("createEvent.errors.titleRequired");
     if (!date.trim()) nextErrors.date = t("createEvent.errors.dateRequired");
     if (!location.trim()) nextErrors.location = t("createEvent.errors.locationRequired");
@@ -123,7 +138,7 @@ export default function CreateEventScreen({ navigation, route }) {
       description: description.trim(),
       date: date.trim(),
       location: location.trim(),
-      category,
+      category: category as EventCategory,
       price: Number(price) || 0,
       emoji,
       color,
@@ -133,12 +148,12 @@ export default function CreateEventScreen({ navigation, route }) {
     try {
       setLoading(true);
       if (eventId) {
-        await api.updateEvent(token, eventId, body);
+        await api.updateEvent(token as string, eventId, body);
         Alert.alert(t("createEvent.updateSuccess"), t("createEvent.updateSuccessMsg", { title }), [
           { text: t("createEvent.ok"), onPress: () => navigation.goBack() },
         ]);
       } else {
-        await api.createEvent(token, body);
+        await api.createEvent(token as string, body);
         Alert.alert(t("createEvent.success"), t("createEvent.successMsg", { title }), [
           { text: t("createEvent.ok"), onPress: () => navigation.goBack() },
         ]);
@@ -146,7 +161,7 @@ export default function CreateEventScreen({ navigation, route }) {
     } catch (error) {
       Alert.alert(
         eventId ? t("createEvent.updateErrorTitle") : t("createEvent.errorTitle"),
-        error.message
+        (error as ApiError).message
       );
     } finally {
       setLoading(false);
@@ -289,7 +304,7 @@ export default function CreateEventScreen({ navigation, route }) {
             onPress={handleSubmit}
             disabled={loading}
           >
-            <AppIcon name={loading ? "hourglass" : "checkmark-circle"} size={20} color="#fff" />
+            <AppIcon name={loading ? "clock" : "checkmark-circle"} size={20} color="#fff" />
             <Text style={styles.submitText}>
               {loading
                 ? t("createEvent.saving")
@@ -304,7 +319,7 @@ export default function CreateEventScreen({ navigation, route }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     padding: Spacing.md,
     gap: Spacing.md,

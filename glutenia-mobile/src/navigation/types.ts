@@ -16,22 +16,35 @@ import type {
 export type CreatedOrder = Order & { gamification: GamificationDelta | null };
 
 // FavoritePlacesScreen/MapScreen's "spot" shape — a client-side mix of
-// static demo spots and Establishment snapshots (User.favoriteSpots is
-// Mixed/heterogeneous on the backend, no fixed shape enforced there).
-// Derived from the exact fields MapDetailScreen reads, not the backend model.
+// static demo spots (getSpots() in MapScreen) and real Establishment
+// records normalized into the same shape (normalizeEstablishment() in
+// MapScreen). User.favoriteSpots is Mixed/heterogeneous on the backend, no
+// fixed shape enforced there - this is derived from every field actually
+// read across MapScreen/MapDetailScreen/FavoritePlacesScreen, not the
+// backend model. `id` matches Establishment._id for real spots, or a
+// small hardcoded string ("1".."10") for static demo spots.
 export interface MapSpot {
+  id: string;
   name: string;
-  color: string;
-  emoji: string;
-  accentEmoji: string;
   type: string;
+  address: string;
+  emoji: string;
   rating: number;
-  reviews: number;
+  reviews: number | string;
   distance: string;
   avgPrice: string;
-  address: string;
+  coordinate: { latitude: number; longitude: number } | null;
   description: string;
   tags: string[];
+  color: string;
+  accentEmoji: string;
+  // Only present on real (normalizeEstablishment-derived) spots, never on
+  // the static demo catalog.
+  coverImageUrl?: string | null;
+  isReal?: boolean;
+  verified?: boolean;
+  phone?: string;
+  hours?: string;
 }
 
 // Screens registered on the two Tab.Navigators nested inside UserStack/

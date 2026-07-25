@@ -8,15 +8,17 @@ import {
   Alert,
 } from "react-native";
 import { useTranslation } from "react-i18next";
+import type { RouteProp } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import AppIcon from "../../components/AppIcon";
+import type { AppNavigation, RootParamList } from "../../navigation/types";
 
 const STARS_FULL = "★★★★★";
 const STARS_EMPTY = "☆☆☆☆☆";
 
-function StarRating({ rating, styles }) {
+function StarRating({ rating, styles }: { rating: number; styles: ReturnType<typeof getStyles> }) {
   const full = Math.floor(rating);
   const half = rating - full >= 0.5;
   return (
@@ -28,7 +30,12 @@ function StarRating({ rating, styles }) {
   );
 }
 
-export default function MapDetailScreen({ route, navigation }) {
+type Props = {
+  route: RouteProp<RootParamList, "MapDetail">;
+  navigation: AppNavigation;
+};
+
+export default function MapDetailScreen({ route, navigation }: Props) {
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -169,7 +176,7 @@ export default function MapDetailScreen({ route, navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.background,
