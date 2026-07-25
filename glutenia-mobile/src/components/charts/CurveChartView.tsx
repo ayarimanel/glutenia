@@ -83,8 +83,8 @@ export default function CurveChartView({ data, color, labelEvery = 2 }: CurveCha
           <Svg width={width} height={CHART_HEIGHT + 8}>
             <Defs>
               <LinearGradient id={`curveGrad-${color}`} x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0%" stopColor={color} stopOpacity={0.24} />
-                <Stop offset="100%" stopColor={color} stopOpacity={0.0} />
+                <Stop offset="0%" stopColor={lineColor} stopOpacity={0.24} />
+                <Stop offset="100%" stopColor={lineColor} stopOpacity={0.0} />
               </LinearGradient>
             </Defs>
 
@@ -122,20 +122,20 @@ export default function CurveChartView({ data, color, labelEvery = 2 }: CurveCha
             )}
 
             {/* Curve Line */}
-            <Path d={linePath} stroke={color} strokeWidth={3} fill="none" strokeLinecap="round" />
+            <Path d={linePath} stroke={lineColor} strokeWidth={3} fill="none" strokeLinecap="round" />
 
             {/* Premium Interactive-style Dots */}
             {points.map((point) => (
               <G key={point.label}>
                 {/* Glow ring */}
-                <Circle cx={point.x} cy={point.y} r={6.5} fill={color} opacity={0.16} />
+                <Circle cx={point.x} cy={point.y} r={6.5} fill={lineColor} opacity={0.16} />
                 {/* Core dot */}
                 <Circle
                   cx={point.x}
                   cy={point.y}
                   r={3.2}
                   fill={colors.surface}
-                  stroke={color}
+                  stroke={lineColor}
                   strokeWidth={2}
                 />
               </G>
