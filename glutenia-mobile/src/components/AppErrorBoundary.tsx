@@ -1,20 +1,29 @@
-import React from "react";
+import React, { type ReactNode } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Radius, Spacing } from "../theme/colors";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../context/ThemeContext";
 import { PrimaryButton } from "./Buttons";
 import i18n from "../i18n";
+
+interface AppErrorBoundaryClassProps {
+  children: ReactNode;
+  colors: ThemeColors;
+}
+
+interface AppErrorBoundaryClassState {
+  error: Error | null;
+}
 
 // AppErrorBoundary must be a class component (getDerivedStateFromError has
 // no hook equivalent), so it can't call useTheme() directly. Instead, a thin
 // functional wrapper reads the theme via the hook and passes colors down as
 // a prop to the class component that does the actual rendering.
-class AppErrorBoundaryClass extends React.Component {
-  state = {
+class AppErrorBoundaryClass extends React.Component<AppErrorBoundaryClassProps, AppErrorBoundaryClassState> {
+  state: AppErrorBoundaryClassState = {
     error: null,
   };
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error: Error) {
     return { error };
   }
 
@@ -48,12 +57,12 @@ class AppErrorBoundaryClass extends React.Component {
   }
 }
 
-export default function AppErrorBoundary(props) {
+export default function AppErrorBoundary(props: { children: ReactNode }) {
   const { colors } = useTheme();
   return <AppErrorBoundaryClass {...props} colors={colors} />;
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   screen: {
     flex: 1,
     justifyContent: "center",

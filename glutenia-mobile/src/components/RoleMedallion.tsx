@@ -1,10 +1,17 @@
 import { useEffect, useRef } from "react";
 import { Animated, StyleSheet, View } from "react-native";
 import Svg, { Circle, Defs, Ellipse, LinearGradient, Stop } from "react-native-svg";
-import AppIcon from "./AppIcon";
+import AppIcon, { type IconName } from "./AppIcon";
 import ShineSweep from "./ShineSweep";
 import { getTierTokensForColor } from "../theme/badgeTheme";
 import { useTheme } from "../context/ThemeContext";
+
+interface RoleMedallionProps {
+  iconName: IconName;
+  color: string;
+  size?: number;
+  locked?: boolean;
+}
 
 // The "My Role" medallion: same layered-gradient-ring + glossy-highlight
 // language as the badge catalog (BadgeIcon), always rendered at the catalog's
@@ -12,7 +19,7 @@ import { useTheme } from "../context/ThemeContext";
 // always gets the full "earned" treatment. The one exception is `locked`
 // (no role chosen yet), which borrows BadgeIcon's own locked/greyed-out
 // styling instead of inventing a second "unearned" look.
-export default function RoleMedallion({ iconName, color, size = 80, locked = false }) {
+export default function RoleMedallion({ iconName, color, size = 80, locked = false }: RoleMedallionProps) {
   const { colors, isDark } = useTheme();
   const scale = useRef(new Animated.Value(0.5)).current;
 

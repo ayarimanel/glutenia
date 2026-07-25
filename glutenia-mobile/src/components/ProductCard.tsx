@@ -2,11 +2,18 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import AppIcon from "./AppIcon";
 import { Radius, Shadow } from "../theme/colors";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../context/ThemeContext";
 import GlutenFreeBadge from "./GlutenFreeBadge";
 import ProductVisual from "./ProductVisual";
+import type { Product } from "../types/models";
 
-export default function ProductCard({ product, onPress, onAdd }) {
+interface ProductCardProps {
+  product: Pick<Product, "stock" | "name" | "category" | "price" | "imageUrl">;
+  onPress?: () => void;
+  onAdd?: () => void;
+}
+
+export default function ProductCard({ product, onPress, onAdd }: ProductCardProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -44,7 +51,7 @@ export default function ProductCard({ product, onPress, onAdd }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
     flex: 1,
     minHeight: 260,

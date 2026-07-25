@@ -2,10 +2,21 @@ import { useEffect, useState } from "react";
 import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import WheelPicker from "./WheelPicker";
 import { Radius, Spacing } from "../theme/colors";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../context/ThemeContext";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
 const MINUTES = ["00", "15", "30", "45"];
+
+interface TimePickerModalProps {
+  visible: boolean;
+  title: string;
+  hour: string;
+  minute: string;
+  onCancel: () => void;
+  onConfirm: (hour: string, minute: string) => void;
+  doneLabel: string;
+  cancelLabel: string;
+}
 
 export default function TimePickerModal({
   visible,
@@ -16,7 +27,7 @@ export default function TimePickerModal({
   onConfirm,
   doneLabel,
   cancelLabel,
-}) {
+}: TimePickerModalProps) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const [hourIndex, setHourIndex] = useState(0);
@@ -60,7 +71,7 @@ export default function TimePickerModal({
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",

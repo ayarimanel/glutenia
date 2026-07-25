@@ -2,22 +2,42 @@ import { useEffect, useRef, useState } from "react";
 import { Animated, Easing, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { ChevronRight } from "lucide-react-native";
+import type { NavigationProp } from "@react-navigation/native";
 import { useTheme } from "../context/ThemeContext";
 import { Radius, Spacing } from "../theme/colors";
 import { getBadgeVisualTokens, getBadgeTier } from "../theme/badgeTheme";
 import BadgeIcon from "./BadgeIcon";
+import type { Badge } from "../types/models";
+import type { RootParamList } from "../navigation/types";
+
+type BadgeDetailNavigation = NavigationProp<RootParamList>;
 
 // Category -> where the badge's underlying action lives in the app. Only
 // categories with one obvious, single action get a CTA (streak/journey are
 // time-based, not a single tappable action, so they intentionally get none).
-const CTA_ROUTES = {
+const CTA_ROUTES: Record<string, { labelKey: string; nav: (navigation: BadgeDetailNavigation) => void }> = {
   scanner: { labelKey: "badges.detail.ctaScan", nav: (navigation) => navigation.navigate("UserTabs", { screen: "Scan" }) },
   safety: { labelKey: "badges.detail.ctaLabelScan", nav: (navigation) => navigation.navigate("LabelScan") },
   community: { labelKey: "badges.detail.ctaEvents", nav: (navigation) => navigation.navigate("UserTabs", { screen: "Events" }) },
   shopper: { labelKey: "badges.detail.ctaShop", nav: (navigation) => navigation.navigate("ShopScreen") },
 };
 
-export default function BadgeDetailModal({ visible, onClose, entry, navigation }) {
+export interface BadgeDetailEntry {
+  badge: Pick<Badge, "slug" | "name" | "description" | "category" | "targetValue">;
+  locked: boolean;
+  earnedAt?: string;
+  currentProgress?: number;
+  ratio?: number;
+}
+
+interface BadgeDetailModalProps {
+  visible: boolean;
+  onClose: () => void;
+  entry: BadgeDetailEntry | null;
+  navigation?: BadgeDetailNavigation;
+}
+
+export default function BadgeDetailModal({ visible, onClose, entry, navigation }: BadgeDetailModalProps) {
   const { t, i18n } = useTranslation();
   const { colors, isDark } = useTheme();
   const [active, setActive] = useState(false);

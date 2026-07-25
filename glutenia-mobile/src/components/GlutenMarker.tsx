@@ -10,7 +10,10 @@ const MARKER_IMAGES = {
   active: require("../../assets/markers/marker-store.png"),
 };
 
-const TYPE_TO_COLOR = {
+// Keyed loosely by string, not EstablishmentCategory - map markers cover
+// both real establishments and static demo spots whose "type" values (e.g.
+// "Café") don't all match the backend's Establishment category enum.
+const TYPE_TO_COLOR: Record<string, keyof typeof MARKER_IMAGES> = {
   Supermarket:    "green",
   "Health Store": "green",
   Restaurant:     "red",
@@ -18,8 +21,13 @@ const TYPE_TO_COLOR = {
   Café:           "red",
 };
 
-export default function GlutenMarker({ type, isActive }) {
-  const colorKey = TYPE_TO_COLOR[type] ?? "green";
+interface GlutenMarkerProps {
+  type?: string;
+  isActive?: boolean;
+}
+
+export default function GlutenMarker({ type, isActive }: GlutenMarkerProps) {
+  const colorKey = TYPE_TO_COLOR[type ?? ""] ?? "green";
   const source = isActive ? MARKER_IMAGES.active : MARKER_IMAGES[colorKey];
   const size   = isActive ? MARKER_SIZE_ACTIVE   : MARKER_SIZE_INACTIVE;
 

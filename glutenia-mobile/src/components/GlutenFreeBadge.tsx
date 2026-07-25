@@ -2,9 +2,9 @@ import { StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import AppIcon from "./AppIcon";
 import { Radius } from "../theme/colors";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../context/ThemeContext";
 
-export default function GlutenFreeBadge({ compact }) {
+export default function GlutenFreeBadge({ compact }: { compact?: boolean }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -16,7 +16,7 @@ export default function GlutenFreeBadge({ compact }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   badge: {
     alignSelf: "flex-start",
     flexDirection: "row",

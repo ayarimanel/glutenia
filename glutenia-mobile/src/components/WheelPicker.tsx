@@ -1,16 +1,23 @@
 import { useEffect, useRef } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { useTheme } from "../context/ThemeContext";
+import { ScrollView, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
+import { useTheme, type ThemeColors } from "../context/ThemeContext";
 
 const ITEM_HEIGHT = 40;
 const VISIBLE_ITEMS = 5;
 const CONTAINER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
 const PADDING = (CONTAINER_HEIGHT - ITEM_HEIGHT) / 2;
 
-export default function WheelPicker({ items, selectedIndex, onChange, width = 72 }) {
+interface WheelPickerProps {
+  items: string[];
+  selectedIndex: number;
+  onChange: (index: number) => void;
+  width?: number;
+}
+
+export default function WheelPicker({ items, selectedIndex, onChange, width = 72 }: WheelPickerProps) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const scrollRef = useRef(null);
+  const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: selectedIndex * ITEM_HEIGHT, animated: false });
@@ -18,7 +25,7 @@ export default function WheelPicker({ items, selectedIndex, onChange, width = 72
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleMomentumEnd = (event) => {
+  const handleMomentumEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const y = event.nativeEvent.contentOffset.y;
     const index = Math.max(0, Math.min(items.length - 1, Math.round(y / ITEM_HEIGHT)));
     onChange(index);
@@ -48,7 +55,7 @@ export default function WheelPicker({ items, selectedIndex, onChange, width = 72
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     height: CONTAINER_HEIGHT,
   },

@@ -1,8 +1,18 @@
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, Text, TextInput, View, type StyleProp, type TextStyle, type ViewStyle, type TextInputProps } from "react-native";
 import { Radius } from "../theme/colors";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../context/ThemeContext";
 
-export default function Field({ label, error, hint, multiline, style, inputStyle, ...props }) {
+interface FieldProps extends Omit<TextInputProps, "style"> {
+  label: string;
+  error?: string;
+  hint?: string;
+  // Applies to the wrapping View, not the TextInput itself - hence the
+  // Omit above rather than reusing TextInputProps' own (TextStyle-typed) style.
+  style?: StyleProp<ViewStyle>;
+  inputStyle?: StyleProp<TextStyle>;
+}
+
+export default function Field({ label, error, hint, multiline, style, inputStyle, ...props }: FieldProps) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   return (
@@ -24,7 +34,7 @@ export default function Field({ label, error, hint, multiline, style, inputStyle
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   wrap: {
     gap: 8,
   },

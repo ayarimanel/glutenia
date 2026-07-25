@@ -1,10 +1,22 @@
 import { useEffect, useRef } from "react";
-import { Animated, StyleSheet, Text, View } from "react-native";
-import { useTheme } from "../../context/ThemeContext";
+import { Animated, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 
 const CHART_HEIGHT = 100; // slightly shorter for better proportions inside cards
 
-function AnimatedBar({ height, color, barStyle }) {
+export interface BarDatum {
+  label: string;
+  value: number;
+  color?: string;
+}
+
+interface AnimatedBarProps {
+  height: number;
+  color: string;
+  barStyle: StyleProp<ViewStyle>;
+}
+
+function AnimatedBar({ height, color, barStyle }: AnimatedBarProps) {
   const animHeight = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -26,7 +38,12 @@ function AnimatedBar({ height, color, barStyle }) {
   );
 }
 
-export default function BarChartView({ data, color }) {
+interface BarChartViewProps {
+  data: BarDatum[];
+  color?: string;
+}
+
+export default function BarChartView({ data, color }: BarChartViewProps) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const barColor = color ?? colors.primary;
@@ -52,7 +69,7 @@ export default function BarChartView({ data, color }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   wrap: {
     flexDirection: "row",
     alignItems: "flex-end",

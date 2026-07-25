@@ -1,9 +1,18 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
-import AppIcon from "./AppIcon";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
+import AppIcon, { type IconName } from "./AppIcon";
 import { Radius } from "../theme/colors";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../context/ThemeContext";
 
-export function PrimaryButton({ title, icon, loading, disabled, onPress, style }) {
+interface PrimaryButtonProps {
+  title: string;
+  icon?: IconName;
+  loading?: boolean;
+  disabled?: boolean;
+  onPress?: () => void;
+  style?: StyleProp<ViewStyle>;
+}
+
+export function PrimaryButton({ title, icon, loading, disabled, onPress, style }: PrimaryButtonProps) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   return (
@@ -29,7 +38,15 @@ export function PrimaryButton({ title, icon, loading, disabled, onPress, style }
   );
 }
 
-export function SecondaryButton({ title, icon, disabled, onPress, style }) {
+interface SecondaryButtonProps {
+  title: string;
+  icon?: IconName;
+  disabled?: boolean;
+  onPress?: () => void;
+  style?: StyleProp<ViewStyle>;
+}
+
+export function SecondaryButton({ title, icon, disabled, onPress, style }: SecondaryButtonProps) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   return (
@@ -51,7 +68,14 @@ export function SecondaryButton({ title, icon, disabled, onPress, style }) {
   );
 }
 
-export function IconButton({ icon, onPress, color, style }) {
+interface IconButtonProps {
+  icon: IconName;
+  onPress?: () => void;
+  color?: string;
+  style?: StyleProp<ViewStyle>;
+}
+
+export function IconButton({ icon, onPress, color, style }: IconButtonProps) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   return (
@@ -64,7 +88,7 @@ export function IconButton({ icon, onPress, color, style }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   primary: {
     minHeight: 52,
     borderRadius: Radius.md,

@@ -1,11 +1,12 @@
 import { Image, StyleSheet, Text, View } from "react-native";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import AppIcon from "./AppIcon";
+import AppIcon, { type IconName } from "./AppIcon";
 import { Radius } from "../theme/colors";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../context/ThemeContext";
+import type { Product } from "../types/models";
 
-const iconByCategory = {
+const iconByCategory: Record<string, IconName> = {
   Bread: "bread-slice",
   Pasta: "noodles",
   Snacks: "food-variant",
@@ -14,7 +15,12 @@ const iconByCategory = {
   Other: "leaf",
 };
 
-export default function ProductVisual({ product, size = "card" }) {
+interface ProductVisualProps {
+  product?: Pick<Product, "imageUrl" | "category"> | null;
+  size?: "card" | "large";
+}
+
+export default function ProductVisual({ product, size = "card" }: ProductVisualProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -40,7 +46,7 @@ export default function ProductVisual({ product, size = "card" }) {
   return (
     <View style={[styles.placeholder, isLarge && styles.large]}>
       <AppIcon
-        name={iconByCategory[product?.category] || "leaf"}
+        name={iconByCategory[product?.category ?? ""] || "leaf"}
         size={isLarge ? 62 : 34}
         color={colors.primary}
       />
@@ -49,7 +55,7 @@ export default function ProductVisual({ product, size = "card" }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   image: {
     width: "100%",
     aspectRatio: 1.18,

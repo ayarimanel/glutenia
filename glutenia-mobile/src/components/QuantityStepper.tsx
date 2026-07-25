@@ -1,9 +1,16 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import AppIcon from "./AppIcon";
 import { Radius } from "../theme/colors";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../context/ThemeContext";
 
-export default function QuantityStepper({ value, onChange, min = 1, max }) {
+interface QuantityStepperProps {
+  value: number;
+  onChange: (value: number) => void;
+  min?: number;
+  max?: number;
+}
+
+export default function QuantityStepper({ value, onChange, min = 1, max }: QuantityStepperProps) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const atMax = typeof max === "number" && value >= max;
@@ -27,7 +34,7 @@ export default function QuantityStepper({ value, onChange, min = 1, max }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   stepper: {
     width: 116,
     height: 42,

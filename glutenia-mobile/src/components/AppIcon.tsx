@@ -48,6 +48,7 @@ import {
   Activity,
   Eye,
 } from "lucide-react-native";
+import type { StyleProp, ViewStyle } from "react-native";
 
 const icons = {
   add: CirclePlus,
@@ -110,6 +111,17 @@ const icons = {
   eye: Eye,
 };
 
+export type IconName = keyof typeof icons;
+
+interface AppIconProps {
+  name: IconName;
+  size?: number;
+  color?: string;
+  strokeWidth?: number;
+  fill?: string;
+  style?: StyleProp<ViewStyle>;
+}
+
 export default function AppIcon({
   name,
   size = 18,
@@ -117,7 +129,7 @@ export default function AppIcon({
   strokeWidth = 2.4,
   fill = "none",
   style,
-}) {
+}: AppIconProps) {
   const Icon = icons[name] || Circle;
   return (
     <Icon

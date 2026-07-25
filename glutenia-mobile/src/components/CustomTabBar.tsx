@@ -1,10 +1,10 @@
-
 import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import AppIcon from "./AppIcon";
-import { useTheme } from "../context/ThemeContext";
+import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import AppIcon, { type IconName } from "./AppIcon";
+import { useTheme, type ThemeColors } from "../context/ThemeContext";
 
-export default function CustomTabBar({ state, descriptors, navigation }) {
+export default function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -17,7 +17,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
           const isFocused = state.index === index;
           const isCenter = route.name === "Scan";
 
-          const iconMap = {
+          const iconMap: Record<string, IconName> = {
             Home: "home",
             Cart: "basket",
             Scan: "scan",
@@ -76,7 +76,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   wrapper: {
     position: "absolute",
     bottom: 0,

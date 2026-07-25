@@ -5,7 +5,12 @@ import { useTheme } from "../context/ThemeContext";
 
 const AUTO_DISMISS_MS = 2200;
 
-export default function GamificationToast({ xpGained, onDismiss }) {
+interface GamificationToastProps {
+  xpGained: number;
+  onDismiss: () => void;
+}
+
+export default function GamificationToast({ xpGained, onDismiss }: GamificationToastProps) {
   const { colors, isDark } = useTheme();
   const translateY = useRef(new Animated.Value(-80)).current;
   const opacity = useRef(new Animated.Value(0)).current;

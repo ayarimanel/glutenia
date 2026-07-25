@@ -10,7 +10,7 @@ import {
 import { Globe, Check } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { Radius, Spacing, Shadow } from "../theme/colors";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../context/ThemeContext";
 
 const LANGUAGES = [
   { code: "fr", label: "Français", flag: "🇫🇷" },
@@ -18,7 +18,13 @@ const LANGUAGES = [
   { code: "en", label: "English", flag: "🇬🇧" },
 ];
 
-export default function LanguageSelector({ visible: externalVisible, onClose, onSelect }) {
+interface LanguageSelectorProps {
+  visible?: boolean;
+  onClose?: () => void;
+  onSelect?: (code: string) => void;
+}
+
+export default function LanguageSelector({ visible: externalVisible, onClose, onSelect }: LanguageSelectorProps) {
   const { t, i18n } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -26,7 +32,9 @@ export default function LanguageSelector({ visible: externalVisible, onClose, on
 
   const controlled = externalVisible !== undefined;
   const visible = controlled ? externalVisible : internalVisible;
-  const close = controlled ? onClose : () => setInternalVisible(false);
+  // Every real call site pairs `visible` with `onClose` (or passes neither) -
+  // verified against all three usages in the codebase - so this is safe.
+  const close = controlled ? (onClose as () => void) : () => setInternalVisible(false);
 
   return (
     <>
@@ -82,7 +90,7 @@ export default function LanguageSelector({ visible: externalVisible, onClose, on
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   trigger: {
     width: 42,
     height: 42,

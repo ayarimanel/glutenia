@@ -1,9 +1,15 @@
 import { StyleSheet, Text, View } from "react-native";
-import AppIcon from "./AppIcon";
+import AppIcon, { type IconName } from "./AppIcon";
 import { Radius } from "../theme/colors";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../context/ThemeContext";
 
-export default function EmptyState({ icon = "leaf", title, body }) {
+interface EmptyStateProps {
+  icon?: IconName;
+  title: string;
+  body?: string;
+}
+
+export default function EmptyState({ icon = "leaf", title, body }: EmptyStateProps) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   return (
@@ -17,7 +23,7 @@ export default function EmptyState({ icon = "leaf", title, body }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   empty: {
     alignItems: "center",
     justifyContent: "center",

@@ -8,8 +8,10 @@ import {
   Animated,
   Easing,
   BackHandler,
+  type AlertButton,
 } from "react-native";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../context/ThemeContext";
+import type { AlertOptions } from "../context/AlertContext";
 import {
   CircleCheck,
   AlertTriangle,
@@ -18,6 +20,15 @@ import {
   HelpCircle,
 } from "lucide-react-native";
 
+interface CustomAlertDialogProps {
+  visible: boolean;
+  title?: string;
+  message?: string;
+  buttons?: AlertButton[];
+  options?: AlertOptions;
+  onClose: () => void;
+}
+
 export default function CustomAlertDialog({
   visible,
   title,
@@ -25,7 +36,7 @@ export default function CustomAlertDialog({
   buttons,
   options,
   onClose,
-}) {
+}: CustomAlertDialogProps) {
   const { colors, isDark } = useTheme();
   const [active, setActive] = useState(false);
 
@@ -75,7 +86,7 @@ export default function CustomAlertDialog({
     };
   }, [active, options]);
 
-  const dismiss = (callback) => {
+  const dismiss = (callback?: () => void) => {
     // Play exit animation
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -100,7 +111,7 @@ export default function CustomAlertDialog({
   if (!active) return null;
 
   // 1. Classify the Alert
-  const classifyAlert = (tTitle, tMsg, tButtons) => {
+  const classifyAlert = (tTitle?: string, tMsg?: string, tButtons?: AlertButton[]) => {
     const t = (tTitle || "").toLowerCase();
     const m = (tMsg || "").toLowerCase();
     const btnCount = tButtons ? tButtons.length : 0;
@@ -183,7 +194,7 @@ export default function CustomAlertDialog({
   // 3. Setup Buttons
   const alertButtons = buttons && buttons.length > 0 ? buttons : [{ text: "OK" }];
 
-  const handleButtonPress = (onPress) => {
+  const handleButtonPress = (onPress?: (value?: string) => void) => {
     dismiss(() => {
       if (onPress) onPress();
     });
@@ -295,7 +306,7 @@ export default function CustomAlertDialog({
   );
 }
 
-const getStyles = (colors, isDark) =>
+const getStyles = (colors: ThemeColors, isDark: boolean) =>
   StyleSheet.create({
     backdrop: {
       flex: 1,

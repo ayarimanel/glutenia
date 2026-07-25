@@ -9,7 +9,7 @@ export interface GamificationContextValue {
 
 const GamificationContext = createContext<GamificationContextValue>({ notifyGamification: () => {} });
 
-type GamificationEvent =
+export type GamificationEvent =
   | { type: "badge"; badge: BadgeSummary }
   | { type: "levelup"; newLevel: number | undefined };
 

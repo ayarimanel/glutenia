@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
-import { PanResponder, StyleSheet, Text, View } from "react-native";
+import { PanResponder, StyleSheet, Text, View, type PanResponderGestureState } from "react-native";
 import { useTranslation } from "react-i18next";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../context/ThemeContext";
 import { Radius, Spacing } from "../theme/colors";
 
 const DAY_MINUTES = 24 * 60;
@@ -12,26 +12,37 @@ const THUMB_VISUAL_SIZE = 24;
 const TRACK_HEIGHT = 6;
 const TICK_LABELS = ["00:00", "06:00", "12:00", "18:00", "24:00"];
 
-const clamp = (min, value, max) => Math.max(min, Math.min(max, value));
+export interface TimeValue {
+  hour: string;
+  minute: string;
+}
 
-const toMinutes = (time) => Number(time.hour) * 60 + Number(time.minute);
+const clamp = (min: number, value: number, max: number): number => Math.max(min, Math.min(max, value));
 
-const snapMinutes = (minutes) =>
+const toMinutes = (time: TimeValue): number => Number(time.hour) * 60 + Number(time.minute);
+
+const snapMinutes = (minutes: number): number =>
   Math.round(clamp(0, minutes, DAY_MINUTES - STEP_MINUTES) / STEP_MINUTES) * STEP_MINUTES;
 
-const toTime = (minutes) => {
+const toTime = (minutes: number): TimeValue => {
   const snapped = snapMinutes(minutes);
   const hour = Math.floor(snapped / 60);
   const minute = snapped % 60;
   return { hour: String(hour).padStart(2, "0"), minute: String(minute).padStart(2, "0") };
 };
 
-const formatMinutes = (minutes) => {
+const formatMinutes = (minutes: number): string => {
   const t = toTime(minutes);
   return `${t.hour}:${t.minute}`;
 };
 
-export default function TimeRangeSlider({ openTime, closeTime, onChange }) {
+interface TimeRangeSliderProps {
+  openTime: TimeValue;
+  closeTime: TimeValue;
+  onChange: (open: TimeValue, close: TimeValue) => void;
+}
+
+export default function TimeRangeSlider({ openTime, closeTime, onChange }: TimeRangeSliderProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -46,7 +57,7 @@ export default function TimeRangeSlider({ openTime, closeTime, onChange }) {
 
   const [, setTick] = useState(0);
   const rerender = () => setTick((n) => n + 1);
-  const [activeThumb, setActiveThumb] = useState(null);
+  const [activeThumb, setActiveThumb] = useState<"open" | "close" | null>(null);
 
   const propOpenMinutes = toMinutes(openTime);
   const propCloseMinutes = toMinutes(closeTime);
@@ -65,7 +76,7 @@ export default function TimeRangeSlider({ openTime, closeTime, onChange }) {
         openDragStartRef.current = openMinutesRef.current;
         setActiveThumb("open");
       },
-      onPanResponderMove: (_, gesture) => {
+      onPanResponderMove: (_, gesture: PanResponderGestureState) => {
         if (!trackWidthRef.current) return;
         const deltaMinutes = (gesture.dx / trackWidthRef.current) * DAY_MINUTES;
         const maxAllowed = closeMinutesRef.current - MIN_GAP_MINUTES;
@@ -89,7 +100,7 @@ export default function TimeRangeSlider({ openTime, closeTime, onChange }) {
         closeDragStartRef.current = closeMinutesRef.current;
         setActiveThumb("close");
       },
-      onPanResponderMove: (_, gesture) => {
+      onPanResponderMove: (_, gesture: PanResponderGestureState) => {
         if (!trackWidthRef.current) return;
         const deltaMinutes = (gesture.dx / trackWidthRef.current) * DAY_MINUTES;
         const minAllowed = openMinutesRef.current + MIN_GAP_MINUTES;
@@ -106,7 +117,7 @@ export default function TimeRangeSlider({ openTime, closeTime, onChange }) {
   ).current;
 
   const trackWidth = trackWidthRef.current;
-  const rawX = (minutes) => (trackWidth ? (minutes / DAY_MINUTES) * trackWidth : 0);
+  const rawX = (minutes: number) => (trackWidth ? (minutes / DAY_MINUTES) * trackWidth : 0);
   const openX = rawX(openMinutesRef.current);
   const closeX = rawX(closeMinutesRef.current);
 
@@ -170,7 +181,7 @@ export default function TimeRangeSlider({ openTime, closeTime, onChange }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   wrap: {
     backgroundColor: colors.surface,
     borderRadius: Radius.lg,

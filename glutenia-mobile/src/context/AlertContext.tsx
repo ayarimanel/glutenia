@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 import { Alert, type AlertButton } from "react-native";
 import CustomAlertDialog from "../components/CustomAlertDialog";
 
-interface AlertOptions {
+export interface AlertOptions {
   cancelable?: boolean;
   userInterfaceStyle?: "unspecified" | "light" | "dark";
   onDismiss?: () => void;

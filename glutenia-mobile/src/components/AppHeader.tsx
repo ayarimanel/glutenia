@@ -1,24 +1,24 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, type NavigationProp } from "@react-navigation/native";
 import AppIcon from "./AppIcon";
 import { useCart } from "../context/CartContext";
 import { useNotifications } from "../context/NotificationContext";
 import { useTheme } from "../context/ThemeContext";
 import { Shadow, Spacing } from "../theme/colors";
+import type { ThemeColors } from "../context/ThemeContext";
+import type { RootParamList } from "../navigation/types";
 
-/**
- * AppHeader — global identity bar for main tab screens (not Profile).
- *
- * Props:
- *   userName   string   — display name from auth context
- *   avatarUri  string   — optional remote image URI; falls back to person icon
- *   onCartPress fn      — called when basket icon is tapped
- *   safeTop    bool     — set true when NOT rendered inside a SafeAreaView (e.g. ScanScreen)
- */
-export default function AppHeader({ userName, avatarUri, onCartPress, safeTop = false }) {
+interface AppHeaderProps {
+  userName?: string;
+  avatarUri?: string;
+  onCartPress: () => void;
+  safeTop?: boolean;
+}
+
+export default function AppHeader({ userName, avatarUri, onCartPress, safeTop = false }: AppHeaderProps) {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<RootParamList>>();
   const { count } = useCart();
   const { unreadCount } = useNotifications() ?? {};
   const { colors } = useTheme();
@@ -69,7 +69,7 @@ export default function AppHeader({ userName, avatarUri, onCartPress, safeTop = 
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     backgroundColor: colors.surface,
     flexDirection: "row",

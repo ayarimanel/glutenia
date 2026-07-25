@@ -18,15 +18,17 @@ import {
   GraduationCap,
   Eye,
   HeartHandshake,
+  type LucideIcon,
 } from "lucide-react-native";
 import { useTheme } from "../context/ThemeContext";
 import { getBadgeVisualTokens, getBadgeTier } from "../theme/badgeTheme";
+import type { Badge } from "../types/models";
 
 // Single source of visual truth for every badge/achievement: the grid, the
 // detail modal, the unlock celebration, and any inline mention all render
 // through this component so locked/unlocked/tier treatment never drifts.
 
-const BADGE_ICONS = {
+const BADGE_ICONS: Record<string, LucideIcon> = {
   first_scan: ScanLine,
   ten_scans: ScanBarcode,
   fifty_scans: PackageSearch,
@@ -47,7 +49,14 @@ const BADGE_ICONS = {
   dedicated_caregiver: HeartHandshake,
 };
 
-export default function BadgeIcon({ badge, size = 64, locked = false, progressRatio = null }) {
+interface BadgeIconProps {
+  badge: Pick<Badge, "slug" | "category"> | null | undefined;
+  size?: number;
+  locked?: boolean;
+  progressRatio?: number | null;
+}
+
+export default function BadgeIcon({ badge, size = 64, locked = false, progressRatio = null }: BadgeIconProps) {
   const { colors, isDark } = useTheme();
   if (!badge) return null;
 

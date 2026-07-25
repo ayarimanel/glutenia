@@ -1,7 +1,14 @@
+import type { ReactNode } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../context/ThemeContext";
 
-export default function SectionHeader({ eyebrow, title, right }) {
+interface SectionHeaderProps {
+  eyebrow?: string;
+  title: string;
+  right?: ReactNode;
+}
+
+export default function SectionHeader({ eyebrow, title, right }: SectionHeaderProps) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   return (
@@ -15,7 +22,7 @@ export default function SectionHeader({ eyebrow, title, right }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",

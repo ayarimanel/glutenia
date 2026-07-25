@@ -6,13 +6,14 @@ import { useTheme } from "../context/ThemeContext";
 import { getBadgeVisualTokens, getBadgeTier } from "../theme/badgeTheme";
 import BadgeIcon from "./BadgeIcon";
 import ShineSweep from "./ShineSweep";
+import type { GamificationEvent } from "../context/GamificationContext";
 
 const PARTICLE_COUNT = 8;
 
 // A short, once-off burst of small dots flying outward from the badge on
 // unlock — the "big moment" celebration. Level-ups reuse the same burst so
 // both payoffs feel equally satisfying; routine XP stays a small toast.
-function ParticleBurst({ color, active }) {
+function ParticleBurst({ color, active }: { color: string; active: boolean }) {
   const particles = useMemo(
     () =>
       Array.from({ length: PARTICLE_COUNT }).map((_, i) => {
@@ -72,7 +73,12 @@ function ParticleBurst({ color, active }) {
 
 // Shows one queued gamification "moment" (a badge unlock or a level-up) at a
 // time. `event` is either { type: "badge", badge } or { type: "levelup", newLevel }.
-export default function GamificationUnlockModal({ event, onDismiss }) {
+interface GamificationUnlockModalProps {
+  event: GamificationEvent | null;
+  onDismiss: () => void;
+}
+
+export default function GamificationUnlockModal({ event, onDismiss }: GamificationUnlockModalProps) {
   const { t } = useTranslation();
   const { colors, isDark } = useTheme();
   const [active, setActive] = useState(false);
@@ -122,9 +128,8 @@ export default function GamificationUnlockModal({ event, onDismiss }) {
   };
 
   const isBadge = event.type === "badge";
-  const tier = isBadge ? getBadgeTier(event.badge.slug) : null;
-  const tokens = isBadge ? getBadgeVisualTokens(event.badge.category, tier) : null;
-  const accentColor = isBadge ? tokens.base : colors.secondary;
+  const tokens = event.type === "badge" ? getBadgeVisualTokens(event.badge.category, getBadgeTier(event.badge.slug)) : null;
+  const accentColor = tokens ? tokens.base : colors.secondary;
 
   return (
     <Modal transparent visible={active} animationType="none" statusBarTranslucent>

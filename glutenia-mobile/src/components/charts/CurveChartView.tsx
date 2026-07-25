@@ -1,14 +1,24 @@
 import { useEffect, useRef } from "react";
 import { Animated, ScrollView, StyleSheet, Text, View } from "react-native";
 import Svg, { Circle, Defs, G, Line as SvgLine, LinearGradient, Path, Stop } from "react-native-svg";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 
 const CHART_HEIGHT = 120;
 const TOP_PADDING = 12;
 const H_PADDING = 16;
 const POINT_GAP = 34;
 
-function buildSmoothPath(points) {
+export interface CurveDatum {
+  label: string;
+  value: number;
+}
+
+interface CurvePoint extends CurveDatum {
+  x: number;
+  y: number;
+}
+
+function buildSmoothPath(points: CurvePoint[]): string {
   if (points.length === 0) return "";
   if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
 
@@ -22,7 +32,13 @@ function buildSmoothPath(points) {
   return d;
 }
 
-export default function CurveChartView({ data, color, labelEvery = 2 }) {
+interface CurveChartViewProps {
+  data: CurveDatum[];
+  color?: string;
+  labelEvery?: number;
+}
+
+export default function CurveChartView({ data, color, labelEvery = 2 }: CurveChartViewProps) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const lineColor = color ?? colors.primary;
@@ -141,7 +157,7 @@ export default function CurveChartView({ data, color, labelEvery = 2 }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   labelsRow: {
     height: 16,
   },
