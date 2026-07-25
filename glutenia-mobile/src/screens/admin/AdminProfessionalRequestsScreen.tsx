@@ -15,7 +15,7 @@ import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
 import { useAuthenticated } from "../../context/AuthContext";
-import { api, type ApiError } from "../../api/client";
+import { api, isApiError, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import type { User } from "../../types/models";
@@ -35,13 +35,12 @@ export default function AdminProfessionalRequestsScreen() {
       setLoading(true);
       setRequests(await api.professionalRequests(token, "pending"));
     } catch (err) {
-      const error = err as ApiError;
-      if (error.status === 401) {
+      if (isApiError(err) && err.status === 401) {
         Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsg"), [
           { text: t("admin.ok"), onPress: logout },
         ]);
       } else {
-        Alert.alert(t("admin.requests.errorTitle"), error.message);
+        Alert.alert(t("admin.requests.errorTitle"), err instanceof Error ? err.message : String(err));
       }
     } finally {
       setLoading(false);

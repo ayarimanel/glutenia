@@ -16,7 +16,7 @@ import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
 import { useAuth } from "../../context/AuthContext";
-import { api, type ApiError } from "../../api/client";
+import { api, isApiError, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import type { AppNavigation } from "../../navigation/types";
@@ -35,13 +35,12 @@ export default function AdminRecipesScreen({ navigation }: { navigation: AppNavi
       setLoading(true);
       setRecipes(await api.recipes());
     } catch (err) {
-      const error = err as ApiError;
-      if (error.status === 401) {
+      if (isApiError(err) && err.status === 401) {
         Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsg"), [
           { text: t("admin.ok"), onPress: logout },
         ]);
       } else {
-        Alert.alert(t("admin.recipes.errorTitle"), error.message);
+        Alert.alert(t("admin.recipes.errorTitle"), err instanceof Error ? err.message : String(err));
       }
     } finally {
       setLoading(false);

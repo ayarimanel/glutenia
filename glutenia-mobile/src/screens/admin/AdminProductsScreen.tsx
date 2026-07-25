@@ -8,7 +8,7 @@ import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
 import ProductVisual from "../../components/ProductVisual";
 import { useAuth } from "../../context/AuthContext";
-import { api, type ApiError } from "../../api/client";
+import { api, isApiError, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import type { AppNavigation } from "../../navigation/types";
@@ -38,13 +38,12 @@ export default function AdminProductsScreen({ navigation }: { navigation: AppNav
       setLoading(true);
       setProducts(await (isAdmin ? api.products() : api.myProducts(token)));
     } catch (err) {
-      const error = err as ApiError;
-      if (error.status === 401) {
+      if (isApiError(err) && err.status === 401) {
         Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsg"), [
           { text: t("admin.ok"), onPress: logout },
         ]);
       } else {
-        Alert.alert(t("admin.products.errorTitle"), error.message);
+        Alert.alert(t("admin.products.errorTitle"), err instanceof Error ? err.message : String(err));
       }
     } finally {
       setLoading(false);

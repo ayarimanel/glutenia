@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 import AppIcon, { type IconName } from "../../components/AppIcon";
 import Screen from "../../components/Screen";
 import { useAuth } from "../../context/AuthContext";
-import { api, type ApiError } from "../../api/client";
+import { api, isApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import type { AppNavigation } from "../../navigation/types";
@@ -46,15 +46,17 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
       setOrders(Array.isArray(nextOrders) ? nextOrders : []);
       setPendingRequests(Array.isArray(nextRequests) ? nextRequests : []);
     } catch (err) {
-      const error = err as ApiError;
-      if (error.status === 401) {
+      if (isApiError(err) && err.status === 401) {
         Alert.alert(
           t("admin.sessionExpired", "Session expired"),
           t("admin.sessionMsg", "Please log in as admin again."),
           [{ text: t("admin.ok", "OK"), onPress: logout }]
         );
       } else {
-        Alert.alert(t("admin.dashboard.errorTitle", "Dashboard"), error.message);
+        Alert.alert(
+          t("admin.dashboard.errorTitle", "Dashboard"),
+          err instanceof Error ? err.message : String(err)
+        );
       }
     } finally {
       setLoading(false);

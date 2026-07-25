@@ -7,7 +7,7 @@ import AppIcon from "../../components/AppIcon";
 import BarChartView from "../../components/charts/BarChartView";
 import CurveChartView from "../../components/charts/CurveChartView";
 import { useAuthenticated } from "../../context/AuthContext";
-import { api, type ApiError } from "../../api/client";
+import { api, isApiError } from "../../api/client";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import type { AppNavigation } from "../../navigation/types";
@@ -27,12 +27,11 @@ export default function AdminAnalyticsScreen({ navigation }: { navigation: AppNa
       setLoading(true);
       setError(null);
       setData(await api.userAnalytics(token));
-    } catch (e) {
-      const err = e as ApiError;
-      if (err.status === 401) {
+    } catch (err) {
+      if (isApiError(err) && err.status === 401) {
         logout();
       } else {
-        setError(err.message || t("admin.analytics.errorTitle"));
+        setError((err instanceof Error && err.message) || t("admin.analytics.errorTitle"));
       }
     } finally {
       setLoading(false);

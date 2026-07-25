@@ -78,6 +78,16 @@ export interface ApiError extends Error {
   data?: unknown;
 }
 
+// A plain `as ApiError` cast on a caught value trusts that whatever was
+// thrown came from `request()` below - true for network/HTTP failures, but
+// not for a TypeError from a bug elsewhere in the same try block, or a
+// SyntaxError from a JSON.parse call. This actually checks for the shape
+// `request()` guarantees (an Error with a numeric `.status`) before letting
+// a call site read `.status`/`.data` off it.
+export function isApiError(error: unknown): error is ApiError {
+  return error instanceof Error && typeof (error as ApiError).status === "number";
+}
+
 interface RequestOptions extends Omit<RequestInit, "body" | "signal"> {
   token?: string;
   body?: unknown;

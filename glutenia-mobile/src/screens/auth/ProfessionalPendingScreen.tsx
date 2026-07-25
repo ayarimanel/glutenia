@@ -10,7 +10,7 @@ import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import type { RouteProp } from "@react-navigation/native";
 import type { AppNavigation, RootParamList } from "../../navigation/types";
-import type { ApiError } from "../../api/client";
+import { isApiError } from "../../api/client";
 
 interface ProfessionalPendingScreenProps {
   navigation: AppNavigation;
@@ -38,15 +38,17 @@ export default function ProfessionalPendingScreen({ navigation, route }: Profess
       // AuthContext now holds a valid session — RootNavigator will switch
       // out of the auth stack automatically.
     } catch (err) {
-      const error = err as ApiError;
-      const pendingData = error.data as { professionalStatus?: string } | undefined;
-      const status = error.status === 403 ? pendingData?.professionalStatus : null;
+      const isApiErr = isApiError(err);
+      const pendingData = isApiErr
+        ? (err.data as { professionalStatus?: string } | undefined)
+        : undefined;
+      const status = isApiErr && err.status === 403 ? pendingData?.professionalStatus : null;
       if (status === "rejected") {
         Alert.alert(t("login.professionalRejectedTitle"), t("login.professionalRejectedMsg"));
       } else if (status === "pending") {
         Alert.alert(t("professionalPending.stillPendingTitle"), t("professionalPending.stillPendingMsg"));
       } else {
-        Alert.alert(t("auth.errors.loginFailed"), error.message);
+        Alert.alert(t("auth.errors.loginFailed"), err instanceof Error ? err.message : String(err));
       }
     } finally {
       setChecking(false);

@@ -17,7 +17,7 @@ import AppIcon from "../../components/AppIcon";
 import EmptyState from "../../components/EmptyState";
 import { PrimaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
-import { api, type ApiError } from "../../api/client";
+import { api, isApiError } from "../../api/client";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import type { AppNavigation } from "../../navigation/types";
@@ -48,13 +48,12 @@ export default function SellerEstablishmentScreen({ navigation }: { navigation: 
       setLoading(true);
       setEstablishment(await api.myEstablishment(token));
     } catch (err) {
-      const error = err as ApiError;
-      if (error.status === 401) {
+      if (isApiError(err) && err.status === 401) {
         Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsg"), [
           { text: t("admin.ok"), onPress: logout },
         ]);
       } else {
-        Alert.alert(t("seller.business.errorTitle"), error.message);
+        Alert.alert(t("seller.business.errorTitle"), err instanceof Error ? err.message : String(err));
       }
     } finally {
       setLoading(false);

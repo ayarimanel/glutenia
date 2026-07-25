@@ -15,7 +15,7 @@ import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { Radius, Spacing } from "../../theme/colors";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { ApiError } from "../../api/client";
+import { isApiError } from "../../api/client";
 import type { AppNavigation } from "../../navigation/types";
 
 const MASCOT = require("../../../assets/mascot.png");
@@ -58,9 +58,11 @@ export default function LoginScreen({ navigation }: { navigation: AppNavigation 
       setLoading(true);
       await login({ email: trimmedEmail, password });
     } catch (err) {
-      const error = err as ApiError;
-      const pendingData = error.data as { professionalStatus?: string; approvalCode?: string } | undefined;
-      const status = error.status === 403 ? pendingData?.professionalStatus : null;
+      const isApiErr = isApiError(err);
+      const pendingData = isApiErr
+        ? (err.data as { professionalStatus?: string; approvalCode?: string } | undefined)
+        : undefined;
+      const status = isApiErr && err.status === 403 ? pendingData?.professionalStatus : null;
       if (status === "rejected") {
         Alert.alert(t("login.professionalRejectedTitle"), t("login.professionalRejectedMsg"));
       } else if (status === "pending") {
@@ -69,7 +71,7 @@ export default function LoginScreen({ navigation }: { navigation: AppNavigation 
           t("login.professionalPendingMsg", { code: pendingData?.approvalCode })
         );
       } else {
-        Alert.alert(t("auth.errors.loginFailed"), error.message);
+        Alert.alert(t("auth.errors.loginFailed"), err instanceof Error ? err.message : String(err));
       }
     } finally {
       setLoading(false);

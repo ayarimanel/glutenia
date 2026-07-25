@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import AppHeader from "../../components/AppHeader";
 import AppIcon from "../../components/AppIcon";
-import { api, type ApiError, type ProductScanResult } from "../../api/client";
+import { api, isApiError, type ApiError, type ProductScanResult } from "../../api/client";
 import { useAuthenticated } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { notifyGamification } from "../../context/GamificationContext";
@@ -110,11 +110,11 @@ export default function ScanScreen({ navigation }: { navigation: AppNavigation }
       setScreenState(FOUND);
       notifyGamification(gamification);
     } catch (error) {
-      if ((error as ApiError).status === 404) {
+      if (isApiError(error) && error.status === 404) {
         setScreenState(NOT_FOUND);
       } else {
         // Non-404 error: show alert, then return to scanning on dismiss.
-        Alert.alert(t("scan.scanError"), (error as ApiError).message, [
+        Alert.alert(t("scan.scanError"), error instanceof Error ? error.message : String(error), [
           {
             text: t("scan.ok"),
             onPress: () => {

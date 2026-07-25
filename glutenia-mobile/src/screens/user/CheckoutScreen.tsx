@@ -7,7 +7,7 @@ import Field from "../../components/Field";
 import { IconButton, PrimaryButton } from "../../components/Buttons";
 import { useAuthenticated } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
-import { api, type ApiError } from "../../api/client";
+import { api, isApiError } from "../../api/client";
 import { notifyGamification } from "../../context/GamificationContext";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
@@ -63,18 +63,18 @@ export default function CheckoutScreen({ navigation }: { navigation: AppNavigati
       notifyGamification(order.gamification);
       navigation.replace("OrderSuccess", { order });
     } catch (err) {
-      const error = err as ApiError;
+      const message = err instanceof Error ? err.message : String(err);
       // 409 here specifically means the backend rejected the order because
       // stock changed since the item was added to the cart (someone else
       // bought it, or it sold out) — send the user back to Cart so they can
       // actually fix it, instead of leaving them stuck on a delivery form
       // that has no way to change quantities.
-      if (error.status === 409) {
-        Alert.alert(t("checkout.failed"), error.message, [
+      if (isApiError(err) && err.status === 409) {
+        Alert.alert(t("checkout.failed"), message, [
           { text: t("checkout.reviewCart"), onPress: () => navigation.navigate("CartPage") },
         ]);
       } else {
-        Alert.alert(t("checkout.failed"), error.message);
+        Alert.alert(t("checkout.failed"), message);
       }
     } finally {
       setLoading(false);
