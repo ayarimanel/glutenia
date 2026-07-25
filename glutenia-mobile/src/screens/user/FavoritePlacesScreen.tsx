@@ -11,7 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Heart, MapPin, Compass } from "lucide-react-native";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
@@ -21,7 +21,7 @@ export default function FavoritePlacesScreen({ navigation }: { navigation: AppNa
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const { token } = useAuth();
+  const { token } = useAuthenticated();
 
   const [favorites, setFavorites] = useState<MapSpot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +30,7 @@ export default function FavoritePlacesScreen({ navigation }: { navigation: AppNa
   const fetchFavorites = useCallback(async () => {
     setLoading(true);
     try {
-      const list = await api.getFavoriteSpots(token as string);
+      const list = await api.getFavoriteSpots(token);
       setFavorites(list || []);
     } catch (_) {
       // Non-critical — leave whatever was already loaded.
@@ -50,7 +50,7 @@ export default function FavoritePlacesScreen({ navigation }: { navigation: AppNa
     setFavorites(next);
     setRemovingId(spot.id);
     try {
-      await api.updateFavoriteSpots(token as string, next);
+      await api.updateFavoriteSpots(token, next);
     } catch (_) {
       setFavorites(favorites);
     } finally {

@@ -17,7 +17,7 @@ import Screen from "../../components/Screen";
 import Field from "../../components/Field";
 import AppIcon from "../../components/AppIcon";
 import { PrimaryButton } from "../../components/Buttons";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { api, type ApiError, type UpdateProfileBody } from "../../api/client";
 import { isValidPhone } from "../../utils/validation";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
@@ -30,7 +30,7 @@ export default function EditProfileScreen({ navigation }: { navigation: AppNavig
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const { user, token, updateUser } = useAuth();
+  const { user, token, updateUser } = useAuthenticated();
 
   const [name, setName] = useState(user?.name || "");
   const [avatar, setAvatar] = useState<string | null>(user?.avatar || null);
@@ -105,7 +105,7 @@ export default function EditProfileScreen({ navigation }: { navigation: AppNavig
       if (avatar !== user?.avatar) {
         body.avatar = avatar || "";
       }
-      const updated = await api.updateProfile(token as string, body);
+      const updated = await api.updateProfile(token, body);
       await updateUser(updated);
       Alert.alert(
         t("settings.editProfileScreen.saved"),

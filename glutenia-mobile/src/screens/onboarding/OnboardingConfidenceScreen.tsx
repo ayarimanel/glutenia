@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft } from "lucide-react-native";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
@@ -18,7 +18,7 @@ interface OnboardingConfidenceScreenProps {
 
 export default function OnboardingConfidenceScreen({ navigation, route }: OnboardingConfidenceScreenProps) {
   const { t } = useTranslation();
-  const { token, markProfileOnboardingComplete, updateUser } = useAuth();
+  const { token, markProfileOnboardingComplete, updateUser } = useAuthenticated();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const [selected, setSelected] = useState<ConfidenceLevel | null>(null);
@@ -47,7 +47,7 @@ export default function OnboardingConfidenceScreen({ navigation, route }: Onboar
     setLoading(true);
     setError(null);
     try {
-      const result = await api.saveOnboardingProfile(token as string, {
+      const result = await api.saveOnboardingProfile(token, {
         roleType: route.params.roleType,
         glutenFreeSince: route.params.glutenFreeSince,
         experienceLevel: route.params.experienceLevel,

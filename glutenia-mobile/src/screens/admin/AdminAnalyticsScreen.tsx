@@ -6,7 +6,7 @@ import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
 import BarChartView from "../../components/charts/BarChartView";
 import CurveChartView from "../../components/charts/CurveChartView";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { api, type ApiError } from "../../api/client";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
@@ -17,7 +17,7 @@ export default function AdminAnalyticsScreen({ navigation }: { navigation: AppNa
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const { token, logout } = useAuth();
+  const { token, logout } = useAuthenticated();
   const [data, setData] = useState<UserAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +26,7 @@ export default function AdminAnalyticsScreen({ navigation }: { navigation: AppNa
     try {
       setLoading(true);
       setError(null);
-      setData(await api.userAnalytics(token as string));
+      setData(await api.userAnalytics(token));
     } catch (e) {
       const err = e as ApiError;
       if (err.status === 401) {

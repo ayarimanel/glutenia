@@ -18,7 +18,7 @@ import Screen from "../../components/Screen";
 import Field from "../../components/Field";
 import AppIcon from "../../components/AppIcon";
 import { PrimaryButton } from "../../components/Buttons";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { notifyGamification } from "../../context/GamificationContext";
 import { api, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
@@ -39,7 +39,7 @@ export default function SubmitProductScreen({ navigation, route }: SubmitProduct
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const { token } = useAuth();
+  const { token } = useAuthenticated();
   const barcode = route.params?.barcode ?? "";
 
   const [name, setName] = useState("");
@@ -122,7 +122,7 @@ export default function SubmitProductScreen({ navigation, route }: SubmitProduct
 
     try {
       setSaving(true);
-      const result = await api.submitCommunityProduct(token as string, {
+      const result = await api.submitCommunityProduct(token, {
         barcode,
         name: trimmedName,
         imageUrl: image as string,

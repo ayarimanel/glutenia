@@ -41,8 +41,9 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       setNotifications((current) =>
         current.map((item) => (item._id === id ? { ...item, read: true } : item))
       );
+      if (!token) return;
       try {
-        await api.markNotificationRead(token as string, id);
+        await api.markNotificationRead(token, id);
       } catch (_) {}
     },
     [token]
@@ -50,8 +51,9 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
   const markAllRead = useCallback(async () => {
     setNotifications((current) => current.map((item) => ({ ...item, read: true })));
+    if (!token) return;
     try {
-      await api.markAllNotificationsRead(token as string);
+      await api.markAllNotificationsRead(token);
     } catch (_) {}
   }, [token]);
 

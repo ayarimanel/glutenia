@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { api, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
@@ -12,7 +12,7 @@ import type { Order } from "../../types/models";
 
 export default function UserOrdersScreen() {
   const { t } = useTranslation();
-  const { token } = useAuth();
+  const { token } = useAuthenticated();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -21,7 +21,7 @@ export default function UserOrdersScreen() {
   const loadOrders = async () => {
     try {
       setLoading(true);
-      setOrders(await api.myOrders(token as string));
+      setOrders(await api.myOrders(token));
     } catch (err) {
       Alert.alert(t("userOrders.errorTitle"), (err as ApiError).message);
     } finally {

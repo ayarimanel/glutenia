@@ -13,7 +13,7 @@ import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import Field from "../../components/Field";
 import AppIcon from "../../components/AppIcon";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { api, type ApiError } from "../../api/client";
 import { Radius, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
@@ -23,7 +23,7 @@ export default function DeleteAccountScreen({ navigation }: { navigation: AppNav
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const { token, logout } = useAuth();
+  const { token, logout } = useAuthenticated();
 
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -46,7 +46,7 @@ export default function DeleteAccountScreen({ navigation }: { navigation: AppNav
           onPress: async () => {
             try {
               setDeleting(true);
-              await api.deleteAccount(token as string, password);
+              await api.deleteAccount(token, password);
               await logout();
             } catch (err) {
               setDeleting(false);

@@ -17,7 +17,7 @@ import Screen from "../../components/Screen";
 import Field from "../../components/Field";
 import AppIcon from "../../components/AppIcon";
 import { PrimaryButton, SecondaryButton } from "../../components/Buttons";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { api, type ApiError } from "../../api/client";
 import { Radius, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
@@ -38,7 +38,7 @@ interface RecipeFormErrors {
 }
 
 export default function AdminRecipeFormScreen({ navigation, route }: AdminRecipeFormScreenProps) {
-  const { token } = useAuth();
+  const { token } = useAuthenticated();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -144,9 +144,9 @@ export default function AdminRecipeFormScreen({ navigation, route }: AdminRecipe
     try {
       setLoading(true);
       if (recipeId) {
-        await api.updateRecipe(token as string, recipeId, body);
+        await api.updateRecipe(token, recipeId, body);
       } else {
-        await api.createRecipe(token as string, body);
+        await api.createRecipe(token, body);
       }
       Alert.alert(t("admin.recipeForm.saved"), t("admin.recipeForm.savedMsg"), [
         { text: t("admin.ok"), onPress: () => navigation.goBack() },

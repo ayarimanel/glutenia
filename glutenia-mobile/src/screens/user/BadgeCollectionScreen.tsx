@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Bookmark, BookmarkCheck } from "lucide-react-native";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { api, type ApiError } from "../../api/client";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
@@ -28,7 +28,7 @@ export default function BadgeCollectionScreen({ navigation }: { navigation: AppN
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const { token } = useAuth();
+  const { token } = useAuthenticated();
 
   const [earnedBadges, setEarnedBadges] = useState<UserBadge[]>([]);
   const [lockedBadges, setLockedBadges] = useState<LockedBadgeEntry[]>([]);
@@ -41,7 +41,7 @@ export default function BadgeCollectionScreen({ navigation }: { navigation: AppN
     setLoading(true);
     setError(null);
     try {
-      const data = await api.getGamificationProfile(token as string);
+      const data = await api.getGamificationProfile(token);
       setEarnedBadges(data.earnedBadges || []);
       setLockedBadges(data.lockedBadges || []);
     } catch (err) {
@@ -74,7 +74,7 @@ export default function BadgeCollectionScreen({ navigation }: { navigation: AppN
     setPinningId(userBadge._id);
 
     try {
-      await api.updateBadgePin(token as string, badgeObjectId, nextPinned);
+      await api.updateBadgePin(token, badgeObjectId, nextPinned);
     } catch (err) {
       setEarnedBadges((prev) =>
         prev.map((ub) => (ub._id === userBadge._id ? { ...ub, isPinned: userBadge.isPinned } : ub))

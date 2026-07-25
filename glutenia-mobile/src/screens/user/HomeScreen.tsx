@@ -10,7 +10,7 @@ import Screen from "../../components/Screen";
 import AppHeader from "../../components/AppHeader";
 import AppIcon, { type IconName } from "../../components/AppIcon";
 import ProductCard from "../../components/ProductCard";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { api } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
@@ -34,7 +34,7 @@ export default function HomeScreen({ navigation }: { navigation: AppNavigation }
   const { colors } = useTheme();
   const styles = getStyles(colors);
 
-  const { user, token } = useAuth();
+  const { user, token } = useAuthenticated();
   const { addItemWithStockCheck } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [productsError, setProductsError] = useState(false);
@@ -52,20 +52,20 @@ export default function HomeScreen({ navigation }: { navigation: AppNavigation }
   }, []);
 
   useEffect(() => {
-    api.events(token as string)
+    api.events(token)
       .then((data) => setEvents(data.slice(0, 6)))
       .catch(() => {});
   }, [token]);
 
   useEffect(() => {
-    api.scanHistory(token as string)
+    api.scanHistory(token)
       .then(setScanHistory)
       .catch(() => {});
   }, [token]);
 
   useEffect(() => {
     if (isProfessional) return;
-    api.getHomeGamification(token as string)
+    api.getHomeGamification(token)
       .then(setHomeGamification)
       .catch(() => {});
   }, [token, isProfessional]);

@@ -186,3 +186,23 @@ export const useAuth = (): AuthContextValue => {
   }
   return context;
 };
+
+export interface AuthenticatedContextValue extends Omit<AuthContextValue, "user" | "token"> {
+  user: User;
+  token: string;
+}
+
+// For screens that only ever mount inside RootNavigator's UserStack/
+// AdminStack/ProfileOnboardingStack - all three only render once `user` is
+// non-null, and AuthProvider always clears `user`/`token` together in one
+// batched update, so by the time either goes null the screen has already
+// been unmounted (RootNavigator swaps to a different component at that
+// JSX position, which React tears down rather than re-renders). This gives
+// those screens a real `token: string` instead of asserting it 40 times.
+export const useAuthenticated = (): AuthenticatedContextValue => {
+  const context = useAuth();
+  if (!context.user || !context.token) {
+    throw new Error("useAuthenticated must be used within a screen mounted only for logged-in users");
+  }
+  return context as AuthenticatedContextValue;
+};

@@ -15,7 +15,7 @@ import Screen from "../components/Screen";
 import AppIcon, { type IconName } from "../components/AppIcon";
 import BadgeIcon from "../components/BadgeIcon";
 import RoleMedallion from "../components/RoleMedallion";
-import { useAuth } from "../context/AuthContext";
+import { useAuthenticated } from "../context/AuthContext";
 import { api } from "../api/client";
 import { useTheme, type ThemeColors } from "../context/ThemeContext";
 import { Radius, Shadow, Spacing } from "../theme/colors";
@@ -89,7 +89,7 @@ export default function AccountScreen({ navigation }: { navigation: AppNavigatio
     },
   };
 
-  const { user, token, logout } = useAuth();
+  const { user, token, logout } = useAuthenticated();
   const isAdmin = user?.role === "admin";
 
   // Title (the pill near the avatar) and the "Your Journey" tracker below it
@@ -115,7 +115,7 @@ export default function AccountScreen({ navigation }: { navigation: AppNavigatio
     setLoading(true);
     setError(null);
     try {
-      const data = await api.getGamificationProfile(token as string);
+      const data = await api.getGamificationProfile(token);
       setProfileData(data);
     } catch (err) {
       setError((err as Error).message || t("account.errorLoad"));
@@ -134,7 +134,7 @@ export default function AccountScreen({ navigation }: { navigation: AppNavigatio
     if (isAdmin) return;
     let cancelled = false;
     api
-      .events(token as string)
+      .events(token)
       .then((data) => {
         if (!cancelled) setEvents(data);
       })

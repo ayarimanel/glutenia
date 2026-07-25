@@ -14,7 +14,7 @@ import Screen from "../../components/Screen";
 import Field from "../../components/Field";
 import AppIcon from "../../components/AppIcon";
 import { PrimaryButton } from "../../components/Buttons";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { api, type ApiError } from "../../api/client";
 import { Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
@@ -30,7 +30,7 @@ export default function ChangePasswordScreen({ navigation }: { navigation: AppNa
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const { token } = useAuth();
+  const { token } = useAuthenticated();
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -58,7 +58,7 @@ export default function ChangePasswordScreen({ navigation }: { navigation: AppNa
 
     try {
       setSaving(true);
-      await api.changePassword(token as string, { currentPassword, newPassword });
+      await api.changePassword(token, { currentPassword, newPassword });
       Alert.alert(
         t("settings.changePasswordScreen.success"),
         t("settings.changePasswordScreen.successMsg"),

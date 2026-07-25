@@ -15,7 +15,7 @@ import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import AppHeader from "../../components/AppHeader";
 import AppIcon from "../../components/AppIcon";
 import { api, type ApiError, type ProductScanResult } from "../../api/client";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { notifyGamification } from "../../context/GamificationContext";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
@@ -43,7 +43,7 @@ export default function ScanScreen({ navigation }: { navigation: AppNavigation }
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const { user, token } = useAuth();
+  const { user, token } = useAuthenticated();
   const cart = useCart();
   const [permission, requestPermission] = useCameraPermissions();
   const [screenState, setScreenState] = useState(SCANNING);
@@ -85,7 +85,7 @@ export default function ScanScreen({ navigation }: { navigation: AppNavigation }
     if (!product?._id) return;
     setFlagging(true);
     try {
-      await api.flagCommunityProduct(token as string, product._id);
+      await api.flagCommunityProduct(token, product._id);
       setFlagged(true);
     } catch (error) {
       Alert.alert(t("scan.flagFailed"), (error as ApiError).message);

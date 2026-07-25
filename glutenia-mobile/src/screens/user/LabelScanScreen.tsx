@@ -15,7 +15,7 @@ import * as ImageManipulator from "expo-image-manipulator";
 import AppHeader from "../../components/AppHeader";
 import AppIcon, { type IconName } from "../../components/AppIcon";
 import { api, type ApiError } from "../../api/client";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { notifyGamification } from "../../context/GamificationContext";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
@@ -31,7 +31,7 @@ type LabelScanResultData = Omit<LabelScanResult, "gamification">;
 
 export default function LabelScanScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
-  const { user, token } = useAuth();
+  const { user, token } = useAuthenticated();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const insets = useSafeAreaInsets();
@@ -63,7 +63,7 @@ export default function LabelScanScreen({ navigation }: { navigation: AppNavigat
         { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true }
       );
 
-      const { gamification, ...data } = await api.scanLabel(compressed.base64 as string, token as string);
+      const { gamification, ...data } = await api.scanLabel(compressed.base64 as string, token);
       setResult(data);
       setScreenState(RESULT);
       notifyGamification(gamification);

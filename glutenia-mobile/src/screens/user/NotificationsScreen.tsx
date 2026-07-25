@@ -8,7 +8,7 @@ import EmptyState from "../../components/EmptyState";
 import AppIcon from "../../components/AppIcon";
 import { IconButton } from "../../components/Buttons";
 import { useNotifications } from "../../context/NotificationContext";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
@@ -32,7 +32,7 @@ export default function NotificationsScreen({ navigation }: { navigation: AppNav
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const { notifications, refresh, markRead, markAllRead, unreadCount } = useNotifications();
-  const { token } = useAuth();
+  const { token } = useAuthenticated();
   const [refreshing, setRefreshing] = useState(false);
 
   useFocusEffect(
@@ -54,7 +54,7 @@ export default function NotificationsScreen({ navigation }: { navigation: AppNav
 
     if (EVENT_TYPES.has(item.type) && item.referenceId) {
       try {
-        const event = await api.event(item.referenceId, token as string);
+        const event = await api.event(item.referenceId, token);
         navigation.navigate("EventDetail", { event });
       } catch (_) {
         // Event may no longer exist — nothing to open.

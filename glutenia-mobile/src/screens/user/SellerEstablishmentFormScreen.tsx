@@ -10,7 +10,7 @@ import Field from "../../components/Field";
 import TimeRangeSlider from "../../components/TimeRangeSlider";
 import AppIcon from "../../components/AppIcon";
 import { IconButton, PrimaryButton, SecondaryButton } from "../../components/Buttons";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { api, type ApiError, type EstablishmentInput } from "../../api/client";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { Radius, Spacing } from "../../theme/colors";
@@ -153,7 +153,7 @@ interface EstablishmentFormErrors {
 }
 
 export default function SellerEstablishmentFormScreen({ navigation }: { navigation: AppNavigation }) {
-  const { token } = useAuth();
+  const { token } = useAuthenticated();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -189,7 +189,7 @@ export default function SellerEstablishmentFormScreen({ navigation }: { navigati
   useEffect(() => {
     const load = async () => {
       try {
-        const establishment = await api.myEstablishment(token as string);
+        const establishment = await api.myEstablishment(token);
         if (establishment) {
           setName(establishment.name || "");
           setCategory(establishment.category || "Restaurant");

@@ -17,7 +17,7 @@ import Screen from "../../components/Screen";
 import Field from "../../components/Field";
 import AppIcon from "../../components/AppIcon";
 import { SecondaryButton } from "../../components/Buttons";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { api, type ApiError } from "../../api/client";
 import { Radius, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
@@ -53,7 +53,7 @@ export default function CreateEventScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const { token } = useAuth();
+  const { token } = useAuthenticated();
   const eventId = route.params?.eventId;
 
   const [title, setTitle] = useState("");
@@ -72,7 +72,7 @@ export default function CreateEventScreen({ navigation, route }: Props) {
     if (!eventId) return;
     const loadEvent = async () => {
       try {
-        const event = await api.event(eventId, token as string);
+        const event = await api.event(eventId, token);
         setTitle(event.title);
         setDescription(event.description || "");
         setDate(event.date);
@@ -148,12 +148,12 @@ export default function CreateEventScreen({ navigation, route }: Props) {
     try {
       setLoading(true);
       if (eventId) {
-        await api.updateEvent(token as string, eventId, body);
+        await api.updateEvent(token, eventId, body);
         Alert.alert(t("createEvent.updateSuccess"), t("createEvent.updateSuccessMsg", { title }), [
           { text: t("createEvent.ok"), onPress: () => navigation.goBack() },
         ]);
       } else {
-        await api.createEvent(token as string, body);
+        await api.createEvent(token, body);
         Alert.alert(t("createEvent.success"), t("createEvent.successMsg", { title }), [
           { text: t("createEvent.ok"), onPress: () => navigation.goBack() },
         ]);

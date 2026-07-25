@@ -11,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
 import { PrimaryButton } from "../../components/Buttons";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { api, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
@@ -77,7 +77,7 @@ export default function EditJourneyScreen({ navigation }: { navigation: AppNavig
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const { user, token, updateUser } = useAuth();
+  const { user, token, updateUser } = useAuthenticated();
 
   const [roleType, setRoleType] = useState<RoleType>(user?.role_type || "warrior");
   const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel>(user?.experience_level || "just_started");
@@ -131,7 +131,7 @@ export default function EditJourneyScreen({ navigation }: { navigation: AppNavig
       const experienceMeta = EXPERIENCE_META.find((o) => o.value === experienceLevel);
       const glutenFreeSince =
         user?.gluten_free_since || (experienceMeta ? daysAgo(experienceMeta.days) : null);
-      const result = await api.saveOnboardingProfile(token as string, {
+      const result = await api.saveOnboardingProfile(token, {
         roleType,
         glutenFreeSince,
         experienceLevel,

@@ -13,7 +13,7 @@ import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import AppIcon, { type IconName } from "../../components/AppIcon";
 import LanguageSelector from "../../components/LanguageSelector";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { api } from "../../api/client";
 import { Radius, Spacing } from "../../theme/colors";
@@ -98,7 +98,7 @@ function Divider({ colors }: { colors: ThemeColors }) {
 }
 
 export default function SettingsScreen({ navigation }: { navigation: AppNavigation }) {
-  const { logout, user, token, updateUser } = useAuth();
+  const { logout, user, token, updateUser } = useAuthenticated();
   const { t } = useTranslation();
   const { isDark, toggleTheme, colors } = useTheme();
 
@@ -114,7 +114,7 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
     setPushNotifs(value);
     setSavingPushNotifs(true);
     try {
-      const updated = await api.updateProfile(token as string, { pushNotificationsEnabled: value });
+      const updated = await api.updateProfile(token, { pushNotificationsEnabled: value });
       await updateUser(updated);
     } catch (error) {
       setPushNotifs(!value);
@@ -127,7 +127,7 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
     setNotifyOrders(value);
     setSavingNotifyOrders(true);
     try {
-      const updated = await api.updateProfile(token as string, { notifyOrders: value });
+      const updated = await api.updateProfile(token, { notifyOrders: value });
       await updateUser(updated);
     } catch (error) {
       setNotifyOrders(!value);
@@ -140,7 +140,7 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
     setNotifyEvents(value);
     setSavingNotifyEvents(true);
     try {
-      const updated = await api.updateProfile(token as string, { notifyEvents: value });
+      const updated = await api.updateProfile(token, { notifyEvents: value });
       await updateUser(updated);
     } catch (error) {
       setNotifyEvents(!value);

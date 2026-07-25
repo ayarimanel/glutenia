@@ -5,7 +5,7 @@ import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import Field from "../../components/Field";
 import { IconButton, PrimaryButton } from "../../components/Buttons";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { api, type ApiError } from "../../api/client";
 import { notifyGamification } from "../../context/GamificationContext";
@@ -19,7 +19,7 @@ export default function CheckoutScreen({ navigation }: { navigation: AppNavigati
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const { token, user, updateUser } = useAuth();
+  const { token, user, updateUser } = useAuthenticated();
   const { items, total, clearCart } = useCart();
   const [fullName, setFullName] = useState(user?.name || "");
   const [addressLine, setAddressLine] = useState("");
@@ -42,7 +42,7 @@ export default function CheckoutScreen({ navigation }: { navigation: AppNavigati
     try {
       setLoading(true);
       const trimmedPhone = phone.trim();
-      const order = await api.createOrder(token as string, {
+      const order = await api.createOrder(token, {
         items: items.map((item) => ({
           productId: item.productId,
           name: item.name,
@@ -54,7 +54,7 @@ export default function CheckoutScreen({ navigation }: { navigation: AppNavigati
 
       if (trimmedPhone !== (user?.phone || "")) {
         try {
-          const updated = await api.updateProfile(token as string, { phone: trimmedPhone });
+          const updated = await api.updateProfile(token, { phone: trimmedPhone });
           await updateUser(updated);
         } catch (_) {}
       }

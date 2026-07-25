@@ -5,14 +5,14 @@ import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { api, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import type { OrderWithBuyer } from "../../types/models";
 
 export default function SellerOrdersScreen() {
-  const { token, logout } = useAuth();
+  const { token, logout } = useAuthenticated();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -51,7 +51,7 @@ export default function SellerOrdersScreen() {
   const markAsShipped = async (orderId: string) => {
     try {
       setUpdatingId(orderId);
-      await api.updateOrderStatus(token as string, orderId, "shipped");
+      await api.updateOrderStatus(token, orderId, "shipped");
       await loadOrders();
     } catch (error) {
       Alert.alert(t("admin.orders.errorTitle"), (error as ApiError).message);

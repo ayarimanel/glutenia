@@ -14,14 +14,14 @@ import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { api, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import type { User } from "../../types/models";
 
 export default function AdminProfessionalRequestsScreen() {
-  const { token, logout } = useAuth();
+  const { token, logout } = useAuthenticated();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -70,9 +70,9 @@ export default function AdminProfessionalRequestsScreen() {
             try {
               setActioningId(request._id);
               if (isApprove) {
-                await api.approveProfessional(token as string, request._id);
+                await api.approveProfessional(token, request._id);
               } else {
-                await api.rejectProfessional(token as string, request._id);
+                await api.rejectProfessional(token, request._id);
               }
               await loadRequests();
             } catch (err) {

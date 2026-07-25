@@ -15,7 +15,7 @@ import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
 import AppHeader from "../../components/AppHeader";
 import EmptyState from "../../components/EmptyState";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
@@ -28,7 +28,7 @@ export default function EventsScreen({ navigation }: { navigation: AppNavigation
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const { user, token } = useAuth();
+  const { user, token } = useAuthenticated();
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeCategory, setActiveCategory] = useState("all");
@@ -38,7 +38,7 @@ export default function EventsScreen({ navigation }: { navigation: AppNavigation
       const load = async () => {
         try {
           setLoading(true);
-          const data = await api.events(token as string);
+          const data = await api.events(token);
           setEvents(data);
         } catch {
           // leave previous data visible on error
