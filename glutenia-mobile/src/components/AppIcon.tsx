@@ -51,7 +51,9 @@ import {
 } from "lucide-react-native";
 import type { StyleProp, ViewStyle } from "react-native";
 
-const icons = {
+// Exported for tests only (icon-map coverage) - not meant to be imported by
+// app code, which should go through the `name` prop instead.
+export const icons = {
   add: CirclePlus,
   "add-circle": CirclePlus,
   "arrow-back": ArrowLeft,
