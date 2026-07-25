@@ -1,0 +1,145 @@
+import type { NavigatorScreenParams } from "@react-navigation/native";
+import type {
+  EatingOutFrequency,
+  Event,
+  ExperienceLevel,
+  GamificationDelta,
+  Order,
+  PatientResource,
+  PrimaryGoal,
+  Recipe,
+  RoleType,
+} from "../types/models";
+
+export type CreatedOrder = Order & { gamification: GamificationDelta | null };
+
+// FavoritePlacesScreen/MapScreen's "spot" shape — a client-side mix of
+// static demo spots and Establishment snapshots (User.favoriteSpots is
+// Mixed/heterogeneous on the backend, no fixed shape enforced there).
+// Derived from the exact fields MapDetailScreen reads, not the backend model.
+export interface MapSpot {
+  name: string;
+  color: string;
+  emoji: string;
+  accentEmoji: string;
+  type: string;
+  rating: number;
+  reviews: number;
+  distance: string;
+  avgPrice: string;
+  address: string;
+  description: string;
+  tags: string[];
+}
+
+// Screens registered on the two Tab.Navigators nested inside UserStack/
+// AdminStack. Kept separate from RootParamList (rather than nesting
+// NavigatorScreenParams<RootParamList> inside itself) purely to avoid a
+// circular type - TS can't resolve a mapped type that references its own
+// container type through one of its properties.
+type UserTabParamList = {
+  Home: undefined;
+  Events: undefined;
+  Scan: undefined;
+  Map: undefined;
+  Profile: undefined;
+};
+
+type AdminTabParamList = {
+  Dashboard: undefined;
+  Products: undefined;
+  Scan: undefined;
+  Orders: undefined;
+  Account: undefined;
+};
+
+// One flat list shared by every navigator (auth/user/admin/onboarding
+// stacks, plus the two tab navigators nested inside them). The app already
+// behaves this way in practice - the same route name can resolve to
+// different components depending on which stack is mounted (e.g. "Orders",
+// "Settings"), and some screens navigate to a role-dependent route name
+// chosen at runtime (e.g. AdminProductsScreen picks "AdminProductForm" or
+// "SellerProductForm") - so separate per-navigator param lists wouldn't
+// reflect how navigation actually works here.
+export type RootParamList = {
+  Login: undefined;
+  Register: undefined;
+  ProfessionalPending: { approvalCode: string; email: string };
+  Home: undefined;
+  Events: undefined;
+  Scan: undefined;
+  Map: undefined;
+  Profile: undefined;
+  UserTabs: NavigatorScreenParams<UserTabParamList> | undefined;
+  CartPage: undefined;
+  ProductDetail: { productId: string };
+  Checkout: undefined;
+  OrderSuccess: { order: CreatedOrder };
+  Orders: undefined;
+  EventDetail: { event: Event };
+  Notifications: undefined;
+  BadgeCollection: undefined;
+  MapDetail: { spot: MapSpot };
+  FavoritePlaces: undefined;
+  ShopScreen: undefined;
+  PatientResources: undefined;
+  VideoPlayer: { youtubeId: string; title: string };
+  ResourceDetail: { resource: PatientResource };
+  Recipes: undefined;
+  RecipeDetail: { recipe: Recipe };
+  Settings: undefined;
+  EditProfile: undefined;
+  ChangePassword: undefined;
+  LabelScan: undefined;
+  SubmitProduct: { barcode: string };
+  SellerProducts: undefined;
+  SellerProductForm: { productId?: string } | undefined;
+  SellerVisibility: undefined;
+  SellerOrders: undefined;
+  SellerEstablishment: undefined;
+  SellerEstablishmentForm: undefined;
+  Legal: { section: "privacy" | "terms" };
+  DeleteAccount: undefined;
+  EditJourney: undefined;
+  AdminTabs: NavigatorScreenParams<AdminTabParamList> | undefined;
+  Dashboard: undefined;
+  Products: undefined;
+  AdminProductForm: { productId?: string } | undefined;
+  AdminEvents: undefined;
+  AdminProfessionalRequests: undefined;
+  AdminOrderDetail: { order: Order };
+  AdminAnalytics: undefined;
+  AdminRecipes: undefined;
+  AdminRecipeForm: { recipeId?: string } | undefined;
+  AdminPatientResources: undefined;
+  AdminPatientResourceForm: { resourceId?: string } | undefined;
+  CreateEvent: { eventId?: string } | undefined;
+  Account: undefined;
+  Onboarding: undefined;
+  OnboardingRole: undefined;
+  OnboardingJourney: { roleType: RoleType };
+  OnboardingGoal: { roleType: RoleType; experienceLevel: ExperienceLevel; glutenFreeSince: string };
+  OnboardingEatingOut: {
+    roleType: RoleType;
+    experienceLevel: ExperienceLevel;
+    glutenFreeSince: string;
+    primaryGoal: PrimaryGoal;
+  };
+  OnboardingConfidence: {
+    roleType: RoleType;
+    experienceLevel: ExperienceLevel;
+    glutenFreeSince: string;
+    primaryGoal: PrimaryGoal;
+    eatingOutFrequency: EatingOutFrequency;
+  };
+};
+
+// Standard React Navigation TypeScript pattern: this makes untyped
+// `useNavigation()`/`navigation` prop usages resolve against RootParamList
+// automatically, once screens are converted in a later phase - no generic
+// type argument needed at each call site.
+declare global {
+  namespace ReactNavigation {
+    interface RootParamList extends RootParamList {}
+  }
+}

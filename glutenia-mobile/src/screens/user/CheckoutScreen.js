@@ -69,7 +69,7 @@ export default function CheckoutScreen({ navigation }) {
       // that has no way to change quantities.
       if (error.status === 409) {
         Alert.alert(t("checkout.failed"), error.message, [
-          { text: t("checkout.reviewCart"), onPress: () => navigation.navigate("Cart") },
+          { text: t("checkout.reviewCart"), onPress: () => navigation.navigate("CartPage") },
         ]);
       } else {
         Alert.alert(t("checkout.failed"), error.message);

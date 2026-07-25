@@ -53,7 +53,7 @@ export default function ProductDetailScreen({ navigation, route }) {
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.topRow}>
           <IconButton icon="arrow-back" onPress={() => navigation.goBack()} />
-          <IconButton icon="basket" onPress={() => navigation.navigate("Cart")} />
+          <IconButton icon="basket" onPress={() => navigation.navigate("CartPage")} />
         </View>
         <ProductVisual product={product} size="large" />
         <View style={styles.card}>

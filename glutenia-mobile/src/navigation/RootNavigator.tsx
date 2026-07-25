@@ -8,6 +8,7 @@ import * as Notifications from "expo-notifications";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { navigationRef, navigate } from "./navigationRef";
+import type { RootParamList } from "./types";
 import i18n from "../i18n";
 import SplashScreen from "../screens/SplashScreen";
 import CustomTabBar from "../components/CustomTabBar";
@@ -68,10 +69,10 @@ import LegalScreen from "../screens/user/LegalScreen";
 import DeleteAccountScreen from "../screens/user/DeleteAccountScreen";
 import EditJourneyScreen from "../screens/user/EditJourneyScreen";
 
-const Stack = createNativeStackNavigator();
-const Tabs = createBottomTabNavigator();
+const Stack = createNativeStackNavigator<RootParamList>();
+const Tabs = createBottomTabNavigator<RootParamList>();
 
-function AuthStack({ bg }) {
+function AuthStack({ bg }: { bg: string }) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: bg } }}>
       <Stack.Screen name="Login" component={LoginScreen} />
@@ -96,7 +97,7 @@ function UserTabs() {
   );
 }
 
-function UserStack({ bg }) {
+function UserStack({ bg }: { bg: string }) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: bg } }}>
       <Stack.Screen name="UserTabs" component={UserTabs} />
@@ -149,7 +150,7 @@ function AdminTabs() {
   );
 }
 
-function AdminStack({ bg }) {
+function AdminStack({ bg }: { bg: string }) {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: bg } }}>
       <Stack.Screen name="AdminTabs" component={AdminTabs} />
