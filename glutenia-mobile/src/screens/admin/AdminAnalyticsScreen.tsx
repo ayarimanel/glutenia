@@ -13,28 +13,6 @@ import { Radius, Shadow, Spacing } from "../../theme/colors";
 import type { AppNavigation } from "../../navigation/types";
 import type { UserAnalytics } from "../../types/models";
 
-const ROLE_ORDER = ["customer", "professional", "admin"];
-const ROLE_TYPE_ORDER = ["warrior", "supporter", "unset"];
-const EXPERIENCE_ORDER = [
-  "just_started",
-  "1_to_6_months",
-  "6_to_12_months",
-  "1_to_3_years",
-  "3_plus_years",
-  "unset",
-];
-const GOAL_ORDER = [
-  "manage_celiac",
-  "manage_intolerance",
-  "support_child",
-  "support_partner",
-  "dietary_choice",
-  "exploring",
-  "unset",
-];
-const CONFIDENCE_ORDER = ["low", "medium", "high", "unset"];
-const EATING_OUT_ORDER = ["rarely", "few_times_month", "weekly", "multiple_week", "unset"];
-
 export default function AdminAnalyticsScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -108,8 +86,15 @@ export default function AdminAnalyticsScreen({ navigation }: { navigation: AppNa
     unset: t("admin.analytics.unset"),
   };
 
-  const toChartData = (order: string[], counts: Record<string, number> | undefined, labels: Record<string, string>) =>
-    order
+  // Order is derived from each labels object's own key order (not a second,
+  // hand-maintained array) so the two can never drift out of sync - the same
+  // technique as AppIcon's IconName being `keyof typeof icons` instead of a
+  // separately hand-typed union.
+  const toChartData = <L extends Record<string, string>>(
+    counts: Record<string, number> | undefined,
+    labels: L
+  ) =>
+    (Object.keys(labels) as Array<keyof L & string>)
       .map((key) => ({ label: labels[key], value: counts?.[key] || 0 }))
       .filter((item) => item.value > 0);
 
@@ -174,7 +159,7 @@ export default function AdminAnalyticsScreen({ navigation }: { navigation: AppNa
             <Text style={styles.sectionLabel}>{t("admin.analytics.byRole")}</Text>
             <View style={styles.card}>
               <BarChartView
-                data={toChartData(ROLE_ORDER, data.byRole, roleLabels)}
+                data={toChartData(data.byRole, roleLabels)}
                 color={colors.primary}
               />
             </View>
@@ -184,7 +169,7 @@ export default function AdminAnalyticsScreen({ navigation }: { navigation: AppNa
             <Text style={styles.sectionLabel}>{t("admin.analytics.byRoleType")}</Text>
             <View style={styles.card}>
               <BarChartView
-                data={toChartData(ROLE_TYPE_ORDER, data.byRoleType, roleTypeLabels)}
+                data={toChartData(data.byRoleType, roleTypeLabels)}
                 color={colors.secondary}
               />
             </View>
@@ -194,7 +179,7 @@ export default function AdminAnalyticsScreen({ navigation }: { navigation: AppNa
             <Text style={styles.sectionLabel}>{t("admin.analytics.byExperience")}</Text>
             <View style={styles.card}>
               <BarChartView
-                data={toChartData(EXPERIENCE_ORDER, data.byExperienceLevel, experienceLabels)}
+                data={toChartData(data.byExperienceLevel, experienceLabels)}
                 color={colors.primary}
               />
             </View>
@@ -204,7 +189,7 @@ export default function AdminAnalyticsScreen({ navigation }: { navigation: AppNa
             <Text style={styles.sectionLabel}>{t("admin.analytics.byGoal")}</Text>
             <View style={styles.card}>
               <BarChartView
-                data={toChartData(GOAL_ORDER, data.byPrimaryGoal, goalLabels)}
+                data={toChartData(data.byPrimaryGoal, goalLabels)}
                 color={colors.secondary}
               />
             </View>
@@ -214,7 +199,7 @@ export default function AdminAnalyticsScreen({ navigation }: { navigation: AppNa
             <Text style={styles.sectionLabel}>{t("admin.analytics.byEatingOut")}</Text>
             <View style={styles.card}>
               <BarChartView
-                data={toChartData(EATING_OUT_ORDER, data.byEatingOutFrequency, eatingOutLabels)}
+                data={toChartData(data.byEatingOutFrequency, eatingOutLabels)}
                 color={colors.secondary}
               />
             </View>
@@ -224,7 +209,7 @@ export default function AdminAnalyticsScreen({ navigation }: { navigation: AppNa
             <Text style={styles.sectionLabel}>{t("admin.analytics.byConfidence")}</Text>
             <View style={styles.card}>
               <BarChartView
-                data={toChartData(CONFIDENCE_ORDER, data.byConfidence, confidenceLabels)}
+                data={toChartData(data.byConfidence, confidenceLabels)}
                 color={colors.primary}
               />
             </View>
