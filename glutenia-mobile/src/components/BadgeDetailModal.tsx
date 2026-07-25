@@ -2,15 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { Animated, Easing, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import { ChevronRight } from "lucide-react-native";
-import type { NavigationProp } from "@react-navigation/native";
 import { useTheme } from "../context/ThemeContext";
 import { Radius, Spacing } from "../theme/colors";
 import { getBadgeVisualTokens, getBadgeTier } from "../theme/badgeTheme";
 import BadgeIcon from "./BadgeIcon";
 import type { Badge } from "../types/models";
-import type { RootParamList } from "../navigation/types";
+import type { AppNavigation } from "../navigation/types";
 
-type BadgeDetailNavigation = NavigationProp<RootParamList>;
+type BadgeDetailNavigation = AppNavigation;
 
 // Category -> where the badge's underlying action lives in the app. Only
 // categories with one obvious, single action get a CTA (streak/journey are

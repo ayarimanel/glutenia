@@ -1,18 +1,27 @@
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
+import type { RouteProp } from "@react-navigation/native";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation, RootParamList } from "../../navigation/types";
 
-export default function LegalScreen({ route, navigation }) {
+type LegalSectionItem = { heading: string; body: string };
+
+type Props = {
+  route: RouteProp<RootParamList, "Legal">;
+  navigation: AppNavigation;
+};
+
+export default function LegalScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const [section, setSection] = useState(route.params?.section === "terms" ? "terms" : "privacy");
 
-  const sections = t(`legal.${section}.sections`, { returnObjects: true });
+  const sections = t(`legal.${section}.sections`, { returnObjects: true }) as LegalSectionItem[];
 
   return (
     <Screen>
@@ -60,7 +69,7 @@ export default function LegalScreen({ route, navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   navBar: {
     flexDirection: "row",
     alignItems: "center",

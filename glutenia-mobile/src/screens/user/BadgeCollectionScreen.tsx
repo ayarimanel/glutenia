@@ -13,37 +13,39 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Bookmark, BookmarkCheck } from "lucide-react-native";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
-import { useTheme } from "../../context/ThemeContext";
+import { api, type ApiError } from "../../api/client";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import BadgeIcon from "../../components/BadgeIcon";
-import BadgeDetailModal from "../../components/BadgeDetailModal";
+import BadgeDetailModal, { type BadgeDetailEntry } from "../../components/BadgeDetailModal";
+import type { AppNavigation } from "../../navigation/types";
+import type { LockedBadgeEntry, UserBadge } from "../../types/models";
 
 const COLUMNS = 3;
 const GRID_GAP = 12;
 
-export default function BadgeCollectionScreen({ navigation }) {
+export default function BadgeCollectionScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const { token } = useAuth();
 
-  const [earnedBadges, setEarnedBadges] = useState([]);
-  const [lockedBadges, setLockedBadges] = useState([]);
+  const [earnedBadges, setEarnedBadges] = useState<UserBadge[]>([]);
+  const [lockedBadges, setLockedBadges] = useState<LockedBadgeEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [pinningId, setPinningId] = useState(null);
-  const [selectedEntry, setSelectedEntry] = useState(null);
+  const [error, setError] = useState<string | null>(null);
+  const [pinningId, setPinningId] = useState<string | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<BadgeDetailEntry | null>(null);
 
   const fetchBadges = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.getGamificationProfile(token);
+      const data = await api.getGamificationProfile(token as string);
       setEarnedBadges(data.earnedBadges || []);
       setLockedBadges(data.lockedBadges || []);
     } catch (err) {
-      setError(err.message || t("badges.error"));
+      setError((err as ApiError).message || t("badges.error"));
     } finally {
       setLoading(false);
     }
@@ -60,7 +62,7 @@ export default function BadgeCollectionScreen({ navigation }) {
 
   const totalCount = earnedBadges.length + lockedBadges.length;
 
-  const handlePinToggle = async (userBadge) => {
+  const handlePinToggle = async (userBadge: UserBadge) => {
     if (pinningId) return;
     const badgeObjectId = userBadge.badgeId?._id;
     if (!badgeObjectId) return;
@@ -72,12 +74,12 @@ export default function BadgeCollectionScreen({ navigation }) {
     setPinningId(userBadge._id);
 
     try {
-      await api.updateBadgePin(token, badgeObjectId, nextPinned);
+      await api.updateBadgePin(token as string, badgeObjectId, nextPinned);
     } catch (err) {
       setEarnedBadges((prev) =>
         prev.map((ub) => (ub._id === userBadge._id ? { ...ub, isPinned: userBadge.isPinned } : ub))
       );
-      Alert.alert(t("badges.pinError"), err.message || t("badges.tryAgain"));
+      Alert.alert(t("badges.pinError"), (err as ApiError).message || t("badges.tryAgain"));
     } finally {
       setPinningId(null);
     }
@@ -217,7 +219,7 @@ export default function BadgeCollectionScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
   centered: { flex: 1, alignItems: "center", justifyContent: "center" },
 

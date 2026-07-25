@@ -1,11 +1,18 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
+import type { RouteProp } from "@react-navigation/native";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation, RootParamList } from "../../navigation/types";
 
-export default function ResourceDetailScreen({ route, navigation }) {
+type Props = {
+  route: RouteProp<RootParamList, "ResourceDetail">;
+  navigation: AppNavigation;
+};
+
+export default function ResourceDetailScreen({ route, navigation }: Props) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -55,7 +62,7 @@ export default function ResourceDetailScreen({ route, navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   navBar: {
     flexDirection: "row",
     alignItems: "center",

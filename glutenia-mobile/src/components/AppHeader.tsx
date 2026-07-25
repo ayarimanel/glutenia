@@ -12,7 +12,7 @@ import type { RootParamList } from "../navigation/types";
 interface AppHeaderProps {
   userName?: string;
   avatarUri?: string;
-  onCartPress: () => void;
+  onCartPress?: () => void;
   safeTop?: boolean;
 }
 

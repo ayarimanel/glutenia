@@ -16,18 +16,19 @@ import AppIcon from "../../components/AppIcon";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { getRecipeDefaultFilter, rankRecipes } from "../../utils/personalization";
+import type { AppNavigation, RecipeWithImage } from "../../navigation/types";
 
 const FILTERS = ["Tunisian", "Easy", "Quick"];
 
-export default function RecipesScreen({ navigation }) {
+export default function RecipesScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const [activeFilter, setActiveFilter] = useState(() => getRecipeDefaultFilter(user));
-  const [recipes, setRecipes] = useState([]);
+  const [activeFilter, setActiveFilter] = useState<string>(() => getRecipeDefaultFilter(user ?? undefined));
+  const [recipes, setRecipes] = useState<RecipeWithImage[]>([]);
   const [loading, setLoading] = useState(true);
 
   useFocusEffect(
@@ -39,7 +40,7 @@ export default function RecipesScreen({ navigation }) {
           const data = await api.recipes();
           if (!cancelled) {
             const mapped = data.map((r) => ({ ...r, id: r._id, image: r.imageUrl }));
-            setRecipes(rankRecipes(mapped, user));
+            setRecipes(rankRecipes(mapped, user ?? undefined) ?? []);
           }
         } catch (error) {
           // Keep whatever was previously loaded; recipes are non-critical content.
@@ -62,7 +63,7 @@ export default function RecipesScreen({ navigation }) {
     <Screen>
       <AppHeader
         userName={user?.name ?? ""}
-        avatarUri={user?.avatar}
+        avatarUri={user?.avatar ?? undefined}
         onCartPress={() => navigation.navigate("CartPage")}
       />
       <ScrollView
@@ -149,7 +150,7 @@ export default function RecipesScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   scroll: {
     paddingHorizontal: Spacing.md,
   },

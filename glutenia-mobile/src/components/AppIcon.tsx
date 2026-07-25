@@ -47,6 +47,7 @@ import {
   Croissant,
   Activity,
   Eye,
+  PlayCircle,
 } from "lucide-react-native";
 import type { StyleProp, ViewStyle } from "react-native";
 
@@ -109,6 +110,7 @@ const icons = {
   croissant: Croissant,
   activity: Activity,
   eye: Eye,
+  "play-circle": PlayCircle,
 };
 
 export type IconName = keyof typeof icons;

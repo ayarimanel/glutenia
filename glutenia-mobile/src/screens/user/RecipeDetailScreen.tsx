@@ -7,14 +7,21 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useTranslation } from "react-i18next";
+import type { RouteProp } from "@react-navigation/native";
 import Screen from "../../components/Screen";
 import AppHeader from "../../components/AppHeader";
 import AppIcon from "../../components/AppIcon";
 import { useAuth } from "../../context/AuthContext";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation, RootParamList } from "../../navigation/types";
 
-export default function RecipeDetailScreen({ navigation, route }) {
+type Props = {
+  navigation: AppNavigation;
+  route: RouteProp<RootParamList, "RecipeDetail">;
+};
+
+export default function RecipeDetailScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { colors } = useTheme();
@@ -31,7 +38,7 @@ export default function RecipeDetailScreen({ navigation, route }) {
     <Screen>
       <AppHeader
         userName={user?.name ?? ""}
-        avatarUri={user?.avatar}
+        avatarUri={user?.avatar ?? undefined}
         onCartPress={() => navigation.navigate("CartPage")}
       />
       <ScrollView
@@ -89,7 +96,7 @@ export default function RecipeDetailScreen({ navigation, route }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   scroll: {
     paddingHorizontal: Spacing.md,
   },

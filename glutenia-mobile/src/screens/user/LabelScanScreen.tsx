@@ -13,26 +13,30 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import AppHeader from "../../components/AppHeader";
-import AppIcon from "../../components/AppIcon";
-import { api } from "../../api/client";
+import AppIcon, { type IconName } from "../../components/AppIcon";
+import { api, type ApiError } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { notifyGamification } from "../../context/GamificationContext";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation } from "../../navigation/types";
+import type { ScanVerdict, LabelScanResult } from "../../types/models";
 
 const TAB_BAR_HEIGHT = 66;
 const IDLE = "idle";
 const LOADING = "loading";
 const RESULT = "result";
 
-export default function LabelScanScreen({ navigation }) {
+type LabelScanResultData = Omit<LabelScanResult, "gamification">;
+
+export default function LabelScanScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
   const { user, token } = useAuth();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const insets = useSafeAreaInsets();
   const [screenState, setScreenState] = useState(IDLE);
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState<LabelScanResultData | null>(null);
 
   const bottomPad = insets.bottom + TAB_BAR_HEIGHT + Spacing.lg;
 
@@ -59,13 +63,13 @@ export default function LabelScanScreen({ navigation }) {
         { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true }
       );
 
-      const { gamification, ...data } = await api.scanLabel(compressed.base64, token);
+      const { gamification, ...data } = await api.scanLabel(compressed.base64 as string, token as string);
       setResult(data);
       setScreenState(RESULT);
       notifyGamification(gamification);
     } catch (err) {
       setScreenState(IDLE);
-      Alert.alert(t("labelScan.error"), err.message ?? String(err));
+      Alert.alert(t("labelScan.error"), (err as ApiError).message ?? String(err));
     }
   };
 
@@ -74,14 +78,14 @@ export default function LabelScanScreen({ navigation }) {
     setScreenState(IDLE);
   };
 
-  const VERDICT_COLOR = {
+  const VERDICT_COLOR: Record<ScanVerdict, string> = {
     safe: colors.primary,
     caution: colors.warning,
     unsafe: colors.danger,
     error: colors.textMuted,
   };
 
-  const VERDICT_ICON = {
+  const VERDICT_ICON: Record<ScanVerdict, IconName> = {
     safe: "checkmark-circle",
     caution: "info",
     unsafe: "close-circle",
@@ -92,7 +96,7 @@ export default function LabelScanScreen({ navigation }) {
   if (screenState === LOADING) {
     return (
       <View style={styles.root}>
-        <AppHeader userName={user?.name ?? ""} avatarUri={user?.avatar} safeTop />
+        <AppHeader userName={user?.name ?? ""} avatarUri={user?.avatar ?? undefined} safeTop />
         <View style={[styles.center, { paddingBottom: bottomPad }]}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.headingText}>{t("labelScan.analyzing")}</Text>
@@ -107,23 +111,26 @@ export default function LabelScanScreen({ navigation }) {
     const color = VERDICT_COLOR[result.verdict] ?? colors.textMuted;
     const icon = VERDICT_ICON[result.verdict] ?? "info";
 
-    const titleKey = {
-      safe: "labelScan.safe",
-      caution: "labelScan.caution",
-      unsafe: "labelScan.unsafe",
-      error: "labelScan.error",
-    }[result.verdict] ?? "labelScan.error";
+    const titleKey: string =
+      ({
+        safe: "labelScan.safe",
+        caution: "labelScan.caution",
+        unsafe: "labelScan.unsafe",
+        error: "labelScan.error",
+      } satisfies Record<ScanVerdict, string>)[result.verdict] ?? "labelScan.error";
 
-    const bodyKey = {
-      safe: "labelScan.safeBody",
-      caution: "labelScan.cautionBody",
-      unsafe: "labelScan.unsafeBody",
-      error: null,
-    }[result.verdict];
+    const bodyKey: string | null = (
+      {
+        safe: "labelScan.safeBody",
+        caution: "labelScan.cautionBody",
+        unsafe: "labelScan.unsafeBody",
+        error: null,
+      } satisfies Record<ScanVerdict, string | null>
+    )[result.verdict];
 
     return (
       <View style={styles.root}>
-        <AppHeader userName={user?.name ?? ""} avatarUri={user?.avatar} safeTop />
+        <AppHeader userName={user?.name ?? ""} avatarUri={user?.avatar ?? undefined} safeTop />
         <ScrollView
           contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad }]}
           showsVerticalScrollIndicator={false}
@@ -205,7 +212,7 @@ export default function LabelScanScreen({ navigation }) {
   // ── IDLE ─────────────────────────────────────────────────────────────────
   return (
     <View style={styles.root}>
-      <AppHeader userName={user?.name ?? ""} avatarUri={user?.avatar} safeTop />
+      <AppHeader userName={user?.name ?? ""} avatarUri={user?.avatar ?? undefined} safeTop />
       <View style={[styles.center, { paddingBottom: bottomPad }]}>
         <View style={styles.iconCircle}>
           <AppIcon name="scan" size={48} color={colors.primary} />
@@ -232,7 +239,7 @@ export default function LabelScanScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.background,

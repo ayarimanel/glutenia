@@ -1,11 +1,18 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { WebView } from "react-native-webview";
+import type { RouteProp } from "@react-navigation/native";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
 import { Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation, RootParamList } from "../../navigation/types";
 
-export default function VideoPlayerScreen({ route, navigation }) {
+type Props = {
+  route: RouteProp<RootParamList, "VideoPlayer">;
+  navigation: AppNavigation;
+};
+
+export default function VideoPlayerScreen({ route, navigation }: Props) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const { youtubeId, title } = route.params;
@@ -33,7 +40,7 @@ export default function VideoPlayerScreen({ route, navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   navBar: {
     flexDirection: "row",
     alignItems: "center",

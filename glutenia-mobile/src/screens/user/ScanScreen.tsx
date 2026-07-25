@@ -1,4 +1,4 @@
-import { CameraView, useCameraPermissions } from "expo-camera";
+import { CameraView, useCameraPermissions, type BarcodeScanningResult } from "expo-camera";
 import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -14,13 +14,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useIsFocused } from "@react-navigation/native";
 import AppHeader from "../../components/AppHeader";
 import AppIcon from "../../components/AppIcon";
-import { api } from "../../api/client";
+import { api, type ApiError, type ProductScanResult } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { notifyGamification } from "../../context/GamificationContext";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTranslation } from "react-i18next";
+import type { AppNavigation } from "../../navigation/types";
 
 const FRAME_W = 260;
 const FRAME_H = 120;
@@ -31,7 +32,14 @@ const LOADING = "loading";
 const FOUND = "found";
 const NOT_FOUND = "not_found";
 
-export default function ScanScreen({ navigation }) {
+// Plain Omit collapses a union to its common keys (keyof a union is an
+// intersection), which would erase ProductScanResult's Product-vs-
+// CommunityProduct discriminated union down to only their shared fields.
+// This distributes Omit over each member instead, preserving the union.
+type DistributiveOmit<T, K extends keyof T> = T extends unknown ? Omit<T, K> : never;
+type ScannedProduct = DistributiveOmit<ProductScanResult, "gamification">;
+
+export default function ScanScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -39,8 +47,8 @@ export default function ScanScreen({ navigation }) {
   const cart = useCart();
   const [permission, requestPermission] = useCameraPermissions();
   const [screenState, setScreenState] = useState(SCANNING);
-  const [product, setProduct] = useState(null);
-  const [scannedBarcode, setScannedBarcode] = useState(null);
+  const [product, setProduct] = useState<ScannedProduct | null>(null);
+  const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   const [flagging, setFlagging] = useState(false);
   const [flagged, setFlagged] = useState(false);
   const scanLock = useRef(false);
@@ -77,16 +85,16 @@ export default function ScanScreen({ navigation }) {
     if (!product?._id) return;
     setFlagging(true);
     try {
-      await api.flagCommunityProduct(token, product._id);
+      await api.flagCommunityProduct(token as string, product._id);
       setFlagged(true);
     } catch (error) {
-      Alert.alert(t("scan.flagFailed"), error.message);
+      Alert.alert(t("scan.flagFailed"), (error as ApiError).message);
     } finally {
       setFlagging(false);
     }
   };
 
-  const handleBarcodeScanned = async ({ data }) => {
+  const handleBarcodeScanned = async ({ data }: BarcodeScanningResult) => {
     if (scanLock.current) return;
     scanLock.current = true;
 
@@ -97,16 +105,16 @@ export default function ScanScreen({ navigation }) {
     setFlagged(false);
 
     try {
-      const { gamification, ...found } = await api.productByBarcode(data, token);
+      const { gamification, ...found } = await api.productByBarcode(data, token ?? undefined);
       setProduct(found);
       setScreenState(FOUND);
       notifyGamification(gamification);
     } catch (error) {
-      if (error.status === 404) {
+      if ((error as ApiError).status === 404) {
         setScreenState(NOT_FOUND);
       } else {
         // Non-404 error: show alert, then return to scanning on dismiss.
-        Alert.alert(t("scan.scanError"), error.message, [
+        Alert.alert(t("scan.scanError"), (error as ApiError).message, [
           {
             text: t("scan.ok"),
             onPress: () => {
@@ -130,7 +138,7 @@ export default function ScanScreen({ navigation }) {
       <View style={styles.root}>
         <AppHeader
           userName={user?.name ?? ""}
-          avatarUri={user?.avatar}
+          avatarUri={user?.avatar ?? undefined}
           onCartPress={handleCartPress}
           safeTop
         />
@@ -170,7 +178,7 @@ export default function ScanScreen({ navigation }) {
       <View style={styles.root}>
         <AppHeader
           userName={user?.name ?? ""}
-          avatarUri={user?.avatar}
+          avatarUri={user?.avatar ?? undefined}
           onCartPress={handleCartPress}
           safeTop
         />
@@ -190,7 +198,7 @@ export default function ScanScreen({ navigation }) {
       <View style={styles.root}>
         <AppHeader
           userName={user?.name ?? ""}
-          avatarUri={user?.avatar}
+          avatarUri={user?.avatar ?? undefined}
           onCartPress={handleCartPress}
           safeTop
         />
@@ -244,12 +252,12 @@ export default function ScanScreen({ navigation }) {
   }
 
   // State FOUND: real shop product returned from API
-  if (screenState === FOUND && product) {
+  if (screenState === FOUND && product && !product.isCommunityReport) {
     return (
       <View style={styles.root}>
         <AppHeader
           userName={user?.name ?? ""}
-          avatarUri={user?.avatar}
+          avatarUri={user?.avatar ?? undefined}
           onCartPress={handleCartPress}
           safeTop
         />
@@ -301,7 +309,7 @@ export default function ScanScreen({ navigation }) {
       <View style={styles.root}>
         <AppHeader
           userName={user?.name ?? ""}
-          avatarUri={user?.avatar}
+          avatarUri={user?.avatar ?? undefined}
           onCartPress={handleCartPress}
           safeTop
         />
@@ -326,7 +334,7 @@ export default function ScanScreen({ navigation }) {
           </Pressable>
           <Pressable
             style={styles.secondaryBtn}
-            onPress={() => navigation.navigate("SubmitProduct", { barcode: scannedBarcode })}
+            onPress={() => navigation.navigate("SubmitProduct", { barcode: scannedBarcode as string })}
           >
             <AppIcon name="add-circle" size={18} color={colors.primary} />
             <Text style={styles.secondaryBtnText}>{t("scan.addThisProduct")}</Text>
@@ -378,7 +386,7 @@ export default function ScanScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.background,

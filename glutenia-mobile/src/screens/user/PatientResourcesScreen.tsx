@@ -11,18 +11,22 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 
 import Screen from "../../components/Screen";
-import AppIcon from "../../components/AppIcon";
+import AppIcon, { type IconName } from "../../components/AppIcon";
 import EmptyState from "../../components/EmptyState";
 import { api } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation, ResolvedPatientResource } from "../../navigation/types";
+import type { PatientResource, PatientResourceCategory } from "../../types/models";
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  STATIC CONTENT (category chips only — articles are now admin-managed and
 //  fetched from the API; see the useFocusEffect fetch below)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const getCategories = (colors) => [
+type CategoryMeta = { key: PatientResourceCategory; icon: IconName; bg: string; color: string };
+
+const getCategories = (colors: ThemeColors): CategoryMeta[] => [
   { key: "celiac",    icon: "activity",     bg: colors.secondaryPale, color: colors.secondary },
   { key: "diet",      icon: "utensils",     bg: colors.primaryPale,   color: colors.primary   },
   { key: "safe",      icon: "shield-check", bg: colors.primaryPale,   color: colors.primary   },
@@ -52,14 +56,14 @@ const VIDEOS = [
 //  SCREEN
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default function PatientResourcesScreen({ navigation }) {
+export default function PatientResourcesScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const CATEGORIES = useMemo(() => getCategories(colors), [colors]);
-  const [resources, setResources] = useState([]);
+  const [resources, setResources] = useState<PatientResource[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState(null);
+  const [activeCategory, setActiveCategory] = useState<PatientResourceCategory | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -84,7 +88,7 @@ export default function PatientResourcesScreen({ navigation }) {
   // Icon/bg/color are derived from category client-side (same mapping the
   // chips use) rather than stored per-resource, so admin-added resources
   // automatically pick up the right visuals with no extra field to fill in.
-  const resolveVisuals = (resource) => {
+  const resolveVisuals = (resource: PatientResource): ResolvedPatientResource => {
     const meta = CATEGORIES.find((c) => c.key === resource.category) || CATEGORIES[0];
     return {
       ...resource,
@@ -105,7 +109,7 @@ export default function PatientResourcesScreen({ navigation }) {
     : resolvedResources
   ).filter((item) => item !== featured);
 
-  const openVideo = (video) => {
+  const openVideo = (video: (typeof VIDEOS)[number]) => {
     navigation.navigate("VideoPlayer", {
       youtubeId: video.youtubeId,
       title: video.title,
@@ -265,7 +269,7 @@ export default function PatientResourcesScreen({ navigation }) {
 //  STYLES
 // ─────────────────────────────────────────────────────────────────────────────
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   // Nav bar
   navBar: {
     flexDirection: "row",
