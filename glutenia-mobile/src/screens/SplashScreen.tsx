@@ -1,6 +1,6 @@
 import { View, Image, StyleSheet, Text, Dimensions } from "react-native";
 import { useTranslation } from "react-i18next";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../context/ThemeContext";
 
 const LOGO_ASPECT_RATIO = 958 / 378;
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -22,7 +22,7 @@ export default function SplashScreen() {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

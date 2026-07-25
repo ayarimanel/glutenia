@@ -1,46 +1,66 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft } from "lucide-react-native";
+import { useAuth } from "../../context/AuthContext";
+import { api } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { RouteProp } from "@react-navigation/native";
+import type { AppNavigation, RootParamList } from "../../navigation/types";
+import type { ConfidenceLevel } from "../../types/models";
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000;
-const daysAgo = (n) => new Date(Date.now() - n * MS_PER_DAY).toISOString();
+interface OnboardingConfidenceScreenProps {
+  navigation: AppNavigation;
+  route: RouteProp<RootParamList, "OnboardingConfidence">;
+}
 
-const OPTIONS_META = [
-  { key: "justStarted",       value: "just_started",   glutenFreeSince: daysAgo(0)    },
-  { key: "lessThan6Months",   value: "1_to_6_months",  glutenFreeSince: daysAgo(90)   },
-  { key: "sixTo12Months",     value: "6_to_12_months", glutenFreeSince: daysAgo(270)  },
-  { key: "oneToThreeYears",   value: "1_to_3_years",   glutenFreeSince: daysAgo(730)  },
-  { key: "moreThanThreeYears",value: "3_plus_years",   glutenFreeSince: daysAgo(1095) },
-];
-
-export default function OnboardingJourneyScreen({ navigation, route }) {
+export default function OnboardingConfidenceScreen({ navigation, route }: OnboardingConfidenceScreenProps) {
   const { t } = useTranslation();
-  const { roleType } = route.params;
+  const { token, markProfileOnboardingComplete, updateUser } = useAuth();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState<ConfidenceLevel | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const OPTIONS = OPTIONS_META.map((o) => ({
-    ...o,
-    label: t(`profileOnboarding.journey.${o.key}`),
-  }));
+  const OPTIONS: Array<{ label: string; subtitle: string; value: ConfidenceLevel }> = [
+    {
+      label: t("profileOnboarding.confidence.still_learning"),
+      subtitle: t("profileOnboarding.confidence.still_learningSub"),
+      value: "low",
+    },
+    {
+      label: t("profileOnboarding.confidence.getting_there"),
+      subtitle: t("profileOnboarding.confidence.getting_thereSub"),
+      value: "medium",
+    },
+    {
+      label: t("profileOnboarding.confidence.confident"),
+      subtitle: t("profileOnboarding.confidence.confidentSub"),
+      value: "high",
+    },
+  ];
 
-  const question =
-    roleType === "warrior"
-      ? t("profileOnboarding.journey.questionWarrior")
-      : t("profileOnboarding.journey.questionSupporter");
-
-  const handleContinue = () => {
-    const opt = OPTIONS.find((o) => o.value === selected);
-    navigation.navigate("OnboardingGoal", {
-      roleType,
-      experienceLevel: opt.value,
-      glutenFreeSince: opt.glutenFreeSince,
-    });
+  const handleContinue = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await api.saveOnboardingProfile(token as string, {
+        roleType: route.params.roleType,
+        glutenFreeSince: route.params.glutenFreeSince,
+        experienceLevel: route.params.experienceLevel,
+        primaryGoal: route.params.primaryGoal,
+        eatingOutFrequency: route.params.eatingOutFrequency,
+        confidenceIdentifyingGf: selected as ConfidenceLevel,
+      });
+      await updateUser(result.user);
+      await markProfileOnboardingComplete();
+    } catch (err) {
+      setError((err as Error).message || t("profileOnboarding.confidence.error"));
+      setLoading(false);
+    }
   };
 
   return (
@@ -50,22 +70,25 @@ export default function OnboardingJourneyScreen({ navigation, route }) {
           onPress={() => navigation.goBack()}
           style={styles.backBtn}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          disabled={loading}
         >
           <ArrowLeft size={22} color={colors.textDark} strokeWidth={2.5} />
         </TouchableOpacity>
-        <Text style={styles.stepLabel}>{t("profileOnboarding.journey.step")}</Text>
+        <Text style={styles.stepLabel}>{t("profileOnboarding.confidence.step")}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: "40%" }]} />
+        <View style={[styles.progressFill, { width: "100%" }]} />
       </View>
 
       <ScrollView
         contentContainerStyle={styles.body}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.question}>{question}</Text>
+        <Text style={styles.question}>
+          {t("profileOnboarding.confidence.question")}
+        </Text>
 
         {OPTIONS.map((opt) => {
           const active = selected === opt.value;
@@ -74,12 +97,13 @@ export default function OnboardingJourneyScreen({ navigation, route }) {
               key={opt.value}
               style={[styles.card, active && styles.cardActive]}
               activeOpacity={0.75}
-              onPress={() => setSelected(opt.value)}
+              onPress={() => !loading && setSelected(opt.value)}
             >
               <View style={styles.cardBody}>
                 <Text style={[styles.cardLabel, active && styles.cardLabelActive]}>
                   {opt.label}
                 </Text>
+                <Text style={styles.cardSub}>{opt.subtitle}</Text>
               </View>
               <View style={[styles.radio, active && styles.radioActive]}>
                 {active && <View style={styles.radioDot} />}
@@ -87,23 +111,29 @@ export default function OnboardingJourneyScreen({ navigation, route }) {
             </TouchableOpacity>
           );
         })}
+
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
       </ScrollView>
 
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.btn, !selected && styles.btnDisabled]}
-          disabled={!selected}
+          style={[styles.btn, (!selected || loading) && styles.btnDisabled]}
+          disabled={!selected || loading}
           activeOpacity={0.8}
           onPress={handleContinue}
         >
-          <Text style={styles.btnText}>{t("profileOnboarding.role.continue")}</Text>
+          {loading ? (
+            <ActivityIndicator color={colors.surface} />
+          ) : (
+            <Text style={styles.btnText}>{t("profileOnboarding.confidence.finish")}</Text>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
 
   headerRow: {
@@ -161,8 +191,9 @@ const getStyles = (colors) => StyleSheet.create({
   },
   cardActive: { borderColor: colors.primary, backgroundColor: colors.primaryPale },
   cardBody: { flex: 1 },
-  cardLabel: { fontSize: 16, fontWeight: "700", color: colors.textDark },
+  cardLabel: { fontSize: 16, fontWeight: "700", color: colors.textDark, marginBottom: 2 },
   cardLabelActive: { color: colors.primary },
+  cardSub: { fontSize: 13, color: colors.textMuted, lineHeight: 18 },
 
   radio: {
     width: 22,
@@ -175,6 +206,14 @@ const getStyles = (colors) => StyleSheet.create({
   },
   radioActive: { borderColor: colors.primary },
   radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary },
+
+  errorText: {
+    color: colors.danger,
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: Spacing.sm,
+    lineHeight: 20,
+  },
 
   footer: { padding: Spacing.md, paddingBottom: Spacing.lg },
   btn: {

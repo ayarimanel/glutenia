@@ -11,24 +11,32 @@ import Screen from "../../components/Screen";
 import Field from "../../components/Field";
 import { PrimaryButton, SecondaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { Radius, Spacing } from "../../theme/colors";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { ApiError } from "../../api/client";
+import type { AppNavigation } from "../../navigation/types";
 
 const MASCOT = require("../../../assets/mascot.png");
-export default function LoginScreen({ navigation }) {
+
+interface LoginErrors {
+  email?: string;
+  password?: string;
+}
+
+export default function LoginScreen({ navigation }: { navigation: AppNavigation }) {
   const { login } = useAuth();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<LoginErrors>({});
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    const nextErrors = {};
+    const nextErrors: LoginErrors = {};
     const trimmedEmail = email.trim();
 
     if (!trimmedEmail) {
@@ -49,14 +57,16 @@ export default function LoginScreen({ navigation }) {
     try {
       setLoading(true);
       await login({ email: trimmedEmail, password });
-    } catch (error) {
-      const status = error.status === 403 ? error.data?.professionalStatus : null;
+    } catch (err) {
+      const error = err as ApiError;
+      const pendingData = error.data as { professionalStatus?: string; approvalCode?: string } | undefined;
+      const status = error.status === 403 ? pendingData?.professionalStatus : null;
       if (status === "rejected") {
         Alert.alert(t("login.professionalRejectedTitle"), t("login.professionalRejectedMsg"));
       } else if (status === "pending") {
         Alert.alert(
           t("login.professionalPendingTitle"),
-          t("login.professionalPendingMsg", { code: error.data?.approvalCode })
+          t("login.professionalPendingMsg", { code: pendingData?.approvalCode })
         );
       } else {
         Alert.alert(t("auth.errors.loginFailed"), error.message);
@@ -132,7 +142,7 @@ export default function LoginScreen({ navigation }) {
 // ─── Styles ────────────────────────────────────────────────────────────────────
 const WAVE_GREEN_DEEP  = "#6ea832";             // deeper shade — inner wave accent
 
-const getStyles = (colors) => {
+const getStyles = (colors: ThemeColors) => {
 const WAVE_GREEN = colors.primary;        // #8BC34A  — outer wave
 return StyleSheet.create({
   // Root background matches the wave so there's no colour seam on tall devices

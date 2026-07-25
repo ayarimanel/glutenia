@@ -12,18 +12,20 @@ import {
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import Screen from "../components/Screen";
-import AppIcon from "../components/AppIcon";
+import AppIcon, { type IconName } from "../components/AppIcon";
 import BadgeIcon from "../components/BadgeIcon";
 import RoleMedallion from "../components/RoleMedallion";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../context/ThemeContext";
 import { Radius, Shadow, Spacing } from "../theme/colors";
 import { useTranslation } from "react-i18next";
+import type { AppNavigation } from "../navigation/types";
+import type { Event, ExperienceLevel, ProfileGamificationData } from "../types/models";
 
-function formatTimeAgo(dateString) {
+function formatTimeAgo(dateString?: string | null): string | null {
   if (!dateString) return null;
-  const diffDays = Math.floor((Date.now() - new Date(dateString)) / 86400000);
+  const diffDays = Math.floor((Date.now() - new Date(dateString).getTime()) / 86400000);
   if (diffDays < 30) return `${diffDays} day${diffDays !== 1 ? "s" : ""}`;
   const months = Math.floor(diffDays / 30);
   if (months < 12) return `${months} month${months !== 1 ? "s" : ""}`;
@@ -32,14 +34,14 @@ function formatTimeAgo(dateString) {
 }
 
 // "How long have you been gluten-free?" onboarding answer → Your Journey step.
-const EXPERIENCE_TO_STEP = {
+const EXPERIENCE_TO_STEP: Record<ExperienceLevel, number> = {
   just_started: 0,
   "1_to_6_months": 1,
   "6_to_12_months": 2,
   "1_to_3_years": 3,
   "3_plus_years": 4,
 };
-const EXPERIENCE_LEVEL_KEYS = [
+const EXPERIENCE_LEVEL_KEYS: ExperienceLevel[] = [
   "just_started",
   "1_to_6_months",
   "6_to_12_months",
@@ -47,19 +49,19 @@ const EXPERIENCE_LEVEL_KEYS = [
   "3_plus_years",
 ];
 
-function daysSince(dateString) {
+function daysSince(dateString?: string | null): number {
   if (!dateString) return 0;
-  return Math.max(0, Math.floor((Date.now() - new Date(dateString)) / 86400000));
+  return Math.max(0, Math.floor((Date.now() - new Date(dateString).getTime()) / 86400000));
 }
 
 const mascot = require("../../assets/mascot.png");
 
-export default function AccountScreen({ navigation }) {
+export default function AccountScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
 
-  const ROLE_META = {
+  const ROLE_META: Record<string, { label: string; icon: IconName; desc: string }> = {
     warrior: {
       label: t("account.roles.warrior.label"),
       icon: "shield",
@@ -99,10 +101,10 @@ export default function AccountScreen({ navigation }) {
     key,
     label: t(`account.stageTitles.${titleTrack}.${key}`),
   }));
-  const [profileData, setProfileData] = useState(null);
+  const [profileData, setProfileData] = useState<ProfileGamificationData | null>(null);
   const [loading, setLoading] = useState(!isAdmin);
-  const [error, setError] = useState(null);
-  const [events, setEvents] = useState([]);
+  const [error, setError] = useState<string | null>(null);
+  const [events, setEvents] = useState<Event[]>([]);
 
   const fetchProfile = useCallback(async () => {
     if (isAdmin) {
@@ -113,10 +115,10 @@ export default function AccountScreen({ navigation }) {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.getGamificationProfile(token);
+      const data = await api.getGamificationProfile(token as string);
       setProfileData(data);
     } catch (err) {
-      setError(err.message || t("account.errorLoad"));
+      setError((err as Error).message || t("account.errorLoad"));
     } finally {
       setLoading(false);
     }
@@ -132,7 +134,7 @@ export default function AccountScreen({ navigation }) {
     if (isAdmin) return;
     let cancelled = false;
     api
-      .events(token)
+      .events(token as string)
       .then((data) => {
         if (!cancelled) setEvents(data);
       })
@@ -187,7 +189,7 @@ export default function AccountScreen({ navigation }) {
     ? ROLE_META.admin
     : isProfessional
       ? ROLE_META.professional
-      : ROLE_META[roleType] || ROLE_META.unset;
+      : ROLE_META[roleType ?? ""] || ROLE_META.unset;
   const accentColor = isAdmin || isProfessional ? colors.secondary : colors.primary;
   const accentPale = isAdmin || isProfessional ? colors.secondaryPale : colors.primaryPale;
   // Nothing "earned" yet if the user never chose a role during onboarding —
@@ -217,7 +219,7 @@ export default function AccountScreen({ navigation }) {
   const nextMin = gamification?.nextLevelXp ?? totalXp;
   const xpProgress = gamification?.progressRatio ?? 0;
   const timeAgo = formatTimeAgo(user?.gluten_free_since);
-  const activeStep = EXPERIENCE_TO_STEP[user?.experience_level] ?? 0;
+  const activeStep = EXPERIENCE_TO_STEP[user?.experience_level as ExperienceLevel] ?? 0;
   const daysOnGlutenia = daysSince(user?.createdAt);
   const badgesToShow =
     pinnedBadges.length > 0 ? pinnedBadges : earnedBadges.slice(0, 3);
@@ -604,7 +606,7 @@ export default function AccountScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   centered: { alignItems: "center", justifyContent: "center" },
   errorMsg: {
     fontSize: 15,

@@ -1,4 +1,5 @@
 import type { NavigatorScreenParams } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type {
   EatingOutFrequency,
   Event,
@@ -143,3 +144,10 @@ declare global {
     interface RootParamList extends RootParamList {}
   }
 }
+
+// A screen's `navigation` prop, typed against the one shared RootParamList
+// rather than the specific Stack/Tab navigator that happens to render it
+// (see the flat-list rationale above) - reused across every screen instead
+// of each one importing NativeStackNavigationProp/BottomTabNavigationProp
+// and repeating the same generic argument.
+export type AppNavigation = NativeStackNavigationProp<RootParamList>;

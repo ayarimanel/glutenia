@@ -7,24 +7,29 @@ import {
   TouchableOpacity,
   useWindowDimensions,
   View,
+  type ImageSourcePropType,
+  type ViewToken,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, ArrowRight } from "lucide-react-native";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../context/ThemeContext";
 import { Spacing } from "../theme/colors";
 import LanguageSelector from "../components/LanguageSelector";
 
 const VIEWABILITY_CONFIG = { viewAreaCoveragePercentThreshold: 50 };
 
-const SLIDE_ASSETS = [
+interface SlideAsset {
+  id: string;
+  image: ImageSourcePropType;
+}
+
+const SLIDE_ASSETS: SlideAsset[] = [
   { id: "1", image: require("../../assets/onboarding/scan.png") },
   { id: "2", image: require("../../assets/onboarding/discover.png") },
   { id: "3", image: require("../../assets/onboarding/community.png") },
 ];
-
-
 
 export default function OnboardingScreen() {
   const { completeOnboarding } = useAuth();
@@ -34,7 +39,7 @@ export default function OnboardingScreen() {
   const { width } = useWindowDimensions();
   const IMAGE_SIZE = width * 0.72;
   const [activeIndex, setActiveIndex] = useState(0);
-  const flatListRef = useRef(null);
+  const flatListRef = useRef<FlatList>(null);
 
   const SLIDES = SLIDE_ASSETS.map((s) => ({
     ...s,
@@ -59,9 +64,9 @@ export default function OnboardingScreen() {
     }
   };
 
-  const onViewableItemsChanged = useRef(({ viewableItems }) => {
+  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     if (viewableItems.length > 0) {
-      setActiveIndex(viewableItems[0].index);
+      setActiveIndex(viewableItems[0].index ?? 0);
     }
   }).current;
 
@@ -136,7 +141,7 @@ export default function OnboardingScreen() {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,

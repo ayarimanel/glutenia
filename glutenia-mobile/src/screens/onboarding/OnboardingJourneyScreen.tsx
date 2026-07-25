@@ -4,27 +4,51 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-nati
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft } from "lucide-react-native";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { RouteProp } from "@react-navigation/native";
+import type { AppNavigation, RootParamList } from "../../navigation/types";
+import type { ExperienceLevel } from "../../types/models";
 
-export default function OnboardingGoalScreen({ navigation, route }) {
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const daysAgo = (n: number): string => new Date(Date.now() - n * MS_PER_DAY).toISOString();
+
+const OPTIONS_META: Array<{ key: string; value: ExperienceLevel; glutenFreeSince: string }> = [
+  { key: "justStarted",       value: "just_started",   glutenFreeSince: daysAgo(0)    },
+  { key: "lessThan6Months",   value: "1_to_6_months",  glutenFreeSince: daysAgo(90)   },
+  { key: "sixTo12Months",     value: "6_to_12_months", glutenFreeSince: daysAgo(270)  },
+  { key: "oneToThreeYears",   value: "1_to_3_years",   glutenFreeSince: daysAgo(730)  },
+  { key: "moreThanThreeYears",value: "3_plus_years",   glutenFreeSince: daysAgo(1095) },
+];
+
+interface OnboardingJourneyScreenProps {
+  navigation: AppNavigation;
+  route: RouteProp<RootParamList, "OnboardingJourney">;
+}
+
+export default function OnboardingJourneyScreen({ navigation, route }: OnboardingJourneyScreenProps) {
   const { t } = useTranslation();
+  const { roleType } = route.params;
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState<ExperienceLevel | null>(null);
 
-  const OPTIONS = [
-    { label: t("profileOnboarding.goal.manage_celiac"), value: "manage_celiac" },
-    { label: t("profileOnboarding.goal.manage_intolerance"), value: "manage_intolerance" },
-    { label: t("profileOnboarding.goal.support_child"), value: "support_child" },
-    { label: t("profileOnboarding.goal.support_partner"), value: "support_partner" },
-    { label: t("profileOnboarding.goal.dietary_choice"), value: "dietary_choice" },
-    { label: t("profileOnboarding.goal.exploring"), value: "exploring" },
-  ];
+  const OPTIONS = OPTIONS_META.map((o) => ({
+    ...o,
+    label: t(`profileOnboarding.journey.${o.key}`),
+  }));
+
+  const question =
+    roleType === "warrior"
+      ? t("profileOnboarding.journey.questionWarrior")
+      : t("profileOnboarding.journey.questionSupporter");
 
   const handleContinue = () => {
-    navigation.navigate("OnboardingEatingOut", {
-      ...route.params,
-      primaryGoal: selected,
+    const opt = OPTIONS.find((o) => o.value === selected);
+    if (!opt) return;
+    navigation.navigate("OnboardingGoal", {
+      roleType,
+      experienceLevel: opt.value,
+      glutenFreeSince: opt.glutenFreeSince,
     });
   };
 
@@ -38,21 +62,19 @@ export default function OnboardingGoalScreen({ navigation, route }) {
         >
           <ArrowLeft size={22} color={colors.textDark} strokeWidth={2.5} />
         </TouchableOpacity>
-        <Text style={styles.stepLabel}>{t("profileOnboarding.goal.step")}</Text>
+        <Text style={styles.stepLabel}>{t("profileOnboarding.journey.step")}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
       <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: "60%" }]} />
+        <View style={[styles.progressFill, { width: "40%" }]} />
       </View>
 
       <ScrollView
         contentContainerStyle={styles.body}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.question}>
-          {t("profileOnboarding.goal.question")}
-        </Text>
+        <Text style={styles.question}>{question}</Text>
 
         {OPTIONS.map((opt) => {
           const active = selected === opt.value;
@@ -83,14 +105,14 @@ export default function OnboardingGoalScreen({ navigation, route }) {
           activeOpacity={0.8}
           onPress={handleContinue}
         >
-          <Text style={styles.btnText}>{t("profileOnboarding.goal.continue")}</Text>
+          <Text style={styles.btnText}>{t("profileOnboarding.role.continue")}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
 
   headerRow: {
@@ -148,7 +170,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   cardActive: { borderColor: colors.primary, backgroundColor: colors.primaryPale },
   cardBody: { flex: 1 },
-  cardLabel: { fontSize: 15, fontWeight: "700", color: colors.textDark },
+  cardLabel: { fontSize: 16, fontWeight: "700", color: colors.textDark },
   cardLabelActive: { color: colors.primary },
 
   radio: {

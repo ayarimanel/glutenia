@@ -7,9 +7,21 @@ import { PrimaryButton, SecondaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
 import { isValidPhone } from "../../utils/validation";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation } from "../../navigation/types";
+import type { UserRole } from "../../types/models";
+import type { ApiError } from "../../api/client";
 
-export default function RegisterScreen({ navigation }) {
+interface RegisterErrors {
+  name?: string;
+  email?: string;
+  password?: string;
+  phone?: string;
+}
+
+const ROLE_OPTIONS: UserRole[] = ["customer", "professional"];
+
+export default function RegisterScreen({ navigation }: { navigation: AppNavigation }) {
   const { register } = useAuth();
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -18,13 +30,13 @@ export default function RegisterScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
-  const [role, setRole] = useState("customer");
-  const [errors, setErrors] = useState({});
+  const [role, setRole] = useState<UserRole>("customer");
+  const [errors, setErrors] = useState<RegisterErrors>({});
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
     const trimmedEmail = email.trim();
-    const nextErrors = {};
+    const nextErrors: RegisterErrors = {};
 
     if (!name.trim()) {
       nextErrors.name = t("auth.errors.nameRequired");
@@ -58,14 +70,14 @@ export default function RegisterScreen({ navigation }) {
         role,
         phone: phone.trim(),
       });
-      if (result?.pending) {
+      if ("pending" in result && result.pending) {
         navigation.replace("ProfessionalPending", {
           approvalCode: result.approvalCode,
           email: trimmedEmail,
         });
       }
-    } catch (error) {
-      Alert.alert(t("auth.errors.registerFailed"), error.message);
+    } catch (err) {
+      Alert.alert(t("auth.errors.registerFailed"), (err as ApiError).message);
     } finally {
       setLoading(false);
     }
@@ -131,7 +143,7 @@ export default function RegisterScreen({ navigation }) {
             <View style={styles.roleWrap}>
               <Text style={styles.roleLabel}>{t("register.role")}</Text>
               <View style={styles.segment}>
-                {["customer", "professional"].map((option) => (
+                {ROLE_OPTIONS.map((option) => (
                   <Pressable
                     key={option}
                     onPress={() => setRole(option)}
@@ -164,7 +176,7 @@ export default function RegisterScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   keyboardView: {
     flex: 1,
   },

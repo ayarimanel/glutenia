@@ -7,9 +7,17 @@ import Field from "../../components/Field";
 import { PrimaryButton, SecondaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { RouteProp } from "@react-navigation/native";
+import type { AppNavigation, RootParamList } from "../../navigation/types";
+import type { ApiError } from "../../api/client";
 
-export default function ProfessionalPendingScreen({ navigation, route }) {
+interface ProfessionalPendingScreenProps {
+  navigation: AppNavigation;
+  route: RouteProp<RootParamList, "ProfessionalPending">;
+}
+
+export default function ProfessionalPendingScreen({ navigation, route }: ProfessionalPendingScreenProps) {
   const { t } = useTranslation();
   const { login } = useAuth();
   const { colors } = useTheme();
@@ -29,8 +37,10 @@ export default function ProfessionalPendingScreen({ navigation, route }) {
       await login({ email, password });
       // AuthContext now holds a valid session — RootNavigator will switch
       // out of the auth stack automatically.
-    } catch (error) {
-      const status = error.status === 403 ? error.data?.professionalStatus : null;
+    } catch (err) {
+      const error = err as ApiError;
+      const pendingData = error.data as { professionalStatus?: string } | undefined;
+      const status = error.status === 403 ? pendingData?.professionalStatus : null;
       if (status === "rejected") {
         Alert.alert(t("login.professionalRejectedTitle"), t("login.professionalRejectedMsg"));
       } else if (status === "pending") {
@@ -87,7 +97,7 @@ export default function ProfessionalPendingScreen({ navigation, route }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",

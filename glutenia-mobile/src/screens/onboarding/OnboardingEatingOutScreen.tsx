@@ -4,15 +4,23 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-nati
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft } from "lucide-react-native";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { RouteProp } from "@react-navigation/native";
+import type { AppNavigation, RootParamList } from "../../navigation/types";
+import type { EatingOutFrequency } from "../../types/models";
 
-export default function OnboardingEatingOutScreen({ navigation, route }) {
+interface OnboardingEatingOutScreenProps {
+  navigation: AppNavigation;
+  route: RouteProp<RootParamList, "OnboardingEatingOut">;
+}
+
+export default function OnboardingEatingOutScreen({ navigation, route }: OnboardingEatingOutScreenProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState<EatingOutFrequency | null>(null);
 
-  const OPTIONS = [
+  const OPTIONS: Array<{ label: string; value: EatingOutFrequency }> = [
     { label: t("profileOnboarding.eatingOut.rarely"), value: "rarely" },
     { label: t("profileOnboarding.eatingOut.fewTimesMonth"), value: "few_times_month" },
     { label: t("profileOnboarding.eatingOut.weekly"), value: "weekly" },
@@ -22,7 +30,7 @@ export default function OnboardingEatingOutScreen({ navigation, route }) {
   const handleContinue = () => {
     navigation.navigate("OnboardingConfidence", {
       ...route.params,
-      eatingOutFrequency: selected,
+      eatingOutFrequency: selected as EatingOutFrequency,
     });
   };
 
@@ -88,7 +96,7 @@ export default function OnboardingEatingOutScreen({ navigation, route }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
 
   headerRow: {

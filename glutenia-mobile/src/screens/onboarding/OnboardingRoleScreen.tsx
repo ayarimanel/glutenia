@@ -3,15 +3,17 @@ import { useTranslation } from "react-i18next";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation } from "../../navigation/types";
+import type { RoleType } from "../../types/models";
 
-export default function OnboardingRoleScreen({ navigation }) {
+export default function OnboardingRoleScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState<RoleType | null>(null);
 
-  const OPTIONS = [
+  const OPTIONS: Array<{ label: string; subtitle: string; value: RoleType }> = [
     {
       label: t("profileOnboarding.role.warrior"),
       subtitle: t("profileOnboarding.role.warriorSub"),
@@ -70,7 +72,7 @@ export default function OnboardingRoleScreen({ navigation }) {
           style={[styles.btn, !selected && styles.btnDisabled]}
           disabled={!selected}
           activeOpacity={0.8}
-          onPress={() => navigation.navigate("OnboardingJourney", { roleType: selected })}
+          onPress={() => navigation.navigate("OnboardingJourney", { roleType: selected as RoleType })}
         >
           <Text style={styles.btnText}>{t("profileOnboarding.role.continue")}</Text>
         </TouchableOpacity>
@@ -79,7 +81,7 @@ export default function OnboardingRoleScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.background },
 
   headerRow: {
