@@ -1114,7 +1114,7 @@ export default {
       stock: "Stock",
       barcode: "Code-barres (optionnel)",
       category: "Catégorie",
-      image: "Image du produit",
+      imageLabel: "Image du produit",
       noImage: "Aucune image sélectionnée.",
       preparing: "Préparation...",
       replaceImage: "Remplacer l'image",

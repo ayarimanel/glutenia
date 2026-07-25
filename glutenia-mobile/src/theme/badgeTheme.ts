@@ -4,20 +4,26 @@
 
 // ---- Color math (no color lib in the project — small local helpers) ----
 
-function hexToRgb(hex) {
+interface Rgb {
+  r: number;
+  g: number;
+  b: number;
+}
+
+function hexToRgb(hex: string): Rgb {
   const clean = hex.replace("#", "");
   const full = clean.length === 3 ? clean.split("").map((c) => c + c).join("") : clean;
   const num = parseInt(full, 16);
   return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
 }
 
-function rgbToHex({ r, g, b }) {
-  const toHex = (v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0");
+function rgbToHex({ r, g, b }: Rgb): string {
+  const toHex = (v: number) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0");
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
 // amount: -1 (black) .. 0 (unchanged) .. 1 (white)
-export function shade(hex, amount) {
+export function shade(hex: string, amount: number): string {
   const { r, g, b } = hexToRgb(hex);
   const target = amount >= 0 ? { r: 255, g: 255, b: 255 } : { r: 0, g: 0, b: 0 };
   const t = Math.abs(amount);
@@ -28,7 +34,7 @@ export function shade(hex, amount) {
   });
 }
 
-export function mix(hexA, hexB, amount) {
+export function mix(hexA: string, hexB: string, amount: number): string {
   const a = hexToRgb(hexA);
   const b = hexToRgb(hexB);
   return rgbToHex({
@@ -38,7 +44,7 @@ export function mix(hexA, hexB, amount) {
   });
 }
 
-export function withAlpha(hex, alpha) {
+export function withAlpha(hex: string, alpha: number): string {
   const a = Math.round(Math.max(0, Math.min(1, alpha)) * 255)
     .toString(16)
     .padStart(2, "0");
@@ -48,7 +54,7 @@ export function withAlpha(hex, alpha) {
 // ---- Category colors ----
 // Matches the category coloring already shipped on the badge list screen,
 // kept identical so earned-badge colors don't shift under existing users.
-export const CATEGORY_COLORS = {
+export const CATEGORY_COLORS: Record<string, string> = {
   journey: "#8BC34A", // primary green
   scanner: "#7B4626", // secondary brown
   community: "#9C27B0",
@@ -63,9 +69,19 @@ const PLATINUM_ACCENT = "#E6ECF5";
 // ---- Rarity tiers ----
 // Each tier controls how "precious" a badge medallion looks: how bright its
 // gradient runs, whether it gets an outer glow ring, and ring thickness.
-export const TIERS = ["bronze", "silver", "gold", "platinum"];
+export const TIERS = ["bronze", "silver", "gold", "platinum"] as const;
+export type Tier = (typeof TIERS)[number];
 
-export const TIER_TOKENS = {
+interface TierTokens {
+  ringWidth: number;
+  glow: boolean;
+  glowRadius: number;
+  highlightMix: number;
+  accentMix: number;
+  accentColor?: string;
+}
+
+export const TIER_TOKENS: Record<Tier, TierTokens> = {
   bronze: {
     ringWidth: 2,
     glow: false,
@@ -102,7 +118,17 @@ export const TIER_TOKENS = {
 // the shared math behind every medallion in the app (badge catalog icons and
 // the profile Role medallion alike), so "how prestigious does tier X look"
 // only has one implementation to keep consistent.
-export function getTierTokensForColor(base, tier) {
+export interface BadgeVisualTokens {
+  gradient: string[];
+  ringColor: string;
+  glow: boolean;
+  glowColor: string;
+  glowRadius: number;
+  ringWidth: number;
+  base: string;
+}
+
+export function getTierTokensForColor(base: string, tier: Tier): BadgeVisualTokens {
   const tokens = TIER_TOKENS[tier] || TIER_TOKENS.bronze;
 
   let highlight = shade(base, tokens.highlightMix);
@@ -126,14 +152,14 @@ export function getTierTokensForColor(base, tier) {
 }
 
 // Builds the gradient stops + ring/glow colors for a given category+tier pair.
-export function getBadgeVisualTokens(category, tier) {
+export function getBadgeVisualTokens(category: string, tier: Tier): BadgeVisualTokens {
   return getTierTokensForColor(CATEGORY_COLORS[category] || "#6C757D", tier);
 }
 
 // ---- Badge slug -> rarity tier ----
 // Rarity follows how much effort the threshold represents relative to other
 // badges in the same track (first action vs. sustained/high-volume use).
-export const BADGE_TIER_MAP = {
+export const BADGE_TIER_MAP: Record<string, Tier> = {
   first_scan: "bronze",
   ten_scans: "silver",
   fifty_scans: "gold",
@@ -154,6 +180,6 @@ export const BADGE_TIER_MAP = {
   dedicated_caregiver: "bronze",
 };
 
-export function getBadgeTier(slug) {
+export function getBadgeTier(slug: string): Tier {
   return BADGE_TIER_MAP[slug] || "bronze";
 }

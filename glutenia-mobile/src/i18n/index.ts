@@ -19,7 +19,6 @@ i18n.use(initReactI18next).init({
   lng: supported.includes(deviceLocale) ? deviceLocale : "fr",
   fallbackLng: "fr",
   interpolation: { escapeValue: false },
-  compatibilityJSON: "v3",
   react: { useSuspense: false },
 });
 

@@ -316,7 +316,7 @@ export default function AdminProductFormScreen({ navigation, route }) {
           </View>
         </View>
         <View style={styles.imageSection}>
-          <Text style={styles.label}>{t("admin.form.image")}</Text>
+          <Text style={styles.label}>{t("admin.form.imageLabel")}</Text>
           <View
             style={[
               styles.imageStatusBox,

@@ -1116,7 +1116,7 @@ export default {
       stock: "المخزون",
       barcode: "الباركود (اختياري)",
       category: "الفئة",
-      image: "صورة المنتج",
+      imageLabel: "صورة المنتج",
       noImage: "لم يتم اختيار صورة بعد.",
       preparing: "جارٍ التحضير...",
       replaceImage: "استبدال الصورة",

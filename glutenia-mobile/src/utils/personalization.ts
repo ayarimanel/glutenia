@@ -5,14 +5,31 @@
 // function of plain data — no React/Expo/RN imports — so behavior can be
 // checked with a plain `node` script.
 
-const QUICK_ACCESS_DEFAULT_ORDER = ["recipes", "events", "patientResources", "map"];
+export type QuickAccessId = "recipes" | "events" | "patientResources" | "map";
+
+export type PrimaryGoal =
+  | "manage_celiac"
+  | "manage_intolerance"
+  | "support_child"
+  | "support_partner"
+  | "dietary_choice"
+  | "exploring";
+
+export interface PersonalizationUser {
+  confidence_identifying_gf?: "low" | "medium" | "high";
+  experience_level?: "just_started" | "1_to_6_months" | "6_to_12_months" | "1_to_3_years" | "3_plus_years";
+  eating_out_frequency?: "rarely" | "few_times_month" | "weekly" | "multiple_week";
+  primary_goal?: PrimaryGoal;
+}
+
+const QUICK_ACCESS_DEFAULT_ORDER: QuickAccessId[] = ["recipes", "events", "patientResources", "map"];
 
 // Surfaces the most relevant Quick Access card first based on why the user
 // said they're here. Exhaustive over every primary_goal enum value —
 // "exploring" used to fall through to the default order silently by
 // omission; it's now an explicit choice (recipes first, a low-commitment
 // way to browse without any goal-specific detour).
-const QUICK_ACCESS_ORDER_BY_GOAL = {
+const QUICK_ACCESS_ORDER_BY_GOAL: Record<PrimaryGoal, QuickAccessId[]> = {
   manage_celiac: ["patientResources", "recipes", "map", "events"],
   manage_intolerance: ["patientResources", "recipes", "map", "events"],
   support_child: ["recipes", "patientResources", "events", "map"],
@@ -21,8 +38,8 @@ const QUICK_ACCESS_ORDER_BY_GOAL = {
   exploring: QUICK_ACCESS_DEFAULT_ORDER,
 };
 
-export function getHomeQuickAccessOrder(primaryGoal) {
-  return QUICK_ACCESS_ORDER_BY_GOAL[primaryGoal] || QUICK_ACCESS_DEFAULT_ORDER;
+export function getHomeQuickAccessOrder(primaryGoal?: PrimaryGoal): QuickAccessId[] {
+  return (primaryGoal && QUICK_ACCESS_ORDER_BY_GOAL[primaryGoal]) || QUICK_ACCESS_DEFAULT_ORDER;
 }
 
 // RecipesScreen's default active category filter. "Easy" is the better
@@ -30,7 +47,7 @@ export function getHomeQuickAccessOrder(primaryGoal) {
 // getting started, not confident identifying gluten yet, or eating out
 // often enough that quick/simple home cooking is the more useful default.
 // Everyone else keeps today's "Tunisian" default.
-export function getRecipeDefaultFilter(user) {
+export function getRecipeDefaultFilter(user?: PersonalizationUser): "Easy" | "Tunisian" {
   const isBeginner =
     user?.confidence_identifying_gf === "low" ||
     user?.experience_level === "just_started";
@@ -44,7 +61,10 @@ export function getRecipeDefaultFilter(user) {
 // Stable re-sort of the full recipe list so already-popular items surface
 // slightly earlier — doesn't add, remove, or duplicate anything; screens
 // still apply their own category filter afterward exactly as before.
-export function rankRecipes(recipes, user) {
+export function rankRecipes<T extends { popular?: boolean }>(
+  recipes: T[] | null | undefined,
+  user?: PersonalizationUser
+): T[] | null | undefined {
   if (!Array.isArray(recipes)) return recipes;
   return recipes
     .map((recipe, index) => ({ recipe, index }))
@@ -62,15 +82,18 @@ export function rankRecipes(recipes, user) {
 // against, so this stays a light nudge — categories most relevant to the
 // user's stated goal move earlier — not a "recommended for you" claim the
 // data can't back up.
-const CATEGORY_PRIORITY_BY_GOAL = {
+const CATEGORY_PRIORITY_BY_GOAL: Partial<Record<PrimaryGoal, string[]>> = {
   manage_celiac: ["Bread", "Flour"],
   manage_intolerance: ["Bread", "Flour"],
   dietary_choice: ["Snacks", "Sweets"],
 };
 
-export function getShopCategoryOrder(categories, user) {
+export function getShopCategoryOrder(
+  categories: string[] | null | undefined,
+  user?: PersonalizationUser
+): string[] | null | undefined {
   if (!Array.isArray(categories)) return categories;
-  const priority = CATEGORY_PRIORITY_BY_GOAL[user?.primary_goal] || [];
+  const priority = (user?.primary_goal && CATEGORY_PRIORITY_BY_GOAL[user.primary_goal]) || [];
 
   return [...categories].sort((a, b) => {
     if (a === "All") return -1;
