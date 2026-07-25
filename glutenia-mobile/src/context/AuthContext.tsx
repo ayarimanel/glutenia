@@ -7,7 +7,7 @@ import type { User } from "../types/models";
 const STORAGE_KEY = "glutenia.session";
 const ONBOARDING_PROFILE_KEY = "onboarding_complete";
 const ONBOARDING_SEEN_KEY = "glutenia.hasSeenOnboarding";
-// Must match LANG_KEY in src/i18n/index.js — that file owns the device-local
+// Must match LANG_KEY in src/i18n/index.ts — that file owns the device-local
 // language cache; this one only reads it once, at login, to seed the account.
 const LANGUAGE_STORAGE_KEY = "glutenia.language";
 
