@@ -239,6 +239,9 @@ const FILTERS = ["All", "Supermarket", "Restaurant", "Health Store", "Bakery", "
 
 // ─── Star rating helper ───────────────────────────────────────────────────────
 
+// Intentionally unused - ratings render as plain text elsewhere in this
+// screen now. Kept rather than deleted in case the star display comes back;
+// not a bug, no need to re-investigate.
 function StarRating({ rating }: { rating: number }) {
   const full = Math.floor(rating);
   const half = rating - full >= 0.5;

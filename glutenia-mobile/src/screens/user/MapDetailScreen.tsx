@@ -15,6 +15,9 @@ import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import AppIcon from "../../components/AppIcon";
 import type { AppNavigation, RootParamList } from "../../navigation/types";
 
+// Intentionally unused - StarRating below builds the star string with
+// .repeat() instead. Leftover from an earlier implementation; not a bug,
+// no need to re-investigate.
 const STARS_FULL = "★★★★★";
 const STARS_EMPTY = "☆☆☆☆☆";
 
