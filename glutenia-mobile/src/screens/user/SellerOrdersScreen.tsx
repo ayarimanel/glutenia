@@ -6,18 +6,19 @@ import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
+import { api, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { OrderWithBuyer } from "../../types/models";
 
 export default function SellerOrdersScreen() {
   const { token, logout } = useAuth();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState<OrderWithBuyer[]>([]);
   const [loading, setLoading] = useState(false);
-  const [updatingId, setUpdatingId] = useState(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const loadOrders = async () => {
     if (!token) {
@@ -27,7 +28,8 @@ export default function SellerOrdersScreen() {
     try {
       setLoading(true);
       setOrders(await api.sellerOrders(token));
-    } catch (error) {
+    } catch (err) {
+      const error = err as ApiError;
       if (error.status === 401) {
         Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsg"), [
           { text: t("admin.ok"), onPress: logout },
@@ -46,13 +48,13 @@ export default function SellerOrdersScreen() {
     }, [token])
   );
 
-  const markAsShipped = async (orderId) => {
+  const markAsShipped = async (orderId: string) => {
     try {
       setUpdatingId(orderId);
-      await api.updateOrderStatus(token, orderId, "shipped");
+      await api.updateOrderStatus(token as string, orderId, "shipped");
       await loadOrders();
     } catch (error) {
-      Alert.alert(t("admin.orders.errorTitle"), error.message);
+      Alert.alert(t("admin.orders.errorTitle"), (error as ApiError).message);
     } finally {
       setUpdatingId(null);
     }
@@ -115,7 +117,7 @@ export default function SellerOrdersScreen() {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: Spacing.md,

@@ -4,6 +4,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -14,11 +15,18 @@ import Field from "../../components/Field";
 import AppIcon from "../../components/AppIcon";
 import { PrimaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
+import { api, type ApiError } from "../../api/client";
 import { Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation } from "../../navigation/types";
 
-export default function ChangePasswordScreen({ navigation }) {
+interface ChangePasswordErrors {
+  currentPassword?: string;
+  newPassword?: string;
+  confirmPassword?: string;
+}
+
+export default function ChangePasswordScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -27,11 +35,11 @@ export default function ChangePasswordScreen({ navigation }) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<ChangePasswordErrors>({});
   const [saving, setSaving] = useState(false);
 
   const handleSubmit = async () => {
-    const nextErrors = {};
+    const nextErrors: ChangePasswordErrors = {};
 
     if (!currentPassword) {
       nextErrors.currentPassword = t("settings.changePasswordScreen.currentRequired");
@@ -50,14 +58,14 @@ export default function ChangePasswordScreen({ navigation }) {
 
     try {
       setSaving(true);
-      await api.changePassword(token, { currentPassword, newPassword });
+      await api.changePassword(token as string, { currentPassword, newPassword });
       Alert.alert(
         t("settings.changePasswordScreen.success"),
         t("settings.changePasswordScreen.successMsg"),
         [{ text: t("settings.ok"), onPress: () => navigation.goBack() }]
       );
     } catch (error) {
-      Alert.alert(t("settings.changePasswordScreen.failed"), error.message);
+      Alert.alert(t("settings.changePasswordScreen.failed"), (error as ApiError).message);
     } finally {
       setSaving(false);
     }
@@ -126,7 +134,7 @@ export default function ChangePasswordScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => ({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",

@@ -6,6 +6,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -17,21 +18,22 @@ import Field from "../../components/Field";
 import AppIcon from "../../components/AppIcon";
 import { PrimaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
+import { api, type ApiError, type UpdateProfileBody } from "../../api/client";
 import { isValidPhone } from "../../utils/validation";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation } from "../../navigation/types";
 
 const MAX_IMAGE_DATA_URL_LENGTH = 3000000;
 
-export default function EditProfileScreen({ navigation }) {
+export default function EditProfileScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const { user, token, updateUser } = useAuth();
 
   const [name, setName] = useState(user?.name || "");
-  const [avatar, setAvatar] = useState(user?.avatar || null);
+  const [avatar, setAvatar] = useState<string | null>(user?.avatar || null);
   const [nameError, setNameError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -96,14 +98,14 @@ export default function EditProfileScreen({ navigation }) {
 
     try {
       setSaving(true);
-      const body = {
+      const body: UpdateProfileBody = {
         name: trimmedName,
         phone: phone.trim(),
       };
       if (avatar !== user?.avatar) {
         body.avatar = avatar || "";
       }
-      const updated = await api.updateProfile(token, body);
+      const updated = await api.updateProfile(token as string, body);
       await updateUser(updated);
       Alert.alert(
         t("settings.editProfileScreen.saved"),
@@ -111,7 +113,7 @@ export default function EditProfileScreen({ navigation }) {
         [{ text: t("settings.ok"), onPress: () => navigation.goBack() }]
       );
     } catch (error) {
-      Alert.alert(t("settings.editProfileScreen.saveFailed"), error.message);
+      Alert.alert(t("settings.editProfileScreen.saveFailed"), (error as ApiError).message);
     } finally {
       setSaving(false);
     }
@@ -199,7 +201,7 @@ export default function EditProfileScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => ({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",

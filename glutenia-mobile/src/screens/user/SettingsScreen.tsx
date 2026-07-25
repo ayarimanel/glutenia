@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   View,
   Text,
@@ -11,14 +11,16 @@ import {
 import Constants from "expo-constants";
 import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
-import AppIcon from "../../components/AppIcon";
+import AppIcon, { type IconName } from "../../components/AppIcon";
 import LanguageSelector from "../../components/LanguageSelector";
 import { useAuth } from "../../context/AuthContext";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { api } from "../../api/client";
 import { Radius, Spacing } from "../../theme/colors";
+import type { AppNavigation } from "../../navigation/types";
+import type { Language } from "../../types/models";
 
-function SectionLabel({ text, colors }) {
+function SectionLabel({ text, colors }: { text: string; colors: ThemeColors }) {
   return (
     <Text
       style={{
@@ -35,7 +37,23 @@ function SectionLabel({ text, colors }) {
   );
 }
 
-function SettingRow({ icon, label, onPress, right, isFirst, isLast, colors }) {
+function SettingRow({
+  icon,
+  label,
+  onPress,
+  right,
+  isFirst,
+  isLast,
+  colors,
+}: {
+  icon: IconName;
+  label: string;
+  onPress?: () => void;
+  right?: ReactNode;
+  isFirst?: boolean;
+  isLast?: boolean;
+  colors: ThemeColors;
+}) {
   return (
     <TouchableOpacity
       style={{
@@ -73,13 +91,13 @@ function SettingRow({ icon, label, onPress, right, isFirst, isLast, colors }) {
   );
 }
 
-function Divider({ colors }) {
+function Divider({ colors }: { colors: ThemeColors }) {
   return (
     <View style={{ height: 1, backgroundColor: colors.divider, marginLeft: 66 }} />
   );
 }
 
-export default function SettingsScreen({ navigation }) {
+export default function SettingsScreen({ navigation }: { navigation: AppNavigation }) {
   const { logout, user, token, updateUser } = useAuth();
   const { t } = useTranslation();
   const { isDark, toggleTheme, colors } = useTheme();
@@ -92,11 +110,11 @@ export default function SettingsScreen({ navigation }) {
   const [savingNotifyEvents, setSavingNotifyEvents] = useState(false);
   const [langVisible, setLangVisible] = useState(false);
 
-  const togglePushNotifs = async (value) => {
+  const togglePushNotifs = async (value: boolean) => {
     setPushNotifs(value);
     setSavingPushNotifs(true);
     try {
-      const updated = await api.updateProfile(token, { pushNotificationsEnabled: value });
+      const updated = await api.updateProfile(token as string, { pushNotificationsEnabled: value });
       await updateUser(updated);
     } catch (error) {
       setPushNotifs(!value);
@@ -105,11 +123,11 @@ export default function SettingsScreen({ navigation }) {
     }
   };
 
-  const toggleNotifyOrders = async (value) => {
+  const toggleNotifyOrders = async (value: boolean) => {
     setNotifyOrders(value);
     setSavingNotifyOrders(true);
     try {
-      const updated = await api.updateProfile(token, { notifyOrders: value });
+      const updated = await api.updateProfile(token as string, { notifyOrders: value });
       await updateUser(updated);
     } catch (error) {
       setNotifyOrders(!value);
@@ -118,11 +136,11 @@ export default function SettingsScreen({ navigation }) {
     }
   };
 
-  const toggleNotifyEvents = async (value) => {
+  const toggleNotifyEvents = async (value: boolean) => {
     setNotifyEvents(value);
     setSavingNotifyEvents(true);
     try {
-      const updated = await api.updateProfile(token, { notifyEvents: value });
+      const updated = await api.updateProfile(token as string, { notifyEvents: value });
       await updateUser(updated);
     } catch (error) {
       setNotifyEvents(!value);
@@ -142,9 +160,9 @@ export default function SettingsScreen({ navigation }) {
     }
   };
 
-  const handleLanguageSelect = (code) => {
+  const handleLanguageSelect = (code: string) => {
     if (token) {
-      api.updateProfile(token, { language: code }).then(updateUser).catch(() => {});
+      api.updateProfile(token, { language: code as Language }).then(updateUser).catch(() => {});
     }
   };
 

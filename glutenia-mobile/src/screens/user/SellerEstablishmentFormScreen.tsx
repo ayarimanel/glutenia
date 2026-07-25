@@ -1,6 +1,7 @@
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { WebView } from "react-native-webview";
+import type { WebViewMessageEvent } from "react-native-webview";
 import * as ImagePicker from "expo-image-picker";
 import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
@@ -10,22 +11,26 @@ import TimeRangeSlider from "../../components/TimeRangeSlider";
 import AppIcon from "../../components/AppIcon";
 import { IconButton, PrimaryButton, SecondaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
-import { useTheme } from "../../context/ThemeContext";
+import { api, type ApiError, type EstablishmentInput } from "../../api/client";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { Radius, Spacing } from "../../theme/colors";
+import type { AppNavigation } from "../../navigation/types";
+import type { EstablishmentCategory } from "../../types/models";
 
-const categories = ["Supermarket", "Restaurant", "Health Store", "Bakery", "Pharmacy", "Other"];
+const categories: EstablishmentCategory[] = ["Supermarket", "Restaurant", "Health Store", "Bakery", "Pharmacy", "Other"];
 const MAX_IMAGE_DATA_URL_LENGTH = 5500000;
 const DEFAULT_CENTER = { latitude: 36.82, longitude: 10.2 };
 const HOURS_PATTERN = /^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})$/;
 const DEFAULT_OPEN_TIME = { hour: "08", minute: "00" };
 const DEFAULT_CLOSE_TIME = { hour: "19", minute: "00" };
 
+type TimeValue = { hour: string; minute: string };
+
 // Matches "36.8065, 10.1815" pasted directly, and also finds the same pattern
 // inside a full Google Maps URL (e.g. ".../@36.8065,10.1815,17z" or "?q=36.8065,10.1815").
 const COORDS_PATTERN = /(-?\d{1,3}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)/;
 
-function parseCoordinatesInput(value) {
+function parseCoordinatesInput(value: string): { latitude: number; longitude: number } | null {
   const match = COORDS_PATTERN.exec((value || "").trim());
   if (!match) return null;
 
@@ -45,7 +50,7 @@ function parseCoordinatesInput(value) {
   return { latitude, longitude };
 }
 
-function parseHoursString(value) {
+function parseHoursString(value?: string | null): { open: TimeValue; close: TimeValue } {
   const match = HOURS_PATTERN.exec((value || "").trim());
   if (!match) {
     return { open: DEFAULT_OPEN_TIME, close: DEFAULT_CLOSE_TIME };
@@ -58,11 +63,11 @@ function parseHoursString(value) {
   };
 }
 
-const readUriAsDataUrl = async (uri, mimeType) => {
+const readUriAsDataUrl = async (uri: string, mimeType: string): Promise<string> => {
   const response = await fetch(uri);
   const blob = await response.blob();
 
-  return new Promise((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error("Could not read selected image."));
     reader.onloadend = () => {
@@ -79,7 +84,7 @@ const readUriAsDataUrl = async (uri, mimeType) => {
   });
 };
 
-function buildPickerHTML(lat, lng) {
+function buildPickerHTML(lat: number | null, lng: number | null): string {
   const hasPoint = lat != null && lng != null;
   const initLat = hasPoint ? lat : DEFAULT_CENTER.latitude;
   const initLng = hasPoint ? lng : DEFAULT_CENTER.longitude;
@@ -142,32 +147,37 @@ function buildPickerHTML(lat, lng) {
 </html>`;
 }
 
-export default function SellerEstablishmentFormScreen({ navigation }) {
+interface EstablishmentFormErrors {
+  name?: string;
+  location?: string;
+}
+
+export default function SellerEstablishmentFormScreen({ navigation }: { navigation: AppNavigation }) {
   const { token } = useAuth();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const imageDataUrlRef = useRef("");
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("Restaurant");
+  const [category, setCategory] = useState<EstablishmentCategory>("Restaurant");
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
-  const [openTime, setOpenTime] = useState(DEFAULT_OPEN_TIME);
-  const [closeTime, setCloseTime] = useState(DEFAULT_CLOSE_TIME);
+  const [openTime, setOpenTime] = useState<TimeValue>(DEFAULT_OPEN_TIME);
+  const [closeTime, setCloseTime] = useState<TimeValue>(DEFAULT_CLOSE_TIME);
   const [coverImageUrl, setCoverImageUrl] = useState("");
   const [imageStatus, setImageStatus] = useState("");
   const [removeImage, setRemoveImage] = useState(false);
-  const [latitude, setLatitude] = useState(null);
-  const [longitude, setLongitude] = useState(null);
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
   const [coordsInput, setCoordsInput] = useState("");
   const [mapReady, setMapReady] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<EstablishmentFormErrors>({});
   const [loading, setLoading] = useState(false);
   const [imageProcessing, setImageProcessing] = useState(false);
-  const mapWebViewRef = useRef(null);
+  const mapWebViewRef = useRef<WebView>(null);
 
-  const categoryLabels = {
+  const categoryLabels: Record<string, string> = {
     Supermarket: t("map.supermarket"),
     Restaurant: t("map.restaurant"),
     "Health Store": t("map.healthStore"),
@@ -179,7 +189,7 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
   useEffect(() => {
     const load = async () => {
       try {
-        const establishment = await api.myEstablishment(token);
+        const establishment = await api.myEstablishment(token as string);
         if (establishment) {
           setName(establishment.name || "");
           setCategory(establishment.category || "Restaurant");
@@ -197,7 +207,7 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
           }
         }
       } catch (error) {
-        Alert.alert(t("seller.form.loadFailed"), error.message);
+        Alert.alert(t("seller.form.loadFailed"), (error as ApiError).message);
       } finally {
         setMapReady(true);
       }
@@ -208,7 +218,7 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
 
   const leafletHTML = useMemo(() => buildPickerHTML(latitude, longitude), [mapReady]);
 
-  const handleMapMessage = (event) => {
+  const handleMapMessage = (event: WebViewMessageEvent) => {
     try {
       const msg = JSON.parse(event.nativeEvent.data);
       if (msg.type === "locationPicked") {
@@ -297,7 +307,7 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
   };
 
   const save = async () => {
-    const nextErrors = {};
+    const nextErrors: EstablishmentFormErrors = {};
     if (!name.trim()) {
       nextErrors.name = t("seller.form.errors.nameRequired");
     }
@@ -317,7 +327,7 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
 
       setLoading(true);
       const hours = `${openTime.hour}:${openTime.minute} - ${closeTime.hour}:${closeTime.minute}`;
-      const body = {
+      const body: EstablishmentInput = {
         name: name.trim(),
         category,
         description,
@@ -343,7 +353,7 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
         { text: t("admin.ok"), onPress: () => navigation.goBack() },
       ]);
     } catch (error) {
-      Alert.alert(t("seller.form.saveFailed"), error.message);
+      Alert.alert(t("seller.form.saveFailed"), (error as ApiError).message);
     } finally {
       setLoading(false);
     }
@@ -515,7 +525,7 @@ export default function SellerEstablishmentFormScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     padding: Spacing.md,
     gap: Spacing.md,

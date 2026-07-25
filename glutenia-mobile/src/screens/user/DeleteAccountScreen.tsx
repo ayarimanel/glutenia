@@ -4,6 +4,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -13,11 +14,12 @@ import Screen from "../../components/Screen";
 import Field from "../../components/Field";
 import AppIcon from "../../components/AppIcon";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
+import { api, type ApiError } from "../../api/client";
 import { Radius, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation } from "../../navigation/types";
 
-export default function DeleteAccountScreen({ navigation }) {
+export default function DeleteAccountScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -44,11 +46,11 @@ export default function DeleteAccountScreen({ navigation }) {
           onPress: async () => {
             try {
               setDeleting(true);
-              await api.deleteAccount(token, password);
+              await api.deleteAccount(token as string, password);
               await logout();
             } catch (err) {
               setDeleting(false);
-              setError(err.message || t("settings.deleteAccountScreen.failed"));
+              setError((err as ApiError).message || t("settings.deleteAccountScreen.failed"));
             }
           },
         },
@@ -111,7 +113,7 @@ export default function DeleteAccountScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => ({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",

@@ -4,19 +4,20 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
-import AppIcon from "../../components/AppIcon";
+import AppIcon, { type IconName } from "../../components/AppIcon";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
+import { api, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { OrderWithBuyer, Product } from "../../types/models";
 
 export default function SellerVisibilityScreen() {
   const { token, logout } = useAuth();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const [products, setProducts] = useState([]);
-  const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<OrderWithBuyer[]>([]);
   const [loading, setLoading] = useState(false);
 
   const load = async () => {
@@ -32,7 +33,8 @@ export default function SellerVisibilityScreen() {
       ]);
       setProducts(myProducts);
       setOrders(myOrders);
-    } catch (error) {
+    } catch (err) {
+      const error = err as ApiError;
       if (error.status === 401) {
         Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsg"), [
           { text: t("admin.ok"), onPress: logout },
@@ -86,7 +88,7 @@ export default function SellerVisibilityScreen() {
   );
 }
 
-function Metric({ label, value, icon }) {
+function Metric({ label, value, icon }: { label: string; value: string | number; icon: IconName }) {
   const { colors } = useTheme();
   const styles = getStyles(colors);
   return (
@@ -98,7 +100,7 @@ function Metric({ label, value, icon }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     padding: Spacing.md,
     gap: Spacing.md,

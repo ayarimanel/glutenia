@@ -17,19 +17,21 @@ import AppIcon from "../../components/AppIcon";
 import EmptyState from "../../components/EmptyState";
 import { PrimaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
-import { useTheme } from "../../context/ThemeContext";
+import { api, type ApiError } from "../../api/client";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
+import type { AppNavigation } from "../../navigation/types";
+import type { Establishment } from "../../types/models";
 
-export default function SellerEstablishmentScreen({ navigation }) {
+export default function SellerEstablishmentScreen({ navigation }: { navigation: AppNavigation }) {
   const { token, logout } = useAuth();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const [establishment, setEstablishment] = useState(null);
+  const [establishment, setEstablishment] = useState<Establishment | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const categoryLabels = {
+  const categoryLabels: Record<string, string> = {
     Supermarket: t("map.supermarket"),
     Restaurant: t("map.restaurant"),
     "Health Store": t("map.healthStore"),
@@ -45,7 +47,8 @@ export default function SellerEstablishmentScreen({ navigation }) {
     try {
       setLoading(true);
       setEstablishment(await api.myEstablishment(token));
-    } catch (error) {
+    } catch (err) {
+      const error = err as ApiError;
       if (error.status === 401) {
         Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsg"), [
           { text: t("admin.ok"), onPress: logout },
@@ -202,7 +205,7 @@ export default function SellerEstablishmentScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
