@@ -1,8 +1,25 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
-import { Alert } from "react-native";
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { Alert, type AlertButton } from "react-native";
 import CustomAlertDialog from "../components/CustomAlertDialog";
 
-const AlertContext = createContext({
+interface AlertOptions {
+  cancelable?: boolean;
+  userInterfaceStyle?: "unspecified" | "light" | "dark";
+  onDismiss?: () => void;
+}
+
+interface AlertConfig {
+  title: string;
+  message?: string;
+  buttons?: AlertButton[];
+  options?: AlertOptions;
+}
+
+export interface AlertContextValue {
+  showAlert: (title: string, message?: string, buttons?: AlertButton[], options?: AlertOptions) => void;
+}
+
+const AlertContext = createContext<AlertContextValue>({
   showAlert: () => {},
 });
 
@@ -10,7 +27,7 @@ const AlertContext = createContext({
 const originalAlert = Alert.alert;
 
 // Global trigger listener
-let globalAlertTrigger = null;
+let globalAlertTrigger: ((config: AlertConfig) => void) | null = null;
 
 // Override React Native's Alert.alert globally
 Alert.alert = (title, message, buttons, options) => {
@@ -22,8 +39,8 @@ Alert.alert = (title, message, buttons, options) => {
   }
 };
 
-export function AlertProvider({ children }) {
-  const [alertConfig, setAlertConfig] = useState(null);
+export function AlertProvider({ children }: { children: ReactNode }) {
+  const [alertConfig, setAlertConfig] = useState<AlertConfig | null>(null);
 
   useEffect(() => {
     // Register global trigger callback

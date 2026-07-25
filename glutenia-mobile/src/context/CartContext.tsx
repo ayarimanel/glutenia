@@ -1,43 +1,68 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Alert } from "react-native";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "./AuthContext";
+import type { Product } from "../types/models";
 
-const storageKey = (userId) => `glutenia.cart.${userId}`;
-const CartContext = createContext(null);
+const storageKey = (userId: string) => `glutenia.cart.${userId}`;
+
+export interface CartItem {
+  productId: string;
+  name: string;
+  price: number;
+  imageUrl?: string;
+  category: Product["category"];
+  stock: number;
+  qty: number;
+}
+
+export type CartProductInput = Pick<Product, "_id" | "name" | "price" | "imageUrl" | "category" | "stock">;
+
+export interface CartContextValue {
+  items: CartItem[];
+  addItem: (product: CartProductInput, qty?: number) => void;
+  addItemWithStockCheck: (product: CartProductInput, qty?: number) => boolean;
+  updateQty: (productId: string, qty: number) => void;
+  removeItem: (productId: string) => void;
+  clearCart: () => void;
+  total: number;
+  count: number;
+}
+
+const CartContext = createContext<CartContextValue | null>(null);
 
 // A product with no numeric stock (shouldn't happen given the backend
 // schema defaults to 0, but defensive) is treated as unlimited rather than
 // silently blocking every add.
-const availableStock = (product) =>
+const availableStock = (product: { stock?: number }): number =>
   typeof product?.stock === "number" ? product.stock : Infinity;
 
-export const CartProvider = ({ children }) => {
+export const CartProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState<CartItem[]>([]);
 
   useEffect(() => {
     setItems([]);
-    if (!user?.id) return;
+    if (!user?._id) return;
     const restore = async () => {
-      const saved = await AsyncStorage.getItem(storageKey(user.id));
+      const saved = await AsyncStorage.getItem(storageKey(user._id));
       if (saved) setItems(JSON.parse(saved));
     };
     restore();
-  }, [user?.id]);
+  }, [user?._id]);
 
   useEffect(() => {
-    if (!user?.id) return;
-    AsyncStorage.setItem(storageKey(user.id), JSON.stringify(items));
-  }, [items, user?.id]);
+    if (!user?._id) return;
+    AsyncStorage.setItem(storageKey(user._id), JSON.stringify(items));
+  }, [items, user?._id]);
 
   // Adds a product to the cart, always capped at its available stock — the
   // one place every screen (Home/Shop/ProductDetail) should call through so
   // the "can't add more than what's in stock" rule and its user feedback
   // only exist once instead of being copy-pasted at every call site.
-  const addItemWithStockCheck = (product, qty = 1) => {
+  const addItemWithStockCheck = (product: CartProductInput, qty = 1): boolean => {
     const stock = availableStock(product);
 
     if (stock <= 0) {
@@ -86,7 +111,7 @@ export const CartProvider = ({ children }) => {
   // Lower-level setter kept for callers that already know exactly what they
   // want the cart to contain (e.g. syncing from persisted storage) — still
   // clamps to stock as a last line of defense, but doesn't show any alert.
-  const addItem = (product, qty = 1) => {
+  const addItem = (product: CartProductInput, qty = 1): void => {
     const stock = availableStock(product);
     setItems((current) => {
       const existing = current.find((item) => item.productId === product._id);
@@ -115,7 +140,7 @@ export const CartProvider = ({ children }) => {
     });
   };
 
-  const updateQty = (productId, qty) => {
+  const updateQty = (productId: string, qty: number): void => {
     if (qty <= 0) {
       removeItem(productId);
       return;
@@ -130,11 +155,11 @@ export const CartProvider = ({ children }) => {
     );
   };
 
-  const removeItem = (productId) => {
+  const removeItem = (productId: string): void => {
     setItems((current) => current.filter((item) => item.productId !== productId));
   };
 
-  const clearCart = () => setItems([]);
+  const clearCart = (): void => setItems([]);
 
   const total = items.reduce((sum, item) => sum + item.price * item.qty, 0);
   const count = items.reduce((sum, item) => sum + item.qty, 0);
@@ -147,4 +172,6 @@ export const CartProvider = ({ children }) => {
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 };
 
-export const useCart = () => useContext(CartContext);
+// Always rendered under <CartProvider> in this app's tree (App.js) - see the
+// matching note on useAuth in AuthContext.tsx.
+export const useCart = () => useContext(CartContext) as CartContextValue;

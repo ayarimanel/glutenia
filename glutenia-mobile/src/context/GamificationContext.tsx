@@ -1,32 +1,46 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import GamificationToast from "../components/GamificationToast";
 import GamificationUnlockModal from "../components/GamificationUnlockModal";
+import type { BadgeSummary, GamificationDelta } from "../types/models";
 
-const GamificationContext = createContext({ notifyGamification: () => {} });
+export interface GamificationContextValue {
+  notifyGamification: (delta: GamificationDelta | null | undefined) => void;
+}
+
+const GamificationContext = createContext<GamificationContextValue>({ notifyGamification: () => {} });
+
+type GamificationEvent =
+  | { type: "badge"; badge: BadgeSummary }
+  | { type: "levelup"; newLevel: number | undefined };
+
+interface ToastState {
+  xpGained: number;
+  key: number;
+}
 
 // Module-level trigger so screens can fire feedback without needing the hook
 // wired into every component tree (mirrors AlertContext's Alert.alert override).
-let globalTrigger = null;
+let globalTrigger: ((delta: GamificationDelta | null | undefined) => void) | null = null;
 
 // Call this with the `gamification` delta object returned alongside a scan,
 // RSVP, or order API response. Safe to call with null/undefined.
-export const notifyGamification = (delta) => {
+export const notifyGamification = (delta: GamificationDelta | null | undefined): void => {
   if (globalTrigger) globalTrigger(delta);
 };
 
-export function GamificationProvider({ children }) {
-  const [toast, setToast] = useState(null);
-  const [modalQueue, setModalQueue] = useState([]);
+export function GamificationProvider({ children }: { children: ReactNode }) {
+  const [toast, setToast] = useState<ToastState | null>(null);
+  const [modalQueue, setModalQueue] = useState<GamificationEvent[]>([]);
 
   useEffect(() => {
     globalTrigger = (delta) => {
       if (!delta) return;
 
-      if (delta.xpGained > 0) {
+      if (delta.xpGained && delta.xpGained > 0) {
         setToast({ xpGained: delta.xpGained, key: Date.now() });
       }
 
-      const events = [];
+      const events: GamificationEvent[] = [];
       (delta.badgesUnlocked || []).forEach((badge) => events.push({ type: "badge", badge }));
       if (delta.leveledUp) events.push({ type: "levelup", newLevel: delta.newLevel });
 

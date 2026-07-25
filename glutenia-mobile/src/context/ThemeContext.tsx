@@ -1,9 +1,26 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const THEME_KEY = "glutenia.theme";
 
-export const lightColors = {
+export interface ThemeColors {
+  primary: string;
+  primaryLight: string;
+  primaryPale: string;
+  secondary: string;
+  secondaryMid: string;
+  secondaryPale: string;
+  background: string;
+  surface: string;
+  textDark: string;
+  textMuted: string;
+  border: string;
+  divider: string;
+  danger: string;
+  warning: string;
+}
+
+export const lightColors: ThemeColors = {
   primary: "#8BC34A",
   primaryLight: "#A5D66A",
   primaryPale: "#F1F8E9",
@@ -20,7 +37,7 @@ export const lightColors = {
   warning: "#F59E0B",
 };
 
-export const darkColors = {
+export const darkColors: ThemeColors = {
   primary: "#8BC34A",
   primaryLight: "#A5D66A",
   primaryPale: "#1B2D0F",
@@ -37,14 +54,21 @@ export const darkColors = {
   warning: "#FFD60A",
 };
 
-const ThemeContext = createContext({
+export interface ThemeContextValue {
+  isDark: boolean;
+  colors: ThemeColors;
+  toggleTheme: () => Promise<void>;
+  setTheme: (nextIsDark: boolean) => Promise<void>;
+}
+
+const ThemeContext = createContext<ThemeContextValue>({
   isDark: false,
   colors: lightColors,
-  toggleTheme: () => {},
-  setTheme: () => {},
+  toggleTheme: async () => {},
+  setTheme: async () => {},
 });
 
-export function ThemeProvider({ children }) {
+export function ThemeProvider({ children }: { children: ReactNode }) {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
@@ -53,13 +77,13 @@ export function ThemeProvider({ children }) {
     });
   }, []);
 
-  const toggleTheme = async () => {
+  const toggleTheme = async (): Promise<void> => {
     const next = !isDark;
     setIsDark(next);
     await AsyncStorage.setItem(THEME_KEY, next ? "dark" : "light");
   };
 
-  const setTheme = async (nextIsDark) => {
+  const setTheme = async (nextIsDark: boolean): Promise<void> => {
     setIsDark(nextIsDark);
     await AsyncStorage.setItem(THEME_KEY, nextIsDark ? "dark" : "light");
   };

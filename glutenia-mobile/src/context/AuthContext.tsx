@@ -1,7 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { api } from "../api/client";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { api, type AuthSession, type LoginBody, type RegisterBody, type RegisterPendingResult } from "../api/client";
 import { registerForPushNotificationsAsync } from "../services/pushNotifications";
+import type { User } from "../types/models";
 
 const STORAGE_KEY = "glutenia.session";
 const ONBOARDING_PROFILE_KEY = "onboarding_complete";
@@ -9,15 +10,30 @@ const ONBOARDING_SEEN_KEY = "glutenia.hasSeenOnboarding";
 // Must match LANG_KEY in src/i18n/index.js — that file owns the device-local
 // language cache; this one only reads it once, at login, to seed the account.
 const LANGUAGE_STORAGE_KEY = "glutenia.language";
-const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
+export interface AuthContextValue {
+  user: User | null;
+  token: string | null;
+  loading: boolean;
+  hasSeenOnboarding: boolean;
+  profileOnboardingDone: boolean;
+  login: (credentials: LoginBody) => Promise<User>;
+  register: (data: RegisterBody) => Promise<User | RegisterPendingResult>;
+  logout: () => Promise<void>;
+  completeOnboarding: () => Promise<void>;
+  markProfileOnboardingComplete: () => Promise<void>;
+  updateUser: (updatedUser: User) => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
   const [profileOnboardingDone, setProfileOnboardingDone] = useState(false);
-  const [pushToken, setPushToken] = useState(null);
+  const [pushToken, setPushToken] = useState<string | null>(null);
 
   useEffect(() => {
     const restore = async () => {
@@ -29,10 +45,10 @@ export const AuthProvider = ({ children }) => {
         ]);
         if (seenOnboarding === "true") setHasSeenOnboarding(true);
         if (saved) {
-          const session = JSON.parse(saved);
+          const session: AuthSession = JSON.parse(saved);
           if (session.token) {
             const freshUser = await api.me(session.token, { timeoutMs: 8000 });
-            const nextSession = { ...session, user: freshUser };
+            const nextSession: AuthSession = { ...session, user: freshUser };
             setToken(nextSession.token);
             setUser(freshUser);
             await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(nextSession));
@@ -64,22 +80,22 @@ export const AuthProvider = ({ children }) => {
     };
   }, [token, user?._id]);
 
-  const completeOnboarding = async () => {
+  const completeOnboarding = async (): Promise<void> => {
     setHasSeenOnboarding(true);
     await AsyncStorage.setItem(ONBOARDING_SEEN_KEY, "true");
   };
 
-  const markProfileOnboardingComplete = async () => {
+  const markProfileOnboardingComplete = async (): Promise<void> => {
     await AsyncStorage.setItem(ONBOARDING_PROFILE_KEY, "true");
     setProfileOnboardingDone(true);
   };
 
-  const updateUser = async (updatedUser) => {
+  const updateUser = async (updatedUser: User): Promise<void> => {
     setUser(updatedUser);
     try {
       const saved = await AsyncStorage.getItem(STORAGE_KEY);
       if (saved) {
-        const session = JSON.parse(saved);
+        const session: AuthSession = JSON.parse(saved);
         await AsyncStorage.setItem(
           STORAGE_KEY,
           JSON.stringify({ ...session, user: updatedUser })
@@ -88,7 +104,7 @@ export const AuthProvider = ({ children }) => {
     } catch (_) {}
   };
 
-  const persistSession = async (session) => {
+  const persistSession = async (session: AuthSession): Promise<void> => {
     const flag = await AsyncStorage.getItem(ONBOARDING_PROFILE_KEY);
     setProfileOnboardingDone(flag === "true" || session.user?.role_type != null);
     setToken(session.token);
@@ -103,7 +119,7 @@ export const AuthProvider = ({ children }) => {
       try {
         const localLanguage = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
         if (localLanguage) {
-          const updated = await api.updateProfile(session.token, { language: localLanguage });
+          const updated = await api.updateProfile(session.token, { language: localLanguage as NonNullable<User["language"]> });
           setUser(updated);
           await AsyncStorage.setItem(
             STORAGE_KEY,
@@ -116,13 +132,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async ({ email, password }) => {
+  const login = async ({ email, password }: LoginBody): Promise<User> => {
     const session = await api.login({ email, password });
     await persistSession(session);
     return session.user;
   };
 
-  const register = async ({ name, email, password, role, phone }) => {
+  const register = async ({ name, email, password, role, phone }: RegisterBody): Promise<User | RegisterPendingResult> => {
     await AsyncStorage.removeItem(ONBOARDING_PROFILE_KEY);
     const data = await api.register({ name, email, password, role, phone });
     if (data.pending) {
@@ -132,7 +148,7 @@ export const AuthProvider = ({ children }) => {
     return data.user;
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     if (token && pushToken) {
       api.unregisterPushToken(token, pushToken).catch(() => {});
     }
@@ -163,4 +179,8 @@ export const AuthProvider = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => useContext(AuthContext);
+// Every consumer in this app renders under <AuthProvider> (it's the
+// outermost provider in App.js), so the context value is never actually
+// null at runtime - this cast just spares every call site an unnecessary
+// null-check for a case that can't happen here.
+export const useAuth = () => useContext(AuthContext) as AuthContextValue;

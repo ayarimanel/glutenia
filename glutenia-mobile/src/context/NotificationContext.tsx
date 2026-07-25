@@ -1,13 +1,23 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useAuth } from "./AuthContext";
 import { api } from "../api/client";
+import type { Notification } from "../types/models";
 
 const POLL_INTERVAL_MS = 30000;
-const NotificationContext = createContext(null);
 
-export const NotificationProvider = ({ children }) => {
+export interface NotificationContextValue {
+  notifications: Notification[];
+  unreadCount: number;
+  refresh: () => Promise<void>;
+  markRead: (id: string) => Promise<void>;
+  markAllRead: () => Promise<void>;
+}
+
+const NotificationContext = createContext<NotificationContextValue | null>(null);
+
+export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const { token } = useAuth();
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const refresh = useCallback(async () => {
     if (!token) return;
@@ -27,12 +37,12 @@ export const NotificationProvider = ({ children }) => {
   }, [token, refresh]);
 
   const markRead = useCallback(
-    async (id) => {
+    async (id: string) => {
       setNotifications((current) =>
         current.map((item) => (item._id === id ? { ...item, read: true } : item))
       );
       try {
-        await api.markNotificationRead(token, id);
+        await api.markNotificationRead(token as string, id);
       } catch (_) {}
     },
     [token]
@@ -41,7 +51,7 @@ export const NotificationProvider = ({ children }) => {
   const markAllRead = useCallback(async () => {
     setNotifications((current) => current.map((item) => ({ ...item, read: true })));
     try {
-      await api.markAllNotificationsRead(token);
+      await api.markAllNotificationsRead(token as string);
     } catch (_) {}
   }, [token]);
 
@@ -57,4 +67,6 @@ export const NotificationProvider = ({ children }) => {
   );
 };
 
-export const useNotifications = () => useContext(NotificationContext);
+// Always rendered under <NotificationProvider> in this app's tree (App.js) -
+// see the matching note on useAuth in AuthContext.tsx.
+export const useNotifications = () => useContext(NotificationContext) as NotificationContextValue;
