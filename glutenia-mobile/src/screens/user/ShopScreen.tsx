@@ -7,26 +7,28 @@ import ProductCard from "../../components/ProductCard";
 import EmptyState from "../../components/EmptyState";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
-import { api } from "../../api/client";
+import { api, type ApiError } from "../../api/client";
 import { Radius, Spacing } from "../../theme/colors";
 import { useTranslation } from "react-i18next";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { getShopCategoryOrder } from "../../utils/personalization";
+import type { AppNavigation } from "../../navigation/types";
+import type { Product } from "../../types/models";
 
 const categories = ["All", "Bread", "Pasta", "Snacks", "Flour", "Sweets"];
 
-export default function ShopScreen({ navigation }) {
+export default function ShopScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { addItemWithStockCheck } = useCart();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [category, setCategory] = useState("All");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const orderedCategories = useMemo(
-    () => getShopCategoryOrder(categories, user),
+    () => getShopCategoryOrder(categories, user ?? undefined) ?? categories,
     [user?.primary_goal]
   );
 
@@ -38,8 +40,8 @@ export default function ShopScreen({ navigation }) {
         search,
       });
       setProducts(data);
-    } catch (error) {
-      Alert.alert(t("shop.errorTitle"), error.message);
+    } catch (err) {
+      Alert.alert(t("shop.errorTitle"), (err as ApiError).message);
     } finally {
       setLoading(false);
     }
@@ -54,7 +56,7 @@ export default function ShopScreen({ navigation }) {
     <Screen>
       <AppHeader
         userName={user?.name ?? ""}
-        avatarUri={user?.avatar}
+        avatarUri={user?.avatar ?? undefined}
         onCartPress={() => navigation.navigate("CartPage")}
       />
       <View style={styles.container}>
@@ -118,7 +120,7 @@ export default function ShopScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: Spacing.md,

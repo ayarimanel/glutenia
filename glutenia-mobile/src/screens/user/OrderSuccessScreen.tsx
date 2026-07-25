@@ -4,9 +4,16 @@ import AppIcon from "../../components/AppIcon";
 import Screen from "../../components/Screen";
 import { PrimaryButton, SecondaryButton } from "../../components/Buttons";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { RouteProp } from "@react-navigation/native";
+import type { AppNavigation, RootParamList } from "../../navigation/types";
 
-export default function OrderSuccessScreen({ navigation, route }) {
+interface OrderSuccessScreenProps {
+  navigation: AppNavigation;
+  route: RouteProp<RootParamList, "OrderSuccess">;
+}
+
+export default function OrderSuccessScreen({ navigation, route }: OrderSuccessScreenProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -33,7 +40,7 @@ export default function OrderSuccessScreen({ navigation, route }) {
           <SecondaryButton
             title={t("orderSuccess.viewOrders")}
             icon="receipt"
-            onPress={() => navigation.navigate("UserTabs", { screen: "Orders" })}
+            onPress={() => navigation.navigate("Orders")}
           />
         </View>
       </View>
@@ -41,7 +48,7 @@ export default function OrderSuccessScreen({ navigation, route }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",

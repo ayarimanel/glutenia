@@ -9,9 +9,10 @@ import QuantityStepper from "../../components/QuantityStepper";
 import { PrimaryButton } from "../../components/Buttons";
 import { useCart } from "../../context/CartContext";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation } from "../../navigation/types";
 
-export default function CartScreen({ navigation }) {
+export default function CartScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -56,7 +57,7 @@ export default function CartScreen({ navigation }) {
           renderItem={({ item }) => (
             <View style={styles.itemCard}>
               <View style={styles.visual}>
-                <ProductVisual product={{ ...item, _id: item.productId }} />
+                <ProductVisual product={item} />
               </View>
               <View style={styles.itemBody}>
                 <Text style={styles.itemName} numberOfLines={2}>
@@ -102,7 +103,7 @@ export default function CartScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: Spacing.md,

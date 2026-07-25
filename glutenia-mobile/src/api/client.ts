@@ -234,10 +234,15 @@ export type ProductScanResult =
   | (Product & { isCommunityReport?: false; gamification: GamificationDelta | null })
   | (CommunityProduct & { isCommunityReport: true; gamification: GamificationDelta | null });
 
+// The request body's field names don't match the Order schema's stored
+// shape: the backend reads `item.productId` (not `product`) and re-fetches
+// the real name/price from the database itself rather than trusting the
+// client's copies; it also computes `total`/`deliveryFee` server-side, so
+// the client never sends them at all. Verified directly against
+// order.controller.js's createOrder/reserveStock, not assumed from the
+// Order model.
 export interface CreateOrderBody {
-  items: Array<{ product: string; name: string; qty: number; price: number }>;
-  total: number;
-  deliveryFee: number;
+  items: Array<{ productId: string; name: string; qty: number; price: number }>;
   address: { fullName: string; addressLine: string; city: string; phone: string };
 }
 

@@ -5,24 +5,25 @@ import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
+import { api, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { Order } from "../../types/models";
 
 export default function UserOrdersScreen() {
   const { t } = useTranslation();
   const { token } = useAuth();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
 
   const loadOrders = async () => {
     try {
       setLoading(true);
-      setOrders(await api.myOrders(token));
-    } catch (error) {
-      Alert.alert(t("userOrders.errorTitle"), error.message);
+      setOrders(await api.myOrders(token as string));
+    } catch (err) {
+      Alert.alert(t("userOrders.errorTitle"), (err as ApiError).message);
     } finally {
       setLoading(false);
     }
@@ -66,7 +67,7 @@ export default function UserOrdersScreen() {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: Spacing.md,

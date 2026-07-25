@@ -8,39 +8,41 @@ import {
 import { useEffect, useState } from "react";
 import Screen from "../../components/Screen";
 import AppHeader from "../../components/AppHeader";
-import AppIcon from "../../components/AppIcon";
+import AppIcon, { type IconName } from "../../components/AppIcon";
 import ProductCard from "../../components/ProductCard";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
 import { api } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { useTranslation } from "react-i18next";
-import { getHomeQuickAccessOrder } from "../../utils/personalization";
+import { getHomeQuickAccessOrder, type QuickAccessId } from "../../utils/personalization";
+import type { AppNavigation } from "../../navigation/types";
+import type { Event, HomeGamificationSummary, Product, ScanHistoryEntry } from "../../types/models";
 
 // Quick Access card catalog, keyed so the display order can be reordered
 // per-user without duplicating the card markup itself.
-const QUICK_ACCESS_ITEMS = {
+const QUICK_ACCESS_ITEMS: Record<QuickAccessId, { icon: IconName; labelKey: string; nav: "Recipes" | "Events" | "PatientResources" | "Map" }> = {
   recipes: { icon: "utensils", labelKey: "home.recipes", nav: "Recipes" },
   events: { icon: "people", labelKey: "events.title", nav: "Events" },
   patientResources: { icon: "heart", labelKey: "home.patientResources", nav: "PatientResources" },
   map: { icon: "location", labelKey: "home.map", nav: "Map" },
 };
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
 
   const { user, token } = useAuth();
   const { addItemWithStockCheck } = useCart();
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [productsError, setProductsError] = useState(false);
-  const [events, setEvents] = useState([]);
-  const [scanHistory, setScanHistory] = useState([]);
-  const [homeGamification, setHomeGamification] = useState(null);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [scanHistory, setScanHistory] = useState<ScanHistoryEntry[]>([]);
+  const [homeGamification, setHomeGamification] = useState<HomeGamificationSummary | null>(null);
   const isProfessional = user?.role === "professional";
-  const quickAccessOrder = getHomeQuickAccessOrder(user?.primary_goal);
+  const quickAccessOrder = getHomeQuickAccessOrder(user?.primary_goal ?? undefined);
 
   useEffect(() => {
     setProductsError(false);
@@ -50,25 +52,25 @@ export default function HomeScreen({ navigation }) {
   }, []);
 
   useEffect(() => {
-    api.events(token)
+    api.events(token as string)
       .then((data) => setEvents(data.slice(0, 6)))
       .catch(() => {});
   }, [token]);
 
   useEffect(() => {
-    api.scanHistory(token)
+    api.scanHistory(token as string)
       .then(setScanHistory)
       .catch(() => {});
   }, [token]);
 
   useEffect(() => {
     if (isProfessional) return;
-    api.getHomeGamification(token)
+    api.getHomeGamification(token as string)
       .then(setHomeGamification)
       .catch(() => {});
   }, [token, isProfessional]);
 
-  const VERDICT_META = {
+  const VERDICT_META: Record<string, { icon: IconName; color: string }> = {
     safe: { icon: "checkmark-circle", color: colors.primary },
     caution: { icon: "info", color: colors.warning },
     unsafe: { icon: "close-circle", color: colors.danger },
@@ -79,7 +81,7 @@ export default function HomeScreen({ navigation }) {
     <Screen>
       <AppHeader
         userName={user?.name ?? ""}
-        avatarUri={user?.avatar}
+        avatarUri={user?.avatar ?? undefined}
         onCartPress={() => navigation.navigate("CartPage")}
       />
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -145,20 +147,21 @@ export default function HomeScreen({ navigation }) {
               contentContainerStyle={styles.hList}
             >
               {scanHistory.map((item) => {
-                const meta = VERDICT_META[item.verdict] || {
-                  icon: "scan",
+                const meta = VERDICT_META[item.verdict ?? ""] || {
+                  icon: "scan" as IconName,
                   color: colors.secondary,
                 };
-                const isBarcodeWithProduct = item.scanType === "barcode" && item.product;
+                const isBarcodeWithProduct = item.scanType === "barcode" && !!item.product;
                 return (
                   <Pressable
                     key={item._id}
                     style={styles.scanCard}
                     disabled={!isBarcodeWithProduct}
-                    onPress={() =>
-                      isBarcodeWithProduct &&
-                      navigation.navigate("ProductDetail", { productId: item.product._id })
-                    }
+                    onPress={() => {
+                      if (item.scanType === "barcode" && item.product) {
+                        navigation.navigate("ProductDetail", { productId: item.product._id });
+                      }
+                    }}
                   >
                     <View style={[styles.scanIconWrap, { backgroundColor: `${meta.color}22` }]}>
                       <AppIcon name={meta.icon} size={20} color={meta.color} />
@@ -283,7 +286,7 @@ export default function HomeScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   // ── Gamification strip ──
   gamStrip: {
     flexDirection: "row",

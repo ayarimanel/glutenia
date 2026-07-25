@@ -7,14 +7,15 @@ import Field from "../../components/Field";
 import { IconButton, PrimaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
-import { api } from "../../api/client";
+import { api, type ApiError } from "../../api/client";
 import { notifyGamification } from "../../context/GamificationContext";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation } from "../../navigation/types";
 
 const DELIVERY_FEE = 7;
 
-export default function CheckoutScreen({ navigation }) {
+export default function CheckoutScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -41,7 +42,7 @@ export default function CheckoutScreen({ navigation }) {
     try {
       setLoading(true);
       const trimmedPhone = phone.trim();
-      const order = await api.createOrder(token, {
+      const order = await api.createOrder(token as string, {
         items: items.map((item) => ({
           productId: item.productId,
           name: item.name,
@@ -53,7 +54,7 @@ export default function CheckoutScreen({ navigation }) {
 
       if (trimmedPhone !== (user?.phone || "")) {
         try {
-          const updated = await api.updateProfile(token, { phone: trimmedPhone });
+          const updated = await api.updateProfile(token as string, { phone: trimmedPhone });
           await updateUser(updated);
         } catch (_) {}
       }
@@ -61,7 +62,8 @@ export default function CheckoutScreen({ navigation }) {
       clearCart();
       notifyGamification(order.gamification);
       navigation.replace("OrderSuccess", { order });
-    } catch (error) {
+    } catch (err) {
+      const error = err as ApiError;
       // 409 here specifically means the backend rejected the order because
       // stock changed since the item was added to the cart (someone else
       // bought it, or it sold out) — send the user back to Cart so they can
@@ -131,7 +133,7 @@ export default function CheckoutScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   flex: {
     flex: 1,
   },

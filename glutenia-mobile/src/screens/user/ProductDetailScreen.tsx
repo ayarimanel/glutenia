@@ -7,17 +7,25 @@ import GlutenFreeBadge from "../../components/GlutenFreeBadge";
 import QuantityStepper from "../../components/QuantityStepper";
 import { IconButton, PrimaryButton } from "../../components/Buttons";
 import { useCart } from "../../context/CartContext";
-import { api } from "../../api/client";
+import { api, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { RouteProp } from "@react-navigation/native";
+import type { AppNavigation, RootParamList } from "../../navigation/types";
+import type { Product } from "../../types/models";
 
-export default function ProductDetailScreen({ navigation, route }) {
+interface ProductDetailScreenProps {
+  navigation: AppNavigation;
+  route: RouteProp<RootParamList, "ProductDetail">;
+}
+
+export default function ProductDetailScreen({ navigation, route }: ProductDetailScreenProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const { productId } = route.params;
   const { addItemWithStockCheck } = useCart();
-  const [product, setProduct] = useState(null);
+  const [product, setProduct] = useState<Product | null>(null);
   const [qty, setQty] = useState(1);
   const [loading, setLoading] = useState(true);
 
@@ -27,8 +35,8 @@ export default function ProductDetailScreen({ navigation, route }) {
         setLoading(true);
         setProduct(await api.product(productId));
         setQty(1);
-      } catch (error) {
-        Alert.alert(t("productDetail.errorTitle"), error.message);
+      } catch (err) {
+        Alert.alert(t("productDetail.errorTitle"), (err as ApiError).message);
         navigation.goBack();
       } finally {
         setLoading(false);
@@ -90,7 +98,7 @@ export default function ProductDetailScreen({ navigation, route }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   centered: {
     alignItems: "center",
     justifyContent: "center",

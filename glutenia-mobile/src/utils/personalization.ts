@@ -5,22 +5,19 @@
 // function of plain data — no React/Expo/RN imports — so behavior can be
 // checked with a plain `node` script.
 
+import type { PrimaryGoal, User } from "../types/models";
+
+export type { PrimaryGoal };
+
 export type QuickAccessId = "recipes" | "events" | "patientResources" | "map";
 
-export type PrimaryGoal =
-  | "manage_celiac"
-  | "manage_intolerance"
-  | "support_child"
-  | "support_partner"
-  | "dietary_choice"
-  | "exploring";
-
-export interface PersonalizationUser {
-  confidence_identifying_gf?: "low" | "medium" | "high";
-  experience_level?: "just_started" | "1_to_6_months" | "6_to_12_months" | "1_to_3_years" | "3_plus_years";
-  eating_out_frequency?: "rarely" | "few_times_month" | "weekly" | "multiple_week";
-  primary_goal?: PrimaryGoal;
-}
+// Derived directly from User (not hand-duplicated) so it stays structurally
+// identical to what AuthContext/useAuth actually provide - including the
+// `| null` (not `| undefined`) convention every one of these fields uses.
+export type PersonalizationUser = Pick<
+  User,
+  "confidence_identifying_gf" | "experience_level" | "eating_out_frequency" | "primary_goal"
+>;
 
 const QUICK_ACCESS_DEFAULT_ORDER: QuickAccessId[] = ["recipes", "events", "patientResources", "map"];
 

@@ -6,6 +6,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   Switch,
   Text,
   TouchableOpacity,
@@ -19,14 +20,22 @@ import AppIcon from "../../components/AppIcon";
 import { PrimaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
 import { notifyGamification } from "../../context/GamificationContext";
-import { api } from "../../api/client";
+import { api, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { RouteProp } from "@react-navigation/native";
+import type { AppNavigation, RootParamList } from "../../navigation/types";
+import type { ProductCategory } from "../../types/models";
 
 const MAX_IMAGE_DATA_URL_LENGTH = 3000000;
-const CATEGORIES = ["Bread", "Pasta", "Snacks", "Flour", "Sweets", "Other"];
+const CATEGORIES: ProductCategory[] = ["Bread", "Pasta", "Snacks", "Flour", "Sweets", "Other"];
 
-export default function SubmitProductScreen({ navigation, route }) {
+interface SubmitProductScreenProps {
+  navigation: AppNavigation;
+  route: RouteProp<RootParamList, "SubmitProduct">;
+}
+
+export default function SubmitProductScreen({ navigation, route }: SubmitProductScreenProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -35,11 +44,11 @@ export default function SubmitProductScreen({ navigation, route }) {
 
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState("");
-  const [image, setImage] = useState(null);
+  const [image, setImage] = useState<string | null>(null);
   const [imageError, setImageError] = useState("");
   const [isGlutenFree, setIsGlutenFree] = useState(true);
   const [brand, setBrand] = useState("");
-  const [category, setCategory] = useState(null);
+  const [category, setCategory] = useState<ProductCategory | null>(null);
   const [saving, setSaving] = useState(false);
 
   const categoryLabels = {
@@ -113,10 +122,10 @@ export default function SubmitProductScreen({ navigation, route }) {
 
     try {
       setSaving(true);
-      const result = await api.submitCommunityProduct(token, {
+      const result = await api.submitCommunityProduct(token as string, {
         barcode,
         name: trimmedName,
-        imageUrl: image,
+        imageUrl: image as string,
         isGlutenFree,
         brand: brand.trim() || undefined,
         category: category || undefined,
@@ -127,8 +136,8 @@ export default function SubmitProductScreen({ navigation, route }) {
         t("submitProduct.successMsg"),
         [{ text: t("settings.ok"), onPress: () => navigation.goBack() }]
       );
-    } catch (error) {
-      Alert.alert(t("submitProduct.failed"), error.message);
+    } catch (err) {
+      Alert.alert(t("submitProduct.failed"), (err as ApiError).message);
     } finally {
       setSaving(false);
     }
@@ -242,7 +251,7 @@ export default function SubmitProductScreen({ navigation, route }) {
   );
 }
 
-const getStyles = (colors) => ({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
