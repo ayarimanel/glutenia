@@ -15,25 +15,27 @@ import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
+import { api, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { User } from "../../types/models";
 
 export default function AdminProfessionalRequestsScreen() {
   const { token, logout } = useAuth();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const [requests, setRequests] = useState([]);
+  const [requests, setRequests] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
-  const [actioningId, setActioningId] = useState(null);
+  const [actioningId, setActioningId] = useState<string | null>(null);
 
   const loadRequests = async () => {
     if (!token) return;
     try {
       setLoading(true);
       setRequests(await api.professionalRequests(token, "pending"));
-    } catch (error) {
+    } catch (err) {
+      const error = err as ApiError;
       if (error.status === 401) {
         Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsg"), [
           { text: t("admin.ok"), onPress: logout },
@@ -52,7 +54,7 @@ export default function AdminProfessionalRequestsScreen() {
     }, [token])
   );
 
-  const respond = (request, action) => {
+  const respond = (request: User, action: "approve" | "reject") => {
     const isApprove = action === "approve";
     Alert.alert(
       isApprove ? t("admin.requests.approveTitle") : t("admin.requests.rejectTitle"),
@@ -68,15 +70,15 @@ export default function AdminProfessionalRequestsScreen() {
             try {
               setActioningId(request._id);
               if (isApprove) {
-                await api.approveProfessional(token, request._id);
+                await api.approveProfessional(token as string, request._id);
               } else {
-                await api.rejectProfessional(token, request._id);
+                await api.rejectProfessional(token as string, request._id);
               }
               await loadRequests();
-            } catch (error) {
+            } catch (err) {
               Alert.alert(
                 isApprove ? t("admin.requests.approveFailed") : t("admin.requests.rejectFailed"),
-                error.message
+                (err as ApiError).message
               );
             } finally {
               setActioningId(null);
@@ -146,7 +148,7 @@ export default function AdminProfessionalRequestsScreen() {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: Spacing.md,

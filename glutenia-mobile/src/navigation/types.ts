@@ -6,6 +6,7 @@ import type {
   ExperienceLevel,
   GamificationDelta,
   Order,
+  OrderWithBuyer,
   PatientResource,
   PrimaryGoal,
   Recipe,
@@ -108,7 +109,7 @@ export type RootParamList = {
   AdminProductForm: { productId?: string } | undefined;
   AdminEvents: undefined;
   AdminProfessionalRequests: undefined;
-  AdminOrderDetail: { order: Order };
+  AdminOrderDetail: { order: OrderWithBuyer };
   AdminAnalytics: undefined;
   AdminRecipes: undefined;
   AdminRecipeForm: { recipeId?: string } | undefined;

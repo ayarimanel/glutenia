@@ -3,9 +3,16 @@ import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { RouteProp } from "@react-navigation/native";
+import type { AppNavigation, RootParamList } from "../../navigation/types";
 
-export default function AdminOrderDetailScreen({ navigation, route }) {
+interface AdminOrderDetailScreenProps {
+  navigation: AppNavigation;
+  route: RouteProp<RootParamList, "AdminOrderDetail">;
+}
+
+export default function AdminOrderDetailScreen({ navigation, route }: AdminOrderDetailScreenProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -119,7 +126,7 @@ export default function AdminOrderDetailScreen({ navigation, route }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",

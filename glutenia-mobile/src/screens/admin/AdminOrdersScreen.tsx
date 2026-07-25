@@ -6,16 +6,18 @@ import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
+import { api, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation } from "../../navigation/types";
+import type { OrderWithBuyer } from "../../types/models";
 
-export default function AdminOrdersScreen({ navigation }) {
+export default function AdminOrdersScreen({ navigation }: { navigation: AppNavigation }) {
   const { token, logout } = useAuth();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState<OrderWithBuyer[]>([]);
   const [loading, setLoading] = useState(false);
 
   const loadOrders = async () => {
@@ -26,7 +28,8 @@ export default function AdminOrdersScreen({ navigation }) {
     try {
       setLoading(true);
       setOrders(await api.allOrders(token));
-    } catch (error) {
+    } catch (err) {
+      const error = err as ApiError;
       if (error.status === 401) {
         Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsg"), [
           { text: t("admin.ok"), onPress: logout },
@@ -79,7 +82,7 @@ export default function AdminOrdersScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: Spacing.md,

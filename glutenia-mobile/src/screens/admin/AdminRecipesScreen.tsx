@@ -16,23 +16,26 @@ import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
+import { api, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation } from "../../navigation/types";
+import type { Recipe } from "../../types/models";
 
-export default function AdminRecipesScreen({ navigation }) {
+export default function AdminRecipesScreen({ navigation }: { navigation: AppNavigation }) {
   const { token, logout } = useAuth();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const [recipes, setRecipes] = useState([]);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(false);
 
   const loadRecipes = async () => {
     try {
       setLoading(true);
       setRecipes(await api.recipes());
-    } catch (error) {
+    } catch (err) {
+      const error = err as ApiError;
       if (error.status === 401) {
         Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsg"), [
           { text: t("admin.ok"), onPress: logout },
@@ -51,7 +54,7 @@ export default function AdminRecipesScreen({ navigation }) {
     }, [token])
   );
 
-  const deleteRecipe = (recipe) => {
+  const deleteRecipe = (recipe: Recipe) => {
     Alert.alert(
       t("admin.recipes.deleteTitle"),
       t("admin.recipes.deleteMsg", { name: recipe.name }),
@@ -68,8 +71,8 @@ export default function AdminRecipesScreen({ navigation }) {
               }
               await api.deleteRecipe(token, recipe._id);
               await loadRecipes();
-            } catch (error) {
-              Alert.alert(t("admin.recipes.deleteFailed"), error.message);
+            } catch (err) {
+              Alert.alert(t("admin.recipes.deleteFailed"), (err as ApiError).message);
             }
           },
         },
@@ -146,7 +149,7 @@ export default function AdminRecipesScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: Spacing.md,

@@ -15,39 +15,43 @@ import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
+import { api, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation } from "../../navigation/types";
+import type { IconName } from "../../components/AppIcon";
+import type { PatientResource } from "../../types/models";
 
 // Mirrors PatientResourcesScreen.js's getCategories() icon/color mapping so
 // admin rows read consistently with what patients actually see.
-const CATEGORY_META = (colors) => ({
+const CATEGORY_META = (colors: ThemeColors): Record<string, { icon: IconName; color: string }> => ({
   celiac: { icon: "activity", color: colors.secondary },
   diet: { icon: "utensils", color: colors.primary },
   safe: { icon: "shield-check", color: colors.primary },
   lifestyle: { icon: "star", color: colors.warning },
 });
 
-export default function AdminPatientResourcesScreen({ navigation }) {
+export default function AdminPatientResourcesScreen({ navigation }: { navigation: AppNavigation }) {
   const { token, logout } = useAuth();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const categoryMeta = CATEGORY_META(colors);
-  const [resources, setResources] = useState([]);
+  const [resources, setResources] = useState<PatientResource[]>([]);
   const [loading, setLoading] = useState(false);
 
   const loadResources = async () => {
     try {
       setLoading(true);
       setResources(await api.patientResources());
-    } catch (error) {
+    } catch (err) {
+      const error = err as ApiError;
       if (error.status === 401) {
         Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsg"), [
           { text: t("admin.ok"), onPress: logout },
         ]);
       } else {
-        Alert.alert(t("admin.patientResources.errorTitle"), error.message, undefined, { type: "error" });
+        Alert.alert(t("admin.patientResources.errorTitle"), error.message);
       }
     } finally {
       setLoading(false);
@@ -60,7 +64,7 @@ export default function AdminPatientResourcesScreen({ navigation }) {
     }, [token])
   );
 
-  const deleteResource = (resource) => {
+  const deleteResource = (resource: PatientResource) => {
     Alert.alert(
       t("admin.patientResources.deleteTitle"),
       t("admin.patientResources.deleteMsg", { title: resource.title }),
@@ -77,8 +81,8 @@ export default function AdminPatientResourcesScreen({ navigation }) {
               }
               await api.deletePatientResource(token, resource._id);
               await loadResources();
-            } catch (error) {
-              Alert.alert(t("admin.patientResources.deleteFailed"), error.message);
+            } catch (err) {
+              Alert.alert(t("admin.patientResources.deleteFailed"), (err as ApiError).message);
             }
           },
         },
@@ -156,7 +160,7 @@ export default function AdminPatientResourcesScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: Spacing.md,

@@ -7,9 +7,11 @@ import AppIcon from "../../components/AppIcon";
 import BarChartView from "../../components/charts/BarChartView";
 import CurveChartView from "../../components/charts/CurveChartView";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
-import { useTheme } from "../../context/ThemeContext";
+import { api, type ApiError } from "../../api/client";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
+import type { AppNavigation } from "../../navigation/types";
+import type { UserAnalytics } from "../../types/models";
 
 const ROLE_ORDER = ["customer", "professional", "admin"];
 const ROLE_TYPE_ORDER = ["warrior", "supporter", "unset"];
@@ -33,21 +35,22 @@ const GOAL_ORDER = [
 const CONFIDENCE_ORDER = ["low", "medium", "high", "unset"];
 const EATING_OUT_ORDER = ["rarely", "few_times_month", "weekly", "multiple_week", "unset"];
 
-export default function AdminAnalyticsScreen({ navigation }) {
+export default function AdminAnalyticsScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const { token, logout } = useAuth();
-  const [data, setData] = useState(null);
+  const [data, setData] = useState<UserAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      setData(await api.userAnalytics(token));
-    } catch (err) {
+      setData(await api.userAnalytics(token as string));
+    } catch (e) {
+      const err = e as ApiError;
       if (err.status === 401) {
         logout();
       } else {
@@ -105,12 +108,12 @@ export default function AdminAnalyticsScreen({ navigation }) {
     unset: t("admin.analytics.unset"),
   };
 
-  const toChartData = (order, counts, labels) =>
+  const toChartData = (order: string[], counts: Record<string, number> | undefined, labels: Record<string, string>) =>
     order
       .map((key) => ({ label: labels[key], value: counts?.[key] || 0 }))
       .filter((item) => item.value > 0);
 
-  const toTrendData = (trend) =>
+  const toTrendData = (trend: UserAnalytics["signupTrend"] | undefined) =>
     (trend || []).map((point) => ({
       label: point.date.slice(5),
       value: point.count,
@@ -137,7 +140,7 @@ export default function AdminAnalyticsScreen({ navigation }) {
             <Text style={styles.retryText}>{t("admin.retry")}</Text>
           </TouchableOpacity>
         </View>
-      ) : (
+      ) : !data ? null : (
         <ScrollView
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
@@ -232,7 +235,7 @@ export default function AdminAnalyticsScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",

@@ -7,25 +7,29 @@ import {
   StyleSheet,
   Text,
   View,
+  type TextStyle,
+  type ViewStyle,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
-import AppIcon from "../../components/AppIcon";
+import AppIcon, { type IconName } from "../../components/AppIcon";
 import Screen from "../../components/Screen";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
+import { api, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation } from "../../navigation/types";
+import type { OrderWithBuyer, Product, User } from "../../types/models";
 
-export default function AdminDashboardScreen({ navigation }) {
+export default function AdminDashboardScreen({ navigation }: { navigation: AppNavigation }) {
   const { token, logout, user } = useAuth();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
 
-  const [products, setProducts] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [pendingRequests, setPendingRequests] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<OrderWithBuyer[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
 
   const load = async () => {
@@ -41,7 +45,8 @@ export default function AdminDashboardScreen({ navigation }) {
       setProducts(Array.isArray(nextProducts) ? nextProducts : []);
       setOrders(Array.isArray(nextOrders) ? nextOrders : []);
       setPendingRequests(Array.isArray(nextRequests) ? nextRequests : []);
-    } catch (error) {
+    } catch (err) {
+      const error = err as ApiError;
       if (error.status === 401) {
         Alert.alert(
           t("admin.sessionExpired", "Session expired"),
@@ -73,10 +78,10 @@ export default function AdminDashboardScreen({ navigation }) {
 
   // Recent 3 orders sorted by date
   const recentOrders = [...orders]
-    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
     .slice(0, 3);
 
-  const getInitials = (name) => {
+  const getInitials = (name?: string) => {
     if (!name) return "AD";
     const parts = name.trim().split(/\s+/);
     if (parts.length === 1) {
@@ -85,9 +90,9 @@ export default function AdminDashboardScreen({ navigation }) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
-  const formatCurrency = (val) => `${Number(val || 0).toFixed(2)} TND`;
+  const formatCurrency = (val?: number) => `${Number(val || 0).toFixed(2)} TND`;
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status?: string) => {
     const s = (status || "").toLowerCase();
     if (s === "pending") {
       return { bg: colors.warning + "20", text: colors.warning, label: t("admin.orders.statusPending", "Pending") };
@@ -516,66 +521,14 @@ export default function AdminDashboardScreen({ navigation }) {
   );
 }
 
-function ActionItem({
-  title,
-  subtitle,
-  icon,
-  onPress,
-  themeColor,
-  colors,
-  styles,
-  badgeText,
-  badgeColor,
-}) {
-  const isPrimary = themeColor === "primary";
-  const iconColor = isPrimary ? colors.primary : colors.secondary;
-  const iconBg = isPrimary ? colors.primaryPale : colors.secondaryPale;
-
-  return (
-    <Pressable
-      style={({ pressed }) => [
-        styles.actionCard,
-        pressed && styles.actionCardPressed,
-      ]}
-      onPress={onPress}
-    >
-      <View style={[styles.actionIconWrapper, { backgroundColor: iconBg }]}>
-        <AppIcon name={icon} size={20} color={iconColor} />
-      </View>
-      <View style={styles.actionCardContent}>
-        <Text style={styles.actionCardText} numberOfLines={1}>
-          {title}
-        </Text>
-        {subtitle && (
-          <Text style={styles.actionCardSubtext} numberOfLines={1}>
-            {subtitle}
-          </Text>
-        )}
-      </View>
-      {badgeText && (
-        <View
-          style={[
-            styles.actionBadge,
-            { backgroundColor: (badgeColor || colors.secondary) + "20" },
-          ]}
-        >
-          <Text
-            style={[
-              styles.actionBadgeText,
-              { color: badgeColor || colors.secondary },
-            ]}
-          >
-            {badgeText}
-          </Text>
-        </View>
-      )}
-      <AppIcon name="chevron-right" size={18} color={colors.textMuted} />
-    </Pressable>
-  );
-}
-
-const getStyles = (colors) =>
-  StyleSheet.create({
+// Split into several smaller StyleSheet.create() calls (merged below)
+// instead of one ~73-key object - TypeScript's inference for
+// StyleSheet.create's generic falls back to widening every property to
+// ViewStyle|TextStyle|ImageStyle on an object this large, breaking every
+// styles.* usage in the file below. Smaller calls infer correctly; the
+// style values themselves are unchanged.
+const getStyles = (colors: ThemeColors) => {
+  const headerStyles = StyleSheet.create({
     screen: {
       backgroundColor: colors.background,
     },
@@ -618,7 +571,7 @@ const getStyles = (colors) =>
     eyebrow: {
       color: colors.textMuted,
       fontSize: 11,
-      fontWeight: "750",
+      fontWeight: "700",
       textTransform: "uppercase",
       letterSpacing: 0.5,
       marginBottom: 2,
@@ -640,8 +593,10 @@ const getStyles = (colors) =>
       borderColor: colors.divider,
       ...Shadow,
     },
+  });
 
-    /* Urgent Alert Card */
+  /* Urgent Alert Card */
+  const alertStyles = StyleSheet.create({
     alertCard: {
       backgroundColor: colors.surface,
       borderRadius: Radius.lg,
@@ -755,8 +710,10 @@ const getStyles = (colors) =>
       fontWeight: "700",
       flex: 1,
     },
+  });
 
-    /* Stats Grid */
+  /* Stats Grid */
+  const statsStyles = StyleSheet.create({
     statsContainer: {
       gap: Spacing.md,
     },
@@ -845,10 +802,12 @@ const getStyles = (colors) =>
     kpiLabel: {
       color: colors.textMuted,
       fontSize: 12,
-      fontWeight: "750",
+      fontWeight: "700",
     },
+  });
 
-    /* Recent Orders Section */
+  /* Recent Orders Section */
+  const ordersStyles = StyleSheet.create({
     recentOrdersSection: {
       gap: Spacing.sm,
     },
@@ -924,7 +883,7 @@ const getStyles = (colors) =>
     customerName: {
       color: colors.textDark,
       fontSize: 14,
-      fontWeight: "750",
+      fontWeight: "700",
     },
     itemMeta: {
       color: colors.textMuted,
@@ -950,8 +909,10 @@ const getStyles = (colors) =>
       fontSize: 13,
       fontWeight: "600",
     },
+  });
 
-    /* Action Menu Sections */
+  /* Action Menu Sections */
+  const menuStyles = StyleSheet.create({
     menuContainer: {
       gap: Spacing.lg,
     },
@@ -1019,3 +980,93 @@ const getStyles = (colors) =>
       opacity: 0.7,
     },
   });
+
+  return { ...headerStyles, ...alertStyles, ...statsStyles, ...ordersStyles, ...menuStyles };
+};
+
+// Hand-typed rather than ReturnType<typeof getStyles> - referencing that
+// (regardless of declaration order) makes TS fall back to widening every
+// property of the 400+-line styles object to ViewStyle|TextStyle|ImageStyle
+// instead of inferring each key's specific shape, breaking every other
+// styles.* usage in this file. Naming just the handful ActionItem needs
+// avoids that.
+interface ActionItemStyles {
+  actionCard: ViewStyle;
+  actionCardPressed: ViewStyle;
+  actionIconWrapper: ViewStyle;
+  actionCardContent: ViewStyle;
+  actionCardText: TextStyle;
+  actionCardSubtext: TextStyle;
+  actionBadge: ViewStyle;
+  actionBadgeText: TextStyle;
+}
+
+interface ActionItemProps {
+  title: string;
+  subtitle?: string;
+  icon: IconName;
+  onPress: () => void;
+  themeColor: "primary" | "secondary";
+  colors: ThemeColors;
+  styles: ActionItemStyles;
+  badgeText?: string | null;
+  badgeColor?: string;
+}
+
+function ActionItem({
+  title,
+  subtitle,
+  icon,
+  onPress,
+  themeColor,
+  colors,
+  styles,
+  badgeText,
+  badgeColor,
+}: ActionItemProps) {
+  const isPrimary = themeColor === "primary";
+  const iconColor = isPrimary ? colors.primary : colors.secondary;
+  const iconBg = isPrimary ? colors.primaryPale : colors.secondaryPale;
+
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        styles.actionCard,
+        pressed && styles.actionCardPressed,
+      ]}
+      onPress={onPress}
+    >
+      <View style={[styles.actionIconWrapper, { backgroundColor: iconBg }]}>
+        <AppIcon name={icon} size={20} color={iconColor} />
+      </View>
+      <View style={styles.actionCardContent}>
+        <Text style={styles.actionCardText} numberOfLines={1}>
+          {title}
+        </Text>
+        {subtitle && (
+          <Text style={styles.actionCardSubtext} numberOfLines={1}>
+            {subtitle}
+          </Text>
+        )}
+      </View>
+      {badgeText && (
+        <View
+          style={[
+            styles.actionBadge,
+            { backgroundColor: (badgeColor || colors.secondary) + "20" },
+          ]}
+        >
+          <Text
+            style={[
+              styles.actionBadgeText,
+              { color: badgeColor || colors.secondary },
+            ]}
+          >
+            {badgeText}
+          </Text>
+        </View>
+      )}
+      <AppIcon name="chevron-right" size={18} color={colors.textMuted} />
+    </Pressable>
+  );
+}

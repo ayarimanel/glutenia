@@ -16,13 +16,25 @@ import Field from "../../components/Field";
 import AppIcon from "../../components/AppIcon";
 import { PrimaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
+import { api, type ApiError } from "../../api/client";
 import { Radius, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { RouteProp } from "@react-navigation/native";
+import type { AppNavigation, RootParamList } from "../../navigation/types";
+import type { PatientResourceCategory } from "../../types/models";
 
-const CATEGORIES = ["celiac", "diet", "safe", "lifestyle"];
+const CATEGORIES: PatientResourceCategory[] = ["celiac", "diet", "safe", "lifestyle"];
 
-export default function AdminPatientResourceFormScreen({ navigation, route }) {
+interface AdminPatientResourceFormScreenProps {
+  navigation: AppNavigation;
+  route: RouteProp<RootParamList, "AdminPatientResourceForm">;
+}
+
+interface FormErrors {
+  title?: string;
+}
+
+export default function AdminPatientResourceFormScreen({ navigation, route }: AdminPatientResourceFormScreenProps) {
   const { token } = useAuth();
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -31,11 +43,11 @@ export default function AdminPatientResourceFormScreen({ navigation, route }) {
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("celiac");
+  const [category, setCategory] = useState<PatientResourceCategory>("celiac");
   const [readTimeMinutes, setReadTimeMinutes] = useState("5");
   const [featured, setFeatured] = useState(false);
   const [body, setBody] = useState("");
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -49,8 +61,8 @@ export default function AdminPatientResourceFormScreen({ navigation, route }) {
         setReadTimeMinutes(String(resource.readTimeMinutes ?? 0));
         setFeatured(Boolean(resource.featured));
         setBody(resource.body || "");
-      } catch (error) {
-        Alert.alert(t("admin.patientResourceForm.loadError"), error.message);
+      } catch (err) {
+        Alert.alert(t("admin.patientResourceForm.loadError"), (err as ApiError).message);
         navigation.goBack();
       }
     };
@@ -58,7 +70,7 @@ export default function AdminPatientResourceFormScreen({ navigation, route }) {
   }, [resourceId]);
 
   const handleSubmit = async () => {
-    const nextErrors = {};
+    const nextErrors: FormErrors = {};
     if (!title.trim()) nextErrors.title = t("admin.patientResourceForm.errors.titleRequired");
 
     setErrors(nextErrors);
@@ -76,15 +88,15 @@ export default function AdminPatientResourceFormScreen({ navigation, route }) {
     try {
       setLoading(true);
       if (resourceId) {
-        await api.updatePatientResource(token, resourceId, payload);
+        await api.updatePatientResource(token as string, resourceId, payload);
       } else {
-        await api.createPatientResource(token, payload);
+        await api.createPatientResource(token as string, payload);
       }
       Alert.alert(t("admin.patientResourceForm.saved"), t("admin.patientResourceForm.savedMsg"), [
         { text: t("admin.ok"), onPress: () => navigation.goBack() },
       ]);
-    } catch (error) {
-      Alert.alert(t("admin.patientResourceForm.saveFailed"), error.message);
+    } catch (err) {
+      Alert.alert(t("admin.patientResourceForm.saveFailed"), (err as ApiError).message);
     } finally {
       setLoading(false);
     }
@@ -181,7 +193,7 @@ export default function AdminPatientResourceFormScreen({ navigation, route }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     padding: Spacing.md,
     gap: Spacing.md,

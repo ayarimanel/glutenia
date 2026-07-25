@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import {
   View,
   Text,
@@ -9,13 +9,14 @@ import {
 } from "react-native";
 import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
-import AppIcon from "../../components/AppIcon";
+import AppIcon, { type IconName } from "../../components/AppIcon";
 import LanguageSelector from "../../components/LanguageSelector";
 import { useAuth } from "../../context/AuthContext";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { Radius, Spacing } from "../../theme/colors";
+import type { AppNavigation } from "../../navigation/types";
 
-function SectionLabel({ text, colors }) {
+function SectionLabel({ text, colors }: { text: string; colors: ThemeColors }) {
   return (
     <Text
       style={{
@@ -32,7 +33,17 @@ function SectionLabel({ text, colors }) {
   );
 }
 
-function SettingRow({ icon, label, onPress, right, isFirst, isLast, colors }) {
+interface SettingRowProps {
+  icon: IconName;
+  label: string;
+  onPress?: () => void;
+  right?: ReactNode;
+  isFirst?: boolean;
+  isLast?: boolean;
+  colors: ThemeColors;
+}
+
+function SettingRow({ icon, label, onPress, right, isFirst, isLast, colors }: SettingRowProps) {
   return (
     <TouchableOpacity
       style={{
@@ -70,11 +81,11 @@ function SettingRow({ icon, label, onPress, right, isFirst, isLast, colors }) {
   );
 }
 
-function Divider({ colors }) {
+function Divider({ colors }: { colors: ThemeColors }) {
   return <View style={{ height: 1, backgroundColor: colors.divider, marginLeft: 66 }} />;
 }
 
-export default function AdminSettingsScreen({ navigation }) {
+export default function AdminSettingsScreen({ navigation }: { navigation: AppNavigation }) {
   const { logout } = useAuth();
   const { t } = useTranslation();
   const { isDark, toggleTheme, colors } = useTheme();

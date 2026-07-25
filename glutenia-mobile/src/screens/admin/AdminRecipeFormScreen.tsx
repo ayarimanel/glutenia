@@ -18,14 +18,26 @@ import Field from "../../components/Field";
 import AppIcon from "../../components/AppIcon";
 import { PrimaryButton, SecondaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
+import { api, type ApiError } from "../../api/client";
 import { Radius, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { RouteProp } from "@react-navigation/native";
+import type { AppNavigation, RootParamList } from "../../navigation/types";
+import type { RecipeCategory } from "../../types/models";
 
-const CATEGORIES = ["Quick", "Tunisian", "Easy"];
+const CATEGORIES: RecipeCategory[] = ["Quick", "Tunisian", "Easy"];
 const MAX_IMAGE_DATA_URL_LENGTH = 3000000;
 
-export default function AdminRecipeFormScreen({ navigation, route }) {
+interface AdminRecipeFormScreenProps {
+  navigation: AppNavigation;
+  route: RouteProp<RootParamList, "AdminRecipeForm">;
+}
+
+interface RecipeFormErrors {
+  name?: string;
+}
+
+export default function AdminRecipeFormScreen({ navigation, route }: AdminRecipeFormScreenProps) {
   const { token } = useAuth();
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -34,7 +46,7 @@ export default function AdminRecipeFormScreen({ navigation, route }) {
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("Quick");
+  const [category, setCategory] = useState<RecipeCategory>("Quick");
   const [imageUrl, setImageUrl] = useState("");
   const [calories, setCalories] = useState("0");
   const [carbo, setCarbo] = useState("0");
@@ -42,7 +54,7 @@ export default function AdminRecipeFormScreen({ navigation, route }) {
   const [popular, setPopular] = useState(false);
   const [ingredientsText, setIngredientsText] = useState("");
   const [preparation, setPreparation] = useState("");
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<RecipeFormErrors>({});
   const [loading, setLoading] = useState(false);
   const imageDataUrlRef = useRef("");
 
@@ -61,8 +73,8 @@ export default function AdminRecipeFormScreen({ navigation, route }) {
         setPopular(Boolean(recipe.popular));
         setIngredientsText((recipe.ingredients || []).join("\n"));
         setPreparation(recipe.preparation || "");
-      } catch (error) {
-        Alert.alert(t("admin.recipeForm.loadError"), error.message);
+      } catch (err) {
+        Alert.alert(t("admin.recipeForm.loadError"), (err as ApiError).message);
         navigation.goBack();
       }
     };
@@ -107,7 +119,7 @@ export default function AdminRecipeFormScreen({ navigation, route }) {
   };
 
   const handleSubmit = async () => {
-    const nextErrors = {};
+    const nextErrors: RecipeFormErrors = {};
     if (!name.trim()) nextErrors.name = t("admin.recipeForm.errors.nameRequired");
 
     setErrors(nextErrors);
@@ -132,15 +144,15 @@ export default function AdminRecipeFormScreen({ navigation, route }) {
     try {
       setLoading(true);
       if (recipeId) {
-        await api.updateRecipe(token, recipeId, body);
+        await api.updateRecipe(token as string, recipeId, body);
       } else {
-        await api.createRecipe(token, body);
+        await api.createRecipe(token as string, body);
       }
       Alert.alert(t("admin.recipeForm.saved"), t("admin.recipeForm.savedMsg"), [
         { text: t("admin.ok"), onPress: () => navigation.goBack() },
       ]);
-    } catch (error) {
-      Alert.alert(t("admin.recipeForm.saveFailed"), error.message);
+    } catch (err) {
+      Alert.alert(t("admin.recipeForm.saveFailed"), (err as ApiError).message);
     } finally {
       setLoading(false);
     }
@@ -274,7 +286,7 @@ export default function AdminRecipeFormScreen({ navigation, route }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     padding: Spacing.md,
     gap: Spacing.md,

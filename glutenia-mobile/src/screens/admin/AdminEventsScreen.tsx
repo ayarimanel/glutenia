@@ -16,16 +16,18 @@ import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
+import { api, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation } from "../../navigation/types";
+import type { Event } from "../../types/models";
 
-export default function AdminEventsScreen({ navigation }) {
+export default function AdminEventsScreen({ navigation }: { navigation: AppNavigation }) {
   const { token, logout } = useAuth();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const [events, setEvents] = useState([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
 
   const loadEvents = async () => {
@@ -33,7 +35,8 @@ export default function AdminEventsScreen({ navigation }) {
     try {
       setLoading(true);
       setEvents(await api.events(token));
-    } catch (error) {
+    } catch (err) {
+      const error = err as ApiError;
       if (error.status === 401) {
         Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsg"), [
           { text: t("admin.ok"), onPress: logout },
@@ -52,7 +55,7 @@ export default function AdminEventsScreen({ navigation }) {
     }, [token])
   );
 
-  const deleteEvent = (event) => {
+  const deleteEvent = (event: Event) => {
     Alert.alert(
       t("admin.events.deleteTitle"),
       t("admin.events.deleteMsg", { title: event.title }),
@@ -69,8 +72,8 @@ export default function AdminEventsScreen({ navigation }) {
               }
               await api.deleteEvent(token, event._id);
               await loadEvents();
-            } catch (error) {
-              Alert.alert(t("admin.events.deleteFailed"), error.message);
+            } catch (err) {
+              Alert.alert(t("admin.events.deleteFailed"), (err as ApiError).message);
             }
           },
         },
@@ -148,7 +151,7 @@ export default function AdminEventsScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: Spacing.md,

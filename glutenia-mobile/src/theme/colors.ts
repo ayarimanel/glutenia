@@ -1,3 +1,5 @@
+import type { ViewStyle } from "react-native";
+
 export const Colors = {
   // Primary Brand Color (Green)
   primary: "#8BC34A",
@@ -42,7 +44,12 @@ export const Radius = {
   pill: 999,
 };
 
-export const Shadow = {
+// Explicitly typed (rather than left inferred) because spreading an
+// untyped/ambiguously-shaped object into many StyleSheet.create() keys can
+// make TypeScript's inference collapse the whole object to
+// ViewStyle|TextStyle|ImageStyle instead of each key's specific shape -
+// observed in AdminDashboardScreen's unusually large (~90-key) styles object.
+export const Shadow: ViewStyle = {
   shadowColor: Colors.primary,
   shadowOffset: { width: 0, height: 4 },
   shadowOpacity: 0.08,

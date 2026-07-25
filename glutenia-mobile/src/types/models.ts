@@ -193,9 +193,10 @@ export interface OrderAddress {
 
 export interface Order {
   _id: string;
-  // Populated to a summary object on getSellerOrders/getAllOrders/getOrderById;
-  // a raw id string on createOrder/getMyOrders/updateOrderStatus.
-  user: string | EstablishmentOwnerSummary;
+  // A raw id string on createOrder/getMyOrders/updateOrderStatus - see
+  // OrderWithBuyer below for the populated variant (getSellerOrders/
+  // getAllOrders).
+  user: string;
   items: OrderItem[];
   total: number;
   deliveryFee: number;
@@ -203,6 +204,12 @@ export interface Order {
   status: OrderStatus;
   createdAt: string;
 }
+
+// getSellerOrders/getAllOrders populate `user` to a summary object instead
+// of leaving it as a raw id - a distinct type rather than a union on Order
+// itself, since call sites always know which shape they have based on
+// which endpoint they called.
+export type OrderWithBuyer = Omit<Order, "user"> & { user: EstablishmentOwnerSummary };
 
 export interface Badge {
   _id: string;

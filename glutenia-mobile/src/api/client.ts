@@ -12,6 +12,7 @@ import type {
   Language,
   Notification,
   Order,
+  OrderWithBuyer,
   PatientResource,
   PatientResourceCategory,
   PrimaryGoal,
@@ -359,8 +360,8 @@ export const api = {
   createOrder: (token: string, body: CreateOrderBody) =>
     request<Order & { gamification: GamificationDelta | null }>("/orders", { method: "POST", token, body }),
   myOrders: (token: string) => request<Order[]>("/orders/my", { token }),
-  allOrders: (token: string) => request<Order[]>("/orders", { token }),
-  sellerOrders: (token: string) => request<Order[]>("/orders/seller", { token }),
+  allOrders: (token: string) => request<OrderWithBuyer[]>("/orders", { token }),
+  sellerOrders: (token: string) => request<OrderWithBuyer[]>("/orders/seller", { token }),
   updateOrderStatus: (token: string, id: string, status: Order["status"]) =>
     request<Order>(`/orders/${id}/status`, { method: "PUT", token, body: { status } }),
   saveOnboardingProfile: (token: string, data: OnboardingProfileBody) =>

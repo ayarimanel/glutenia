@@ -8,18 +8,20 @@ import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
 import ProductVisual from "../../components/ProductVisual";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
+import { api, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation } from "../../navigation/types";
+import type { Product } from "../../types/models";
 
-export default function AdminProductsScreen({ navigation }) {
+export default function AdminProductsScreen({ navigation }: { navigation: AppNavigation }) {
   const { token, logout, user } = useAuth();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const isAdmin = user?.role === "admin";
   const productFormRoute = isAdmin ? "AdminProductForm" : "SellerProductForm";
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   // Distinct from `loading` (which also drives pull-to-refresh): tracks
   // whether we've completed the very first fetch yet, so the empty state
@@ -35,7 +37,8 @@ export default function AdminProductsScreen({ navigation }) {
     try {
       setLoading(true);
       setProducts(await (isAdmin ? api.products() : api.myProducts(token)));
-    } catch (error) {
+    } catch (err) {
+      const error = err as ApiError;
       if (error.status === 401) {
         Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsg"), [
           { text: t("admin.ok"), onPress: logout },
@@ -55,7 +58,7 @@ export default function AdminProductsScreen({ navigation }) {
     }, [token])
   );
 
-  const deleteProduct = (product) => {
+  const deleteProduct = (product: Product) => {
     Alert.alert(t("admin.products.deleteTitle"), t("admin.products.deleteMsg", { name: product.name }), [
       { text: t("admin.products.cancel"), style: "cancel" },
       {
@@ -69,8 +72,8 @@ export default function AdminProductsScreen({ navigation }) {
             }
             await api.deleteProduct(token, product._id);
             await loadProducts();
-          } catch (error) {
-            Alert.alert(t("admin.products.deleteFailed"), error.message);
+          } catch (err) {
+            Alert.alert(t("admin.products.deleteFailed"), (err as ApiError).message);
           }
         },
       },
@@ -149,7 +152,7 @@ export default function AdminProductsScreen({ navigation }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     padding: Spacing.md,

@@ -8,18 +8,21 @@ import Field from "../../components/Field";
 import ProductVisual from "../../components/ProductVisual";
 import { IconButton, PrimaryButton, SecondaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
-import { api } from "../../api/client";
+import { api, type ApiError, type ProductInput } from "../../api/client";
 import { Radius, Spacing } from "../../theme/colors";
-import { useTheme } from "../../context/ThemeContext";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { RouteProp } from "@react-navigation/native";
+import type { AppNavigation, RootParamList } from "../../navigation/types";
+import type { ProductCategory } from "../../types/models";
 
-const categories = ["Bread", "Pasta", "Snacks", "Flour", "Sweets", "Other"];
+const categories: ProductCategory[] = ["Bread", "Pasta", "Snacks", "Flour", "Sweets", "Other"];
 const MAX_IMAGE_DATA_URL_LENGTH = 5500000;
 
-const readUriAsDataUrl = async (uri, mimeType) => {
+const readUriAsDataUrl = async (uri: string, mimeType: string): Promise<string> => {
   const response = await fetch(uri);
   const blob = await response.blob();
 
-  return new Promise((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error("Could not read selected image."));
     reader.onloadend = () => {
@@ -36,7 +39,21 @@ const readUriAsDataUrl = async (uri, mimeType) => {
   });
 };
 
-export default function AdminProductFormScreen({ navigation, route }) {
+interface AdminProductFormScreenProps {
+  navigation: AppNavigation;
+  // This component is mounted under both "AdminProductForm" (admin stack)
+  // and "SellerProductForm" (seller/user stack) - same identical params
+  // shape, different route names depending on which stack renders it.
+  route: RouteProp<RootParamList, "AdminProductForm" | "SellerProductForm">;
+}
+
+interface ProductFormErrors {
+  name?: string;
+  price?: string;
+  stock?: string;
+}
+
+export default function AdminProductFormScreen({ navigation, route }: AdminProductFormScreenProps) {
   const { token } = useAuth();
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -46,14 +63,14 @@ export default function AdminProductFormScreen({ navigation, route }) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
-  const [category, setCategory] = useState("Bread");
+  const [category, setCategory] = useState<ProductCategory>("Bread");
   const [imageUrl, setImageUrl] = useState("");
   const [imageStatus, setImageStatus] = useState("");
   const [removeImage, setRemoveImage] = useState(false);
   const [stock, setStock] = useState("");
   const [barcode, setBarcode] = useState("");
   const [isGlutenFree, setIsGlutenFree] = useState(true);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<ProductFormErrors>({});
   const [loading, setLoading] = useState(false);
   const [imageProcessing, setImageProcessing] = useState(false);
 
@@ -85,8 +102,8 @@ export default function AdminProductFormScreen({ navigation, route }) {
         setStock(String(product.stock ?? 0));
         setBarcode(product.barcode || "");
         setIsGlutenFree(Boolean(product.isGlutenFree));
-      } catch (error) {
-        Alert.alert(t("admin.form.productErrorTitle"), error.message);
+      } catch (err) {
+        Alert.alert(t("admin.form.productErrorTitle"), (err as ApiError).message);
         navigation.goBack();
       }
     };
@@ -99,7 +116,7 @@ export default function AdminProductFormScreen({ navigation, route }) {
     const trimmedStock = stock.trim();
     const numericPrice = Number(trimmedPrice);
     const numericStock = Number(trimmedStock);
-    const nextErrors = {};
+    const nextErrors: ProductFormErrors = {};
 
     if (!name.trim()) {
       nextErrors.name = t("admin.form.errors.nameRequired");
@@ -130,7 +147,7 @@ export default function AdminProductFormScreen({ navigation, route }) {
 
       setLoading(true);
       const imageDataUrl = imageDataUrlRef.current;
-      const body = {
+      const body: ProductInput = {
         name: name.trim(),
         description,
         price: numericPrice,
@@ -172,8 +189,8 @@ export default function AdminProductFormScreen({ navigation, route }) {
         imageDataUrl ? t("admin.form.savedImgMsg") : t("admin.form.savedMsg"),
         [{ text: t("admin.ok"), onPress: () => navigation.goBack() }]
       );
-    } catch (error) {
-      Alert.alert(t("admin.form.saveFailed"), error.message);
+    } catch (err) {
+      Alert.alert(t("admin.form.saveFailed"), (err as ApiError).message);
     } finally {
       setLoading(false);
     }
@@ -384,7 +401,7 @@ export default function AdminProductFormScreen({ navigation, route }) {
   );
 }
 
-const getStyles = (colors) => StyleSheet.create({
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     padding: Spacing.md,
     gap: Spacing.md,
