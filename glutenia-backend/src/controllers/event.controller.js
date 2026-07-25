@@ -3,7 +3,7 @@ const User = require("../models/User");
 const { notify, notifyBroadcast } = require("../services/notificationService");
 const gamificationService = require("../services/gamificationService");
 
-const ALLOWED_FIELDS = ["title", "description", "date", "location", "category", "price", "emoji", "color"];
+const ALLOWED_FIELDS = ["title", "description", "date", "location", "category", "price", "emoji", "color", "imageUrl"];
 
 const serialize = (event, userId) => {
   const obj = event.toObject();
@@ -39,7 +39,7 @@ exports.getEventById = async (req, res, next) => {
 
 exports.createEvent = async (req, res, next) => {
   try {
-    const { title, description, date, location, category, price, emoji, color } = req.body;
+    const { title, description, date, location, category, price, emoji, color, imageUrl } = req.body;
     const event = await Event.create({
       title,
       description,
@@ -49,6 +49,7 @@ exports.createEvent = async (req, res, next) => {
       price: price ?? 0,
       emoji: emoji || "🎉",
       color: color || "#E8F5E9",
+      imageUrl: imageUrl || "",
       createdBy: req.user.id,
     });
 

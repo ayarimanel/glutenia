@@ -14,6 +14,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import Screen from "../components/Screen";
 import AppIcon from "../components/AppIcon";
 import BadgeIcon from "../components/BadgeIcon";
+import RoleMedallion from "../components/RoleMedallion";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
 import { useTheme } from "../context/ThemeContext";
@@ -189,6 +190,9 @@ export default function AccountScreen({ navigation }) {
       : ROLE_META[roleType] || ROLE_META.unset;
   const accentColor = isAdmin || isProfessional ? colors.secondary : colors.primary;
   const accentPale = isAdmin || isProfessional ? colors.secondaryPale : colors.primaryPale;
+  // Nothing "earned" yet if the user never chose a role during onboarding —
+  // the medallion should read as a placeholder, not a trophy.
+  const roleLocked = !isAdmin && !isProfessional && !roleType;
   // Derived client-side from the same fields the "Your Journey" tracker
   // uses below, instead of the server-stored gamification.currentTitle —
   // that field only updated on save (via onboarding/Edit Journey) and was
@@ -304,15 +308,30 @@ export default function AccountScreen({ navigation }) {
 
         {/* ── D. Role card ───────────────────────────────────────────────── */}
         <Text style={styles.sectionLabel}>{t("account.yourRole")}</Text>
-        <View style={[styles.roleCard, { backgroundColor: accentPale }]}>
-          <View style={styles.roleIconWrap}>
-            <AppIcon name={roleMeta.icon} size={32} color={accentColor} />
-          </View>
-          <View style={styles.roleTextWrap}>
-            <Text style={styles.roleTitle}>{roleMeta.label}</Text>
-            <Text style={styles.roleDesc}>{roleMeta.desc}</Text>
-          </View>
-        </View>
+        <Pressable
+          style={({ pressed }) => [
+            styles.roleCard,
+            { backgroundColor: colors.surface },
+            pressed && styles.roleCardPressed,
+          ]}
+        >
+          <View
+            pointerEvents="none"
+            style={[styles.roleCardGlowA, { backgroundColor: accentPale }]}
+          />
+          <View
+            pointerEvents="none"
+            style={[styles.roleCardGlowB, { backgroundColor: accentColor }]}
+          />
+          <RoleMedallion
+            iconName={roleMeta.icon}
+            color={accentColor}
+            size={78}
+            locked={roleLocked}
+          />
+          <Text style={styles.roleTitle}>{roleMeta.label}</Text>
+          <Text style={styles.roleDesc}>{roleMeta.desc}</Text>
+        </Pressable>
 
         {/* ── E. Journey (not applicable to professional/seller or admin accounts) ──── */}
         {!isProfessional && !isAdmin && (
@@ -720,26 +739,56 @@ const getStyles = (colors) => StyleSheet.create({
   },
 
   // ── D. Role card ──────────────────────────────────────────────────────────
+  // An "achievement seal" layout (medallion + title + description, all
+  // centered) instead of the old icon-left/text-right row — it borrows the
+  // same centered composition as the badge unlock celebration and detail
+  // modal, so the role reads as something earned, not a settings line.
   roleCard: {
-    flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F0FAF0",
-    borderRadius: Radius.lg,
-    padding: Spacing.md,
+    borderRadius: Radius.xl,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.md,
     marginHorizontal: Spacing.md,
-    gap: 12,
+    overflow: "hidden",
+    ...Shadow,
   },
-  roleIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: Radius.md,
-    backgroundColor: colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
+  roleCardPressed: {
+    opacity: 0.92,
+    transform: [{ scale: 0.99 }],
   },
-  roleTextWrap: { flex: 1 },
-  roleTitle: { fontSize: 15, fontWeight: "700", color: colors.textDark, marginBottom: 4 },
-  roleDesc: { fontSize: 13, color: colors.textMuted, lineHeight: 19 },
+  roleCardGlowA: {
+    position: "absolute",
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    top: -70,
+    right: -50,
+    opacity: 0.7,
+  },
+  roleCardGlowB: {
+    position: "absolute",
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    bottom: -60,
+    left: -40,
+    opacity: 0.08,
+  },
+  roleTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: colors.textDark,
+    marginTop: 14,
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  roleDesc: {
+    fontSize: 13,
+    color: colors.textMuted,
+    lineHeight: 19,
+    textAlign: "center",
+    maxWidth: "88%",
+  },
 
   // ── E.2 Seller activity ──────────────────────────────────────────────────
   activityCard: {

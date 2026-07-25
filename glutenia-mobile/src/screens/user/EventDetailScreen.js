@@ -1,5 +1,6 @@
 import {
   Alert,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -49,10 +50,14 @@ export default function EventDetailScreen({ route, navigation }) {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Hero */}
         <View style={[styles.hero, { backgroundColor: event.color }]}>
+          {event.imageUrl ? (
+            <Image source={{ uri: event.imageUrl }} style={styles.heroPhoto} />
+          ) : (
+            <Text style={styles.heroEmoji}>{event.emoji}</Text>
+          )}
           <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
             <AppIcon name="arrow-back" size={20} color={colors.textDark} />
           </Pressable>
-          <Text style={styles.heroEmoji}>{event.emoji}</Text>
           <View style={styles.categoryBadge}>
             <Text style={styles.categoryBadgeText}>{event.category}</Text>
           </View>
@@ -126,6 +131,10 @@ const getStyles = (colors) => StyleSheet.create({
     height: 240,
     alignItems: "center",
     justifyContent: "center",
+  },
+  heroPhoto: {
+    ...StyleSheet.absoluteFillObject,
+    resizeMode: "cover",
   },
   backBtn: {
     position: "absolute",

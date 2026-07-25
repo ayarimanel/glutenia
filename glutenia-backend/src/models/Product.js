@@ -41,9 +41,12 @@ const productSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  // No `default` here on purpose: a sparse index still indexes a field that
+  // is *present* with a null value, it only skips fields that are entirely
+  // absent from the document. A default of `null` would make every barcode-
+  // less product collide on the unique index after the first one.
   barcode: {
     type: String,
-    default: null,
     trim: true,
   },
 });

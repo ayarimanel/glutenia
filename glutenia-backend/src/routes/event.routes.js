@@ -22,6 +22,7 @@ const createValidators = [
   body("price").optional().isFloat({ min: 0 }).withMessage("Price must be >= 0").toFloat(),
   body("emoji").optional({ checkFalsy: true }).trim().isString(),
   body("color").optional({ checkFalsy: true }).trim().isString(),
+  body("imageUrl").optional({ checkFalsy: true }).isString(),
 ];
 
 const updateValidators = [
@@ -33,6 +34,7 @@ const updateValidators = [
   body("price").optional().isFloat({ min: 0 }).withMessage("Price must be >= 0").toFloat(),
   body("emoji").optional({ checkFalsy: true }).trim().isString(),
   body("color").optional({ checkFalsy: true }).trim().isString(),
+  body("imageUrl").optional({ checkFalsy: true }).isString(),
 ];
 
 // Attaches req.user if a valid Bearer token is present, but never blocks the request

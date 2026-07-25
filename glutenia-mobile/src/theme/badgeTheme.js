@@ -98,9 +98,11 @@ export const TIER_TOKENS = {
   },
 };
 
-// Builds the gradient stops + ring/glow colors for a given category+tier pair.
-export function getBadgeVisualTokens(category, tier) {
-  const base = CATEGORY_COLORS[category] || "#6C757D";
+// Builds the gradient stops + ring/glow colors for a given base color+tier —
+// the shared math behind every medallion in the app (badge catalog icons and
+// the profile Role medallion alike), so "how prestigious does tier X look"
+// only has one implementation to keep consistent.
+export function getTierTokensForColor(base, tier) {
   const tokens = TIER_TOKENS[tier] || TIER_TOKENS.bronze;
 
   let highlight = shade(base, tokens.highlightMix);
@@ -121,6 +123,11 @@ export function getBadgeVisualTokens(category, tier) {
     ringWidth: tokens.ringWidth,
     base,
   };
+}
+
+// Builds the gradient stops + ring/glow colors for a given category+tier pair.
+export function getBadgeVisualTokens(category, tier) {
+  return getTierTokensForColor(CATEGORY_COLORS[category] || "#6C757D", tier);
 }
 
 // ---- Badge slug -> rarity tier ----

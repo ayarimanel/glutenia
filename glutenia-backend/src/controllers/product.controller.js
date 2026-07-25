@@ -25,11 +25,14 @@ const pickProductFields = (body) => {
   }, {});
 
   // barcode has a sparse unique index (Product.js) so multiple products can
-  // have "no barcode" — but that only works if "no barcode" is consistently
-  // null, not an empty string. An empty string is itself a value, so two
-  // products both saved with barcode: "" would collide on the unique index.
+  // have "no barcode" — but that only works if the field is genuinely absent
+  // from the stored document. A sparse index still indexes a field that is
+  // present with a null/empty value, so two such products would collide on
+  // the unique index. Dropping the key here means create() never writes the
+  // path at all; updateProduct explicitly unsets it for the clearing case,
+  // since Object.assign alone can't remove an already-set path.
   if (Object.prototype.hasOwnProperty.call(fields, "barcode") && !fields.barcode) {
-    fields.barcode = null;
+    delete fields.barcode;
   }
 
   return fields;
@@ -178,6 +181,11 @@ exports.updateProduct = async (req, res, next) => {
     }
 
     Object.assign(product, pickProductFields(req.body));
+    // pickProductFields drops "barcode" entirely when it's being cleared, so
+    // Object.assign alone leaves the old value in place — unset it explicitly.
+    if (Object.prototype.hasOwnProperty.call(req.body, "barcode") && !req.body.barcode) {
+      product.barcode = undefined;
+    }
     await product.save();
 
     return res.json({

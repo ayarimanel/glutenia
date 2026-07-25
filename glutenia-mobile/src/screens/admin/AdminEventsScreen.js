@@ -1,6 +1,7 @@
 import {
   Alert,
   FlatList,
+  Image,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -107,7 +108,11 @@ export default function AdminEventsScreen({ navigation }) {
           renderItem={({ item }) => (
             <View style={styles.eventRow}>
               <View style={[styles.visual, { backgroundColor: item.color }]}>
-                <Text style={styles.emoji}>{item.emoji}</Text>
+                {item.imageUrl ? (
+                  <Image source={{ uri: item.imageUrl }} style={styles.visualPhoto} />
+                ) : (
+                  <Text style={styles.emoji}>{item.emoji}</Text>
+                )}
               </View>
               <View style={styles.eventBody}>
                 <Text style={styles.name} numberOfLines={2}>{item.title}</Text>
@@ -176,6 +181,12 @@ const getStyles = (colors) => StyleSheet.create({
     borderRadius: Radius.md,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
+  },
+  visualPhoto: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   emoji: {
     fontSize: 32,

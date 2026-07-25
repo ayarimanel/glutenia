@@ -11,6 +11,7 @@ const eventSchema = new mongoose.Schema({
   price: { type: Number, default: 0, min: 0 },
   emoji: { type: String, default: "🎉" },
   color: { type: String, default: "#E8F5E9" },
+  imageUrl: { type: String, trim: true, default: "" },
   attendees: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   createdAt: { type: Date, default: Date.now },

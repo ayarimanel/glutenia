@@ -5,6 +5,7 @@ import { TrendingUp } from "lucide-react-native";
 import { useTheme } from "../context/ThemeContext";
 import { getBadgeVisualTokens, getBadgeTier } from "../theme/badgeTheme";
 import BadgeIcon from "./BadgeIcon";
+import ShineSweep from "./ShineSweep";
 
 const PARTICLE_COUNT = 8;
 
@@ -66,35 +67,6 @@ function ParticleBurst({ color, active }) {
         />
       ))}
     </View>
-  );
-}
-
-// A soft diagonal light sweep across the badge medallion, once, on mount.
-function ShineSweep({ active }) {
-  const sweep = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (!active) return;
-    Animated.sequence([
-      Animated.delay(220),
-      Animated.timing(sweep, { toValue: 1, duration: 520, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-    ]).start();
-  }, [active]);
-
-  return (
-    <Animated.View
-      pointerEvents="none"
-      style={[
-        styles.shine,
-        {
-          opacity: sweep.interpolate({ inputRange: [0, 0.15, 0.85, 1], outputRange: [0, 0.5, 0.5, 0] }),
-          transform: [
-            { translateX: sweep.interpolate({ inputRange: [0, 1], outputRange: [-90, 90] }) },
-            { rotate: "20deg" },
-          ],
-        },
-      ]}
-    />
   );
 }
 
@@ -169,7 +141,7 @@ export default function GamificationUnlockModal({ event, onDismiss }) {
           {isBadge ? (
             <Animated.View style={[styles.badgeCelebrationWrap, { transform: [{ scale: badgeScale }] }]}>
               <ParticleBurst color={accentColor} active={active} />
-              <ShineSweep active={active} />
+              <ShineSweep active={active} size={92} />
               <BadgeIcon badge={event.badge} size={92} locked={false} />
             </Animated.View>
           ) : (
@@ -254,13 +226,6 @@ const styles = StyleSheet.create({
   },
   particle: {
     position: "absolute",
-  },
-  shine: {
-    position: "absolute",
-    width: 18,
-    height: 130,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 9,
   },
   eyebrow: {
     fontSize: 12,

@@ -1,6 +1,7 @@
 import {
   ActivityIndicator,
   FlatList,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -117,7 +118,11 @@ export default function EventsScreen({ navigation }) {
                 onPress={() => navigation.navigate("EventDetail", { event: item })}
               >
                 <View style={[styles.cardImage, { backgroundColor: item.color }]}>
-                  <Text style={styles.cardEmoji}>{item.emoji}</Text>
+                  {item.imageUrl ? (
+                    <Image source={{ uri: item.imageUrl }} style={styles.cardImagePhoto} />
+                  ) : (
+                    <Text style={styles.cardEmoji}>{item.emoji}</Text>
+                  )}
                   <View style={styles.categoryBadge}>
                     <Text style={styles.categoryBadgeText}>{item.category}</Text>
                   </View>
@@ -217,6 +222,10 @@ const getStyles = (colors) => StyleSheet.create({
     height: 180,
     alignItems: "center",
     justifyContent: "center",
+  },
+  cardImagePhoto: {
+    ...StyleSheet.absoluteFillObject,
+    resizeMode: "cover",
   },
   cardEmoji: {
     fontSize: 72,

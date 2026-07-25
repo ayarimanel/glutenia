@@ -1,5 +1,6 @@
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -9,16 +10,19 @@ import {
   View,
 } from "react-native";
 import { useEffect, useState } from "react";
+import * as ImagePicker from "expo-image-picker";
 import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import Field from "../../components/Field";
 import AppIcon from "../../components/AppIcon";
+import { SecondaryButton } from "../../components/Buttons";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../api/client";
 import { Radius, Spacing } from "../../theme/colors";
 import { useTheme } from "../../context/ThemeContext";
 
 const CATEGORIES = ["Meetups", "Classes", "Markets", "Workshops"];
+const MAX_IMAGE_DATA_URL_LENGTH = 3000000;
 
 const PRESET_EMOJIS = ["🎉", "👨‍🍳", "🧺", "🧁", "🛍️", "🥗", "🌿", "🍞", "🎪", "🏃"];
 
@@ -45,6 +49,7 @@ export default function CreateEventScreen({ navigation, route }) {
   const [price, setPrice] = useState("0");
   const [emoji, setEmoji] = useState("🎉");
   const [color, setColor] = useState("#E8F5E9");
+  const [imageUrl, setImageUrl] = useState("");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
@@ -61,6 +66,7 @@ export default function CreateEventScreen({ navigation, route }) {
         setPrice(String(event.price ?? 0));
         setEmoji(event.emoji || "🎉");
         setColor(event.color || "#E8F5E9");
+        setImageUrl(event.imageUrl || "");
       } catch (error) {
         Alert.alert(t("createEvent.loadError"), error.message);
         navigation.goBack();
@@ -68,6 +74,39 @@ export default function CreateEventScreen({ navigation, route }) {
     };
     loadEvent();
   }, [eventId]);
+
+  const pickImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(t("admin.form.image.permissionTitle"), t("admin.form.image.permissionMsg"));
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: false,
+      base64: true,
+      mediaTypes: ["images"],
+      quality: 0.4,
+    });
+
+    if (result.canceled) return;
+
+    const asset = result.assets?.[0];
+    if (!asset?.base64) {
+      Alert.alert(t("admin.form.image.errorTitle"), t("admin.form.image.cantReadMsg"));
+      return;
+    }
+
+    const mimeType = asset.mimeType || "image/jpeg";
+    const dataUrl = `data:${mimeType};base64,${asset.base64}`;
+
+    if (dataUrl.length > MAX_IMAGE_DATA_URL_LENGTH) {
+      Alert.alert(t("admin.form.image.tooLargeTitle"), t("admin.form.image.tooLargeMsg"));
+      return;
+    }
+
+    setImageUrl(dataUrl);
+  };
 
   const handleSubmit = async () => {
     const nextErrors = {};
@@ -88,6 +127,7 @@ export default function CreateEventScreen({ navigation, route }) {
       price: Number(price) || 0,
       emoji,
       color,
+      imageUrl,
     };
 
     try {
@@ -193,9 +233,25 @@ export default function CreateEventScreen({ navigation, route }) {
             {errors.category ? <Text style={styles.errorText}>{errors.category}</Text> : null}
           </View>
 
+          {/* Cover image */}
+          <View style={styles.fieldWrap}>
+            <Text style={styles.fieldLabel}>{t("createEvent.coverImage")}</Text>
+            {imageUrl ? (
+              <Image source={{ uri: imageUrl }} style={styles.imagePreview} />
+            ) : (
+              <Text style={styles.noImageText}>{t("createEvent.noImage")}</Text>
+            )}
+            <SecondaryButton
+              title={imageUrl ? t("createEvent.replaceImage") : t("createEvent.uploadImage")}
+              icon="image"
+              onPress={pickImage}
+            />
+          </View>
+
           {/* Emoji picker */}
           <View style={styles.fieldWrap}>
             <Text style={styles.fieldLabel}>{t("createEvent.emoji")}</Text>
+            <Text style={styles.fieldHint}>{t("createEvent.emojiHint")}</Text>
             <View style={styles.row}>
               {PRESET_EMOJIS.map((e) => (
                 <Pressable
@@ -280,6 +336,20 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.textDark,
     fontSize: 13,
     fontWeight: "700",
+  },
+  fieldHint: {
+    color: colors.textMuted,
+    fontSize: 12,
+  },
+  imagePreview: {
+    width: "100%",
+    height: 160,
+    borderRadius: Radius.lg,
+    resizeMode: "cover",
+  },
+  noImageText: {
+    color: colors.textMuted,
+    fontSize: 13,
   },
   row: {
     flexDirection: "row",
