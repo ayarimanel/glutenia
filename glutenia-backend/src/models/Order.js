@@ -94,4 +94,8 @@ const orderSchema = new mongoose.Schema({
   },
 });
 
+// getMyOrders and getUserOrders (order.controller.js) both filter on this
+// field directly; it had no index before.
+orderSchema.index({ user: 1 });
+
 module.exports = mongoose.model("Order", orderSchema);
