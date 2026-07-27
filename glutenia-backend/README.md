@@ -31,20 +31,19 @@ On Windows, you can use the runner instead:
 
 The runner checks Node.js, npm, `.env`, MongoDB reachability, dependencies, syntax, audit status, integration tests, and a short server smoke test.
 
-## Main Routes
+## API Routes
 
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `GET /api/auth/me`
-- `GET /api/products`
-- `POST /api/products` admin only
-- `PUT /api/products/:id` admin only
-- `DELETE /api/products/:id` admin only
-- `POST /api/orders`
-- `GET /api/orders/my`
-- `GET /api/orders` admin only
-- `GET /api/orders/:id`
-- `GET /api/users` admin only
-- `GET /api/users/:id/orders` admin only
+Every endpoint is defined in `src/routes/` (one file per resource) and mounted
+under `/api/<resource>` in `src/app.js`: `auth`, `community-products`,
+`establishments`, `events`, `gamification`, `notifications`, `onboarding`,
+`orders`, `patient-resources`, `products`, `professionals`, `recipes`,
+`scan`, `users`.
+
+This list used to enumerate individual routes, but it drifted out of sync
+with the actual API as routes were added — a hand-maintained duplicate of
+`src/routes/` will always eventually go stale. For the exact methods, paths,
+auth/role requirements, and request bodies, read the relevant
+`src/routes/*.routes.js` file directly; each one is short and follows the
+same shape.
 
 All JSON responses use `{ "success": true, "data": ... }` or `{ "success": false, "message": "..." }`.
