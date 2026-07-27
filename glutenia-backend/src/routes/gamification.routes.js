@@ -12,9 +12,6 @@ router.get("/profile", verifyToken, gamificationController.getProfileGamificatio
 // Lightweight payload for surfaces that load on every app open (Home strip)
 router.get("/home", verifyToken, gamificationController.getHomeGamification);
 
-// Full badge catalog
-router.get("/badges", verifyToken, gamificationController.getBadgeCatalog);
-
 // Badge pin with explicit boolean + 3-pin cap
 router.put(
   "/badges/:badgeId/pin",
