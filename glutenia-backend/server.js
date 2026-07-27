@@ -1,5 +1,6 @@
 require("dotenv").config();
 
+const { getJwtSecret } = require("./src/config/auth");
 const connectDB = require("./src/config/db");
 const app = require("./src/app");
 const seedRecipesIfEmpty = require("./src/seed/seedRecipes");
@@ -8,6 +9,10 @@ const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || "0.0.0.0";
 
 const startServer = async () => {
+  // Fail fast on a missing JWT_SECRET rather than letting the server boot
+  // and start signing/verifying tokens once the first request arrives.
+  getJwtSecret();
+
   await connectDB();
 
   app.listen(PORT, HOST, () => {
