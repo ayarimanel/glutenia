@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
+const swaggerUi = require("swagger-ui-express");
 const errorHandler = require("./middleware/errorHandler");
+const { buildOpenApiSpec } = require("./docs/buildOpenApiSpec");
 
 const authRoutes = require("./routes/auth.routes");
 const communityProductRoutes = require("./routes/communityProduct.routes");
@@ -67,6 +69,13 @@ app.use("/api/professionals", professionalRoutes);
 app.use("/api/recipes", recipeRoutes);
 app.use("/api/scan", scanRoutes);
 app.use("/api/users", userRoutes);
+
+// Auto-generated from route/validator source (src/docs/) — not exposed in
+// production by default since it lists every endpoint, param, and auth rule.
+if (process.env.NODE_ENV !== "production") {
+  const { spec } = buildOpenApiSpec();
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(spec));
+}
 
 app.use((req, res) => {
   res.status(404).json({
