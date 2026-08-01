@@ -38,7 +38,6 @@ const submitValidators = [
 
 const idValidator = [param("id").isMongoId().withMessage("Invalid community product id")];
 
-router.get("/barcode/:code", verifyToken, communityProductController.getCommunityProductByBarcode);
 router.post("/", verifyToken, submitValidators, validateRequest, communityProductController.submitCommunityProduct);
 router.post(
   "/:id/flag",

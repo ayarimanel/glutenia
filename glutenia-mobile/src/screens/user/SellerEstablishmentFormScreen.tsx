@@ -1,0 +1,680 @@
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { WebView } from "react-native-webview";
+import type { WebViewMessageEvent } from "react-native-webview";
+import * as ImagePicker from "expo-image-picker";
+import { useTranslation } from "react-i18next";
+import Screen from "../../components/Screen";
+import SectionHeader from "../../components/SectionHeader";
+import Field from "../../components/Field";
+import TimeRangeSlider from "../../components/TimeRangeSlider";
+import AppIcon from "../../components/AppIcon";
+import { IconButton, PrimaryButton, SecondaryButton } from "../../components/Buttons";
+import { useAuthenticated } from "../../context/AuthContext";
+import { api, type ApiError, type EstablishmentInput } from "../../api/client";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import { Radius, Spacing } from "../../theme/colors";
+import type { AppNavigation } from "../../navigation/types";
+import type { EstablishmentCategory } from "../../types/models";
+
+const categories: EstablishmentCategory[] = ["Supermarket", "Restaurant", "Health Store", "Bakery", "Pharmacy", "Other"];
+const MAX_IMAGE_DATA_URL_LENGTH = 5500000;
+const DEFAULT_CENTER = { latitude: 36.82, longitude: 10.2 };
+const HOURS_PATTERN = /^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})$/;
+const DEFAULT_OPEN_TIME = { hour: "08", minute: "00" };
+const DEFAULT_CLOSE_TIME = { hour: "19", minute: "00" };
+
+type TimeValue = { hour: string; minute: string };
+
+// Matches "36.8065, 10.1815" pasted directly, and also finds the same pattern
+// inside a full Google Maps URL (e.g. ".../@36.8065,10.1815,17z" or "?q=36.8065,10.1815").
+const COORDS_PATTERN = /(-?\d{1,3}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)/;
+
+function parseCoordinatesInput(value: string): { latitude: number; longitude: number } | null {
+  const match = COORDS_PATTERN.exec((value || "").trim());
+  if (!match) return null;
+
+  const latitude = Number(match[1]);
+  const longitude = Number(match[2]);
+  if (
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
+  ) {
+    return null;
+  }
+
+  return { latitude, longitude };
+}
+
+function parseHoursString(value?: string | null): { open: TimeValue; close: TimeValue } {
+  const match = HOURS_PATTERN.exec((value || "").trim());
+  if (!match) {
+    return { open: DEFAULT_OPEN_TIME, close: DEFAULT_CLOSE_TIME };
+  }
+
+  const [, openHour, openMinute, closeHour, closeMinute] = match;
+  return {
+    open: { hour: openHour.padStart(2, "0"), minute: openMinute },
+    close: { hour: closeHour.padStart(2, "0"), minute: closeMinute },
+  };
+}
+
+const readUriAsDataUrl = async (uri: string, mimeType: string): Promise<string> => {
+  const response = await fetch(uri);
+  const blob = await response.blob();
+
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Could not read selected image."));
+    reader.onloadend = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      if (result.startsWith("data:image/")) {
+        resolve(result);
+        return;
+      }
+
+      const base64 = result.split(",")[1];
+      resolve(base64 ? `data:${mimeType};base64,${base64}` : "");
+    };
+    reader.readAsDataURL(blob);
+  });
+};
+
+function buildPickerHTML(lat: number | null, lng: number | null): string {
+  const hasPoint = lat != null && lng != null;
+  const initLat = hasPoint ? lat : DEFAULT_CENTER.latitude;
+  const initLng = hasPoint ? lng : DEFAULT_CENTER.longitude;
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #e8efe9; }
+    #map { width: 100%; height: 100%; }
+    .leaflet-control-attribution { display: none !important; }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+  var map = L.map('map', { zoomControl: false }).setView([${initLat}, ${initLng}], ${hasPoint ? 15 : 12});
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    subdomains: 'abcd', maxZoom: 19
+  }).addTo(map);
+
+  var marker = null;
+
+  function notify(lat, lng) {
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'locationPicked', lat: lat, lng: lng }));
+    }
+  }
+
+  function placeMarker(lat, lng, silent) {
+    if (marker) {
+      marker.setLatLng([lat, lng]);
+    } else {
+      marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+      marker.on('dragend', function() {
+        var p = marker.getLatLng();
+        notify(p.lat, p.lng);
+      });
+    }
+    if (!silent) notify(lat, lng);
+  }
+
+  ${hasPoint ? `placeMarker(${initLat}, ${initLng}, true);` : ""}
+
+  map.on('click', function(e) {
+    placeMarker(e.latlng.lat, e.latlng.lng);
+  });
+
+  window.placeFromRN = function(lat, lng) {
+    placeMarker(lat, lng, true);
+    map.flyTo([lat, lng], 16, { animate: true, duration: 0.5 });
+  };
+</script>
+</body>
+</html>`;
+}
+
+interface EstablishmentFormErrors {
+  name?: string;
+  location?: string;
+}
+
+export default function SellerEstablishmentFormScreen({ navigation }: { navigation: AppNavigation }) {
+  const { token } = useAuthenticated();
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
+  const imageDataUrlRef = useRef("");
+  const [name, setName] = useState("");
+  const [category, setCategory] = useState<EstablishmentCategory>("Restaurant");
+  const [description, setDescription] = useState("");
+  const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState("");
+  const [openTime, setOpenTime] = useState<TimeValue>(DEFAULT_OPEN_TIME);
+  const [closeTime, setCloseTime] = useState<TimeValue>(DEFAULT_CLOSE_TIME);
+  const [coverImageUrl, setCoverImageUrl] = useState("");
+  const [imageStatus, setImageStatus] = useState("");
+  const [removeImage, setRemoveImage] = useState(false);
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [coordsInput, setCoordsInput] = useState("");
+  const [mapReady, setMapReady] = useState(false);
+  const [errors, setErrors] = useState<EstablishmentFormErrors>({});
+  const [loading, setLoading] = useState(false);
+  const [imageProcessing, setImageProcessing] = useState(false);
+  const mapWebViewRef = useRef<WebView>(null);
+
+  const categoryLabels: Record<string, string> = {
+    Supermarket: t("map.supermarket"),
+    Restaurant: t("map.restaurant"),
+    "Health Store": t("map.healthStore"),
+    Bakery: t("map.bakery"),
+    Pharmacy: t("map.pharmacy"),
+    Other: t("admin.form.other"),
+  };
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const establishment = await api.myEstablishment(token);
+        if (establishment) {
+          setName(establishment.name || "");
+          setCategory(establishment.category || "Restaurant");
+          setDescription(establishment.description || "");
+          setAddress(establishment.address || "");
+          setPhone(establishment.phone || "");
+          const parsedHours = parseHoursString(establishment.hours);
+          setOpenTime(parsedHours.open);
+          setCloseTime(parsedHours.close);
+          setCoverImageUrl(establishment.coverImageUrl || "");
+          setImageStatus(establishment.coverImageUrl ? t("admin.form.currentImage") : "");
+          if (establishment.coordinates?.latitude != null && establishment.coordinates?.longitude != null) {
+            setLatitude(establishment.coordinates.latitude);
+            setLongitude(establishment.coordinates.longitude);
+          }
+        }
+      } catch (error) {
+        Alert.alert(t("seller.form.loadFailed"), (error as ApiError).message);
+      } finally {
+        setMapReady(true);
+      }
+    };
+
+    load();
+  }, []);
+
+  const leafletHTML = useMemo(() => buildPickerHTML(latitude, longitude), [mapReady]);
+
+  const handleMapMessage = (event: WebViewMessageEvent) => {
+    try {
+      const msg = JSON.parse(event.nativeEvent.data);
+      if (msg.type === "locationPicked") {
+        setLatitude(msg.lat);
+        setLongitude(msg.lng);
+        setErrors((current) => ({ ...current, location: "" }));
+      }
+    } catch (_) {}
+  };
+
+  const applyPastedCoordinates = () => {
+    const parsed = parseCoordinatesInput(coordsInput);
+    if (!parsed) {
+      setErrors((current) => ({ ...current, location: t("seller.form.errors.coordsInvalid") }));
+      return;
+    }
+
+    setLatitude(parsed.latitude);
+    setLongitude(parsed.longitude);
+    setErrors((current) => ({ ...current, location: "" }));
+    setCoordsInput("");
+    mapWebViewRef.current?.injectJavaScript(
+      `if (window.placeFromRN) { window.placeFromRN(${parsed.latitude}, ${parsed.longitude}); } true;`
+    );
+  };
+
+  const pickImage = async () => {
+    setImageStatus(t("admin.form.image.checking"));
+
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      setImageStatus(t("admin.form.image.denied"));
+      Alert.alert(t("admin.form.image.permissionTitle"), t("admin.form.image.permissionMsg"));
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: false,
+      base64: true,
+      mediaTypes: ["images"],
+      quality: 0.25,
+    });
+
+    if (result.canceled) {
+      setImageStatus(t("admin.form.image.cancelled"));
+      return;
+    }
+
+    const asset = result.assets?.[0];
+    if (!asset?.uri) {
+      setImageStatus(t("admin.form.image.cantRead"));
+      Alert.alert(t("admin.form.image.errorTitle"), t("admin.form.image.cantReadMsg"));
+      return;
+    }
+
+    try {
+      setImageProcessing(true);
+      setImageStatus(t("admin.form.image.reading"));
+      const mimeType = asset.mimeType || "image/jpeg";
+      const dataUrl = asset.base64
+        ? `data:${mimeType};base64,${asset.base64}`
+        : await readUriAsDataUrl(asset.uri, mimeType);
+
+      if (!dataUrl.startsWith("data:image/")) {
+        setImageStatus(t("admin.form.image.readFailed"));
+        Alert.alert(t("admin.form.image.errorTitle"), t("admin.form.image.cantReadMsg"));
+        return;
+      }
+
+      if (dataUrl.length > MAX_IMAGE_DATA_URL_LENGTH) {
+        setImageStatus(t("admin.form.image.tooLarge", { size: Math.ceil(dataUrl.length / 1024) }));
+        Alert.alert(t("admin.form.image.tooLargeTitle"), t("admin.form.image.tooLargeMsg"));
+        return;
+      }
+
+      imageDataUrlRef.current = dataUrl;
+      setRemoveImage(false);
+      setCoverImageUrl(asset.uri);
+      setImageStatus(t("admin.form.image.ready", { size: Math.ceil(dataUrl.length / 1024) }));
+    } catch (error) {
+      setImageStatus(t("admin.form.image.failed"));
+      Alert.alert(t("admin.form.image.errorTitle"), t("admin.form.image.failedMsg"));
+    } finally {
+      setImageProcessing(false);
+    }
+  };
+
+  const save = async () => {
+    const nextErrors: EstablishmentFormErrors = {};
+    if (!name.trim()) {
+      nextErrors.name = t("seller.form.errors.nameRequired");
+    }
+    if (latitude == null || longitude == null) {
+      nextErrors.location = t("seller.form.errors.locationRequired");
+    }
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) {
+      return;
+    }
+
+    try {
+      if (!token) {
+        Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsgShort"));
+        return;
+      }
+
+      setLoading(true);
+      const hours = `${openTime.hour}:${openTime.minute} - ${closeTime.hour}:${closeTime.minute}`;
+      const body: EstablishmentInput = {
+        name: name.trim(),
+        category,
+        description,
+        address,
+        phone,
+        hours,
+      };
+
+      if (removeImage) {
+        body.coverImageUrl = "";
+      }
+      if (imageDataUrlRef.current) {
+        body.coverImageUrl = imageDataUrlRef.current;
+      }
+      if (latitude != null && longitude != null) {
+        body.latitude = latitude;
+        body.longitude = longitude;
+      }
+
+      await api.upsertMyEstablishment(token, body);
+
+      Alert.alert(t("seller.form.saved"), t("seller.form.savedMsg"), [
+        { text: t("admin.ok"), onPress: () => navigation.goBack() },
+      ]);
+    } catch (error) {
+      Alert.alert(t("seller.form.saveFailed"), (error as ApiError).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Screen>
+      <ScrollView contentContainerStyle={styles.container}>
+        <SectionHeader
+          eyebrow={t("seller.form.eyebrow")}
+          title={t("seller.form.title")}
+          right={<IconButton icon="close" onPress={() => navigation.goBack()} />}
+        />
+        <Field
+          label={t("seller.form.name")}
+          value={name}
+          error={errors.name}
+          onChangeText={(value) => {
+            setName(value);
+            setErrors((current) => ({ ...current, name: "" }));
+          }}
+        />
+        <View style={styles.categoryWrap}>
+          <Text style={styles.label}>{t("seller.form.category")}</Text>
+          <View style={styles.categories}>
+            {categories.map((item) => (
+              <Pressable
+                key={item}
+                onPress={() => setCategory(item)}
+                style={[styles.categoryPill, category === item && styles.categoryPillActive]}
+              >
+                <Text
+                  style={[
+                    styles.categoryText,
+                    category === item && styles.categoryTextActive,
+                  ]}
+                >
+                  {categoryLabels[item] || item}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+        <Field
+          label={t("seller.form.description")}
+          value={description}
+          onChangeText={setDescription}
+          multiline
+        />
+        <Field label={t("seller.form.address")} value={address} onChangeText={setAddress} />
+        <Field
+          label={t("seller.form.phone")}
+          value={phone}
+          onChangeText={setPhone}
+          keyboardType="phone-pad"
+        />
+        <View style={styles.hoursWrap}>
+          <Text style={styles.label}>{t("seller.form.hours")}</Text>
+          <TimeRangeSlider
+            openTime={openTime}
+            closeTime={closeTime}
+            onChange={(nextOpen, nextClose) => {
+              setOpenTime(nextOpen);
+              setCloseTime(nextClose);
+            }}
+          />
+        </View>
+
+        <View style={styles.imageSection}>
+          <Text style={styles.label}>{t("seller.form.coverImage")}</Text>
+          <View
+            style={[styles.imageStatusBox, imageStatus ? styles.imageStatusBoxActive : null]}
+          >
+            <Text style={styles.imageStatus}>{imageStatus || t("admin.form.noImage")}</Text>
+          </View>
+          <View style={styles.imageActions}>
+            <SecondaryButton
+              title={
+                imageProcessing
+                  ? t("admin.form.preparing")
+                  : coverImageUrl
+                    ? t("admin.form.replaceImage")
+                    : t("admin.form.uploadImage")
+              }
+              icon="image"
+              disabled={imageProcessing || loading}
+              onPress={pickImage}
+              style={styles.imageAction}
+            />
+            {coverImageUrl ? (
+              <SecondaryButton
+                title={t("admin.form.remove")}
+                icon="trash"
+                disabled={imageProcessing || loading}
+                onPress={() => {
+                  setCoverImageUrl("");
+                  imageDataUrlRef.current = "";
+                  setImageStatus(t("admin.form.removeStatus"));
+                  setRemoveImage(true);
+                }}
+                style={styles.imageAction}
+              />
+            ) : null}
+          </View>
+        </View>
+
+        <View style={styles.locationSection}>
+          <Text style={styles.label}>{t("seller.form.location")}</Text>
+          <Text style={styles.locationHint}>{t("seller.form.locationHint")}</Text>
+          <View style={[styles.mapBox, errors.location && styles.mapBoxError]}>
+            {mapReady ? (
+              <WebView
+                ref={mapWebViewRef}
+                style={StyleSheet.absoluteFillObject}
+                source={{ html: leafletHTML }}
+                onMessage={handleMapMessage}
+                javaScriptEnabled
+                originWhitelist={["*"]}
+                mixedContentMode="compatibility"
+              />
+            ) : null}
+          </View>
+          <View style={styles.coordsRow}>
+            <AppIcon name="map-pin" size={14} color={colors.secondary} />
+            <Text style={styles.coordsText}>
+              {latitude != null && longitude != null
+                ? `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
+                : t("seller.form.noLocation")}
+            </Text>
+          </View>
+          {errors.location ? <Text style={styles.error}>{errors.location}</Text> : null}
+
+          <View style={styles.coordsPasteBlock}>
+            <Text style={styles.coordsPasteLabel}>{t("seller.form.coordsLabel")}</Text>
+            <View style={styles.coordsPasteRow}>
+              <TextInput
+                value={coordsInput}
+                onChangeText={setCoordsInput}
+                placeholder={t("seller.form.coordsPlaceholder")}
+                placeholderTextColor={colors.textMuted}
+                style={styles.coordsPasteInput}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <Pressable
+                style={[styles.coordsApplyBtn, !coordsInput.trim() && styles.coordsApplyBtnDisabled]}
+                onPress={applyPastedCoordinates}
+                disabled={!coordsInput.trim()}
+              >
+                <Text style={styles.coordsApplyBtnText}>{t("seller.form.coordsApply")}</Text>
+              </Pressable>
+            </View>
+            <View style={styles.coordsTipRow}>
+              <AppIcon name="info" size={13} color={colors.textMuted} />
+              <Text style={styles.coordsTipText}>{t("seller.form.coordsTip")}</Text>
+            </View>
+          </View>
+        </View>
+
+        <PrimaryButton
+          title={t("seller.form.save")}
+          icon="save"
+          loading={loading || imageProcessing}
+          disabled={imageProcessing}
+          onPress={save}
+        />
+      </ScrollView>
+    </Screen>
+  );
+}
+
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
+  container: {
+    padding: Spacing.md,
+    gap: Spacing.md,
+  },
+  label: {
+    color: colors.textDark,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  hoursWrap: {
+    gap: 8,
+  },
+  error: {
+    color: colors.danger,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  categoryWrap: {
+    gap: 8,
+  },
+  categories: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  categoryPill: {
+    borderRadius: Radius.pill,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.divider,
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+  },
+  categoryPillActive: {
+    backgroundColor: colors.secondary,
+    borderColor: colors.secondary,
+  },
+  categoryText: {
+    color: colors.textMuted,
+    fontWeight: "800",
+  },
+  categoryTextActive: {
+    color: colors.surface,
+  },
+  imageSection: {
+    gap: 8,
+  },
+  imageActions: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  imageAction: {
+    flex: 1,
+  },
+  imageStatusBox: {
+    borderRadius: Radius.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.divider,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  imageStatusBoxActive: {
+    borderColor: colors.secondary,
+    backgroundColor: colors.secondaryPale,
+  },
+  imageStatus: {
+    color: colors.textDark,
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  locationSection: {
+    gap: 8,
+  },
+  locationHint: {
+    color: colors.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  mapBox: {
+    height: 220,
+    borderRadius: Radius.lg,
+    overflow: "hidden",
+    backgroundColor: colors.divider,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  mapBoxError: {
+    borderColor: colors.danger,
+  },
+  coordsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  coordsText: {
+    color: colors.textDark,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  coordsPasteBlock: {
+    gap: 8,
+    marginTop: 4,
+  },
+  coordsPasteLabel: {
+    color: colors.textDark,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  coordsPasteRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  coordsPasteInput: {
+    flex: 1,
+    minHeight: 44,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: Radius.md,
+    backgroundColor: colors.surface,
+    color: colors.textDark,
+    paddingHorizontal: 14,
+    fontSize: 14,
+  },
+  coordsApplyBtn: {
+    minHeight: 44,
+    borderRadius: Radius.md,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  coordsApplyBtnDisabled: {
+    opacity: 0.5,
+  },
+  coordsApplyBtnText: {
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: 13,
+  },
+  coordsTipRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+  },
+  coordsTipText: {
+    flex: 1,
+    color: colors.textMuted,
+    fontSize: 11,
+    lineHeight: 15,
+  },
+});

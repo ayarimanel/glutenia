@@ -1,4 +1,3 @@
-const Badge = require("../models/Badge");
 const UserBadge = require("../models/UserBadge");
 const gamificationService = require("../services/gamificationService");
 
@@ -65,15 +64,6 @@ exports.getProfileGamification = async (req, res, next) => {
       });
     }
     return res.json({ success: true, data: result });
-  } catch (error) {
-    return next(error);
-  }
-};
-
-exports.getBadgeCatalog = async (req, res, next) => {
-  try {
-    const badges = await Badge.find().sort({ category: 1, targetValue: 1 });
-    return res.json({ success: true, data: badges });
   } catch (error) {
     return next(error);
   }

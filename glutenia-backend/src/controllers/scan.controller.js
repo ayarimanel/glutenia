@@ -38,6 +38,13 @@ exports.scanLabel = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "No image provided" });
     }
 
+    if (!process.env.GROQ_API_KEY) {
+      return res.status(500).json({
+        success: false,
+        message: "Label scanning is not configured on the server (missing GROQ_API_KEY).",
+      });
+    }
+
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
     const completion = await groq.chat.completions.create({

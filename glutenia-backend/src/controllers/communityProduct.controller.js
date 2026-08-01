@@ -12,23 +12,6 @@ const MAX_SUBMISSIONS_PER_DAY = 20;
 // that specific gap: enough independent flags marks an entry disputed.
 const DISPUTE_FLAG_THRESHOLD = 3;
 
-exports.getCommunityProductByBarcode = async (req, res, next) => {
-  try {
-    const entry = await CommunityProduct.findOne({ barcode: req.params.code });
-
-    if (!entry) {
-      return res.status(404).json({
-        success: false,
-        message: "Community product not found",
-      });
-    }
-
-    return res.json({ success: true, data: entry });
-  } catch (error) {
-    return next(error);
-  }
-};
-
 exports.submitCommunityProduct = async (req, res, next) => {
   try {
     const { barcode, name, imageUrl, isGlutenFree, brand, category } = req.body;

@@ -1,0 +1,268 @@
+import {
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { RouteProp } from "@react-navigation/native";
+import Screen from "../../components/Screen";
+import AppIcon from "../../components/AppIcon";
+import { useAuth } from "../../context/AuthContext";
+import { api, type ApiError } from "../../api/client";
+import { notifyGamification } from "../../context/GamificationContext";
+import { Radius, Shadow, Spacing } from "../../theme/colors";
+import { useTheme, type ThemeColors } from "../../context/ThemeContext";
+import type { AppNavigation, RootParamList } from "../../navigation/types";
+
+type Props = {
+  route: RouteProp<RootParamList, "EventDetail">;
+  navigation: AppNavigation;
+};
+
+export default function EventDetailScreen({ route, navigation }: Props) {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const styles = getStyles(colors);
+  const { token } = useAuth();
+  const { event } = route.params;
+  const [going, setGoing] = useState(event.isGoing ?? false);
+  const [attendeeCount, setAttendeeCount] = useState(event.attendeeCount ?? 0);
+  const [loading, setLoading] = useState(false);
+
+  const handleRsvp = async () => {
+    if (!token) {
+      Alert.alert(t("eventDetail.loginRequired"), t("eventDetail.loginMsg"));
+      return;
+    }
+    try {
+      setLoading(true);
+      const result = await api.rsvpEvent(token, event._id);
+      setGoing(result.isGoing);
+      setAttendeeCount(result.attendeeCount);
+      notifyGamification(result.gamification);
+    } catch (error) {
+      Alert.alert(t("eventDetail.rsvpError"), (error as ApiError).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Screen>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Hero */}
+        <View style={[styles.hero, { backgroundColor: event.color }]}>
+          {event.imageUrl ? (
+            <Image source={{ uri: event.imageUrl }} style={styles.heroPhoto} />
+          ) : (
+            <Text style={styles.heroEmoji}>{event.emoji}</Text>
+          )}
+          <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <AppIcon name="arrow-back" size={20} color={colors.textDark} />
+          </Pressable>
+          <View style={styles.categoryBadge}>
+            <Text style={styles.categoryBadgeText}>{event.category}</Text>
+          </View>
+        </View>
+
+        <View style={styles.body}>
+          <Text style={styles.title}>{event.title}</Text>
+
+          {/* Meta info */}
+          <View style={styles.metaCard}>
+            <View style={styles.metaRow}>
+              <View style={styles.metaIcon}>
+                <AppIcon name="calendar" size={18} color={colors.primary} />
+              </View>
+              <Text style={styles.metaText}>{event.date}</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.metaRow}>
+              <View style={styles.metaIcon}>
+                <AppIcon name="location" size={18} color={colors.primary} />
+              </View>
+              <Text style={styles.metaText}>{event.location}</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.metaRow}>
+              <View style={styles.metaIcon}>
+                <AppIcon name="people" size={18} color={colors.primary} />
+              </View>
+              <Text style={styles.metaText}>
+                {t("eventDetail.going", { count: attendeeCount })}
+              </Text>
+            </View>
+          </View>
+
+          {/* Description */}
+          <Text style={styles.sectionTitle}>{t("eventDetail.about")}</Text>
+          <Text style={styles.description}>{event.description}</Text>
+
+          {/* Price + RSVP row */}
+          <View style={styles.rsvpRow}>
+            <View style={styles.priceBox}>
+              <AppIcon name="cash" size={16} color={colors.primary} />
+              <Text style={styles.priceText}>
+                {event.price === 0 ? t("eventDetail.free") : `${event.price} TND`}
+              </Text>
+            </View>
+
+            <Pressable
+              style={[styles.rsvpBtn, going && styles.rsvpBtnActive, loading && { opacity: 0.6 }]}
+              onPress={handleRsvp}
+              disabled={loading}
+            >
+              <AppIcon
+                name={going ? "checkmark-circle" : "people"}
+                size={20}
+                color={going ? colors.primary : "#fff"}
+              />
+              <Text style={[styles.rsvpText, going && styles.rsvpTextActive]}>
+                {going ? t("eventDetail.rsvpGoing") : t("eventDetail.rsvpJoin")}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </ScrollView>
+    </Screen>
+  );
+}
+
+const getStyles = (colors: ThemeColors) => StyleSheet.create({
+  hero: {
+    height: 240,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroPhoto: {
+    ...StyleSheet.absoluteFillObject,
+    resizeMode: "cover",
+  },
+  backBtn: {
+    position: "absolute",
+    top: 16,
+    left: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.8)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroEmoji: {
+    fontSize: 90,
+  },
+  categoryBadge: {
+    position: "absolute",
+    bottom: 16,
+    left: 16,
+    backgroundColor: colors.secondary,
+    borderRadius: Radius.pill,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  categoryBadgeText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "900",
+  },
+  body: {
+    padding: Spacing.md,
+    gap: Spacing.md,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "900",
+    color: colors.textDark,
+    lineHeight: 30,
+  },
+  metaCard: {
+    backgroundColor: colors.surface,
+    borderRadius: Radius.lg,
+    padding: Spacing.md,
+    ...Shadow,
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 4,
+  },
+  metaIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primaryPale,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  metaText: {
+    fontSize: 14,
+    color: colors.textDark,
+    fontWeight: "600",
+    flex: 1,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.divider,
+    marginVertical: 8,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: "900",
+    color: colors.textDark,
+  },
+  description: {
+    fontSize: 14,
+    color: colors.textMuted,
+    lineHeight: 22,
+  },
+  rsvpRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: Spacing.xl,
+  },
+  priceBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: colors.primaryPale,
+    borderRadius: Radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  priceText: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: colors.primary,
+  },
+  rsvpBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: colors.primary,
+    borderRadius: Radius.lg,
+    paddingVertical: 16,
+  },
+  rsvpBtnActive: {
+    backgroundColor: colors.primaryPale,
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  rsvpText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  rsvpTextActive: {
+    color: colors.primary,
+  },
+});

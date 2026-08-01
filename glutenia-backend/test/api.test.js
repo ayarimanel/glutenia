@@ -399,6 +399,7 @@ describe("Barcode", () => {
 
     const found = await request(app)
       .get("/api/products/barcode/3017620422003")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
       .expect(200);
 
     assert.equal(found.body.data._id, ctx.productId);
@@ -408,6 +409,7 @@ describe("Barcode", () => {
   test("returns 404 for an unknown barcode", async () => {
     const missing = await request(app)
       .get("/api/products/barcode/0000000000000")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
       .expect(404);
 
     assert.equal(missing.body.success, false);
@@ -451,7 +453,8 @@ describe("Orders", () => {
       .expect(201);
 
     assert.equal(order.body.success, true);
-    assert.equal(order.body.data.total, 9);
+    // subtotal (2 x 4.5) + the $7 delivery fee (order.controller.js DELIVERY_FEE)
+    assert.equal(order.body.data.total, 16);
     assert.equal(order.body.data.items[0].name, "Pain sans gluten");
     assert.equal(order.body.data.items[0].price, 4.5);
     assert.equal(order.body.data.status, "confirmed");
@@ -483,7 +486,7 @@ describe("Orders", () => {
       .set("Authorization", `Bearer ${ctx.customerToken}`)
       .expect(200);
 
-    assert.equal(orderDetail.body.data.total, 9);
+    assert.equal(orderDetail.body.data.total, 16);
 
     const secondCustomer = await registerCustomer({
       name: "Customer Two",
