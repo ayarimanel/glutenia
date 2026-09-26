@@ -1,12 +1,15 @@
 const express = require("express");
 const cors = require("cors");
+const swaggerUi = require("swagger-ui-express");
 const errorHandler = require("./middleware/errorHandler");
+const { buildOpenApiSpec } = require("./docs/buildOpenApiSpec");
 
 const authRoutes = require("./routes/auth.routes");
 const communityProductRoutes = require("./routes/communityProduct.routes");
 const establishmentRoutes = require("./routes/establishment.routes");
 const eventRoutes = require("./routes/event.routes");
 const gamificationRoutes = require("./routes/gamification.routes");
+const listingRoutes = require("./routes/listing.routes");
 const notificationRoutes = require("./routes/notification.routes");
 const onboardingRoutes = require("./routes/onboarding.routes");
 const orderRoutes = require("./routes/order.routes");
@@ -58,6 +61,7 @@ app.use("/api/community-products", communityProductRoutes);
 app.use("/api/establishments", establishmentRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/gamification", gamificationRoutes);
+app.use("/api/listings", listingRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/onboarding", onboardingRoutes);
 app.use("/api/orders", orderRoutes);
@@ -67,6 +71,13 @@ app.use("/api/professionals", professionalRoutes);
 app.use("/api/recipes", recipeRoutes);
 app.use("/api/scan", scanRoutes);
 app.use("/api/users", userRoutes);
+
+// Auto-generated from route/validator source (src/docs/) — not exposed in
+// production by default since it lists every endpoint, param, and auth rule.
+if (process.env.NODE_ENV !== "production") {
+  const { spec } = buildOpenApiSpec();
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(spec));
+}
 
 app.use((req, res) => {
   res.status(404).json({

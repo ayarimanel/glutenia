@@ -45,7 +45,7 @@ export default function CartScreen({ navigation }: { navigation: AppNavigation }
         />
         <FlatList
           data={items}
-          keyExtractor={(item) => item.productId}
+          keyExtractor={(item) => item.listingId}
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
             <EmptyState
@@ -74,10 +74,10 @@ export default function CartScreen({ navigation }: { navigation: AppNavigation }
                 <View style={styles.itemActions}>
                   <QuantityStepper
                     value={item.qty}
-                    onChange={(qty) => updateQty(item.productId, qty)}
+                    onChange={(qty) => updateQty(item.listingId, qty)}
                     max={item.stock}
                   />
-                  <Pressable onPress={() => removeItem(item.productId)}>
+                  <Pressable onPress={() => removeItem(item.listingId)}>
                     <AppIcon name="close-circle" size={28} color={colors.danger} />
                   </Pressable>
                 </View>

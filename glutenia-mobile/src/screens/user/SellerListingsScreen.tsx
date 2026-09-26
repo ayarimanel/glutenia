@@ -1,4 +1,4 @@
-import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import AppIcon from "../../components/AppIcon";
 import { useCallback, useState } from "react";
 import { useFocusEffect } from "@react-navigation/native";
@@ -7,45 +7,37 @@ import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
 import ProductVisual from "../../components/ProductVisual";
-import { useAuth } from "../../context/AuthContext";
+import { useAuthenticated } from "../../context/AuthContext";
 import { api, isApiError, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import type { AppNavigation } from "../../navigation/types";
-import type { Product } from "../../types/models";
+import type { Listing } from "../../types/models";
 
-// Admin-only: manages the master product catalog (canonical name/category/
-// image/gluten-free flag/barcode). A Professional's own sellable offers are
-// a separate concept (Listing) managed on SellerListingsScreen instead.
-export default function AdminProductsScreen({ navigation }: { navigation: AppNavigation }) {
-  const { token, logout } = useAuth();
+// A Professional's own sellable offers against the admin-managed catalog.
+// Unlike AdminProductsScreen (catalog, admin-only), this can never create a
+// brand-new product - see SellerListingFormScreen, which only lets you pick
+// an existing catalog product and set your own price/stock/availability.
+export default function SellerListingsScreen({ navigation }: { navigation: AppNavigation }) {
+  const { token, logout } = useAuthenticated();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [search, setSearch] = useState("");
+  const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(false);
-  // Distinct from `loading` (which also drives pull-to-refresh): tracks
-  // whether we've completed the very first fetch yet, so the empty state
-  // doesn't flash "no products" while the initial request is still in
-  // flight.
   const [initialLoadDone, setInitialLoadDone] = useState(false);
 
-  const loadProducts = async () => {
-    if (!token) {
-      return;
-    }
-
+  const loadListings = async () => {
     try {
       setLoading(true);
-      setProducts(await api.products());
+      setListings(await api.myListings(token));
     } catch (err) {
       if (isApiError(err) && err.status === 401) {
         Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsg"), [
           { text: t("admin.ok"), onPress: logout },
         ]);
       } else {
-        Alert.alert(t("admin.products.errorTitle"), err instanceof Error ? err.message : String(err));
+        Alert.alert(t("seller.listings.errorTitle"), err instanceof Error ? err.message : String(err));
       }
     } finally {
       setLoading(false);
@@ -55,99 +47,89 @@ export default function AdminProductsScreen({ navigation }: { navigation: AppNav
 
   useFocusEffect(
     useCallback(() => {
-      loadProducts();
+      loadListings();
     }, [token])
   );
 
-  const deleteProduct = (product: Product) => {
-    Alert.alert(t("admin.products.deleteTitle"), t("admin.products.deleteMsg", { name: product.name }), [
-      { text: t("admin.products.cancel"), style: "cancel" },
+  const deleteListing = (listing: Listing) => {
+    Alert.alert(t("seller.listings.deleteTitle"), t("seller.listings.deleteMsg", { name: listing.name }), [
+      { text: t("seller.listings.cancel"), style: "cancel" },
       {
-        text: t("admin.products.delete"),
+        text: t("seller.listings.delete"),
         style: "destructive",
         onPress: async () => {
           try {
-            if (!token) {
-              Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsgShort"));
-              return;
-            }
-            await api.deleteProduct(token, product._id);
-            await loadProducts();
+            await api.deleteListing(token, listing._id);
+            await loadListings();
           } catch (err) {
-            Alert.alert(t("admin.products.deleteFailed"), (err as ApiError).message);
+            Alert.alert(t("seller.listings.deleteFailed"), (err as ApiError).message);
           }
         },
       },
     ]);
   };
 
-  const query = search.trim().toLowerCase();
-  const visibleProducts = query
-    ? products.filter(
-        (p) =>
-          p.name.toLowerCase().includes(query) ||
-          p.category.toLowerCase().includes(query) ||
-          (p.barcode || "").includes(query)
-      )
-    : products;
-
   return (
     <Screen>
       <View style={styles.container}>
         <SectionHeader
-          eyebrow={t("admin.products.eyebrow")}
-          title={t("admin.products.title")}
+          eyebrow={t("seller.listings.eyebrow")}
+          title={t("seller.listings.title")}
           right={
             <Pressable
               style={styles.addButton}
-              onPress={() => navigation.navigate("AdminProductForm")}
+              onPress={() => navigation.navigate("SellerProductForm")}
             >
               <AppIcon name="add" size={24} color={colors.surface} />
             </Pressable>
           }
         />
-        <View style={styles.searchBox}>
-          <AppIcon name="search" size={19} color={colors.textMuted} />
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder={t("admin.products.searchPlaceholder")}
-            placeholderTextColor={colors.textMuted}
-            style={styles.searchInput}
-          />
-        </View>
         {!initialLoadDone ? (
           <ActivityIndicator color={colors.primary} style={styles.loading} />
         ) : (
         <FlatList
-          data={visibleProducts}
-          keyboardShouldPersistTaps="handled"
+          data={listings}
           keyExtractor={(item) => item._id}
-          refreshControl={<RefreshControl refreshing={loading} onRefresh={loadProducts} />}
+          refreshControl={<RefreshControl refreshing={loading} onRefresh={loadListings} />}
           contentContainerStyle={styles.listContent}
-          ListEmptyComponent={<EmptyState icon="cube" title={t("admin.products.empty")} body={t("admin.products.emptyBody")} />}
+          ListEmptyComponent={
+            <EmptyState icon="cube" title={t("seller.listings.empty")} body={t("seller.listings.emptyBody")} />
+          }
           renderItem={({ item }) => (
             <View style={styles.productRow}>
               <View style={styles.visual}>
                 <ProductVisual product={item} />
+                {item.stock <= 0 && (
+                  <View style={styles.outOfStockBadge}>
+                    <Text style={styles.outOfStockBadgeText}>{t("admin.products.outOfStock")}</Text>
+                  </View>
+                )}
               </View>
               <View style={styles.productBody}>
                 <Text style={styles.name} numberOfLines={2}>
                   {item.name}
                 </Text>
-                <Text style={styles.meta}>{item.category}</Text>
+                <Text
+                  style={[
+                    styles.meta,
+                    item.stock <= 0 ? styles.stockOut : item.stock <= 5 && styles.stockLow,
+                  ]}
+                >
+                  {item.category} - {t("admin.products.stock")} {item.stock}
+                </Text>
+                <Text style={styles.price}>{item.price.toFixed(2)} TND</Text>
               </View>
               <View style={styles.actions}>
                 <Pressable
                   style={styles.actionButton}
                   onPress={() =>
-                    navigation.navigate("AdminProductForm", { productId: item._id })
+                    navigation.navigate("SellerProductForm", { listingId: item._id })
                   }
                 >
                   <AppIcon name="pencil" size={18} color={colors.primary} />
                   <Text style={styles.actionText}>{t("admin.products.edit")}</Text>
                 </Pressable>
-                <Pressable style={styles.actionButton} onPress={() => deleteProduct(item)}>
+                <Pressable style={styles.actionButton} onPress={() => deleteListing(item)}>
                   <AppIcon name="trash" size={18} color={colors.danger} />
                   <Text style={[styles.actionText, styles.deleteText]}>{t("admin.products.delete")}</Text>
                 </Pressable>
@@ -175,22 +157,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  searchBox: {
-    height: 52,
-    borderRadius: Radius.md,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 14,
-    gap: 10,
-  },
-  searchInput: {
-    flex: 1,
-    color: colors.textDark,
-    fontSize: 15,
-  },
   loading: {
     marginVertical: Spacing.xl,
   },
@@ -210,6 +176,23 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
   visual: {
     width: 82,
   },
+  outOfStockBadge: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.danger,
+    paddingVertical: 2,
+    borderBottomLeftRadius: Radius.md,
+    borderBottomRightRadius: Radius.md,
+  },
+  outOfStockBadgeText: {
+    color: "#fff",
+    fontSize: 9,
+    fontWeight: "900",
+    textAlign: "center",
+    textTransform: "uppercase",
+  },
   productBody: {
     flex: 1,
     gap: 5,
@@ -223,6 +206,16 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.textMuted,
     fontSize: 12,
     fontWeight: "700",
+  },
+  stockOut: {
+    color: colors.danger,
+  },
+  stockLow: {
+    color: colors.warning,
+  },
+  price: {
+    color: colors.primary,
+    fontWeight: "900",
   },
   actions: {
     gap: 8,

@@ -1,14 +1,13 @@
 const Product = require("../models/Product");
 const CommunityProduct = require("../models/CommunityProduct");
+const Listing = require("../models/Listing");
 const { recordScanEvent } = require("../services/scanService");
 
 const allowedProductFields = [
   "name",
   "description",
-  "price",
   "category",
   "imageUrl",
-  "stock",
   "isGlutenFree",
   "barcode",
 ];
@@ -38,29 +37,52 @@ const pickProductFields = (body) => {
   return fields;
 };
 
-const canManageProduct = (req, product) =>
-  req.user.role === "admin" ||
-  (product.createdBy && product.createdBy.toString() === req.user.id);
+// Finds the cheapest in-stock listing for a catalog product, so a barcode
+// scan resolves straight to something addable to cart instead of a bare
+// catalog record with no price/stock of its own.
+const cheapestAvailableListing = (productId) =>
+  Listing.findOne({ product: productId, isAvailable: true, stock: { $gt: 0 } })
+    .sort({ price: 1 })
+    .populate("product");
 
 exports.getProductByBarcode = async (req, res, next) => {
   try {
     const product = await Product.findOne({ barcode: req.params.code });
 
     if (product) {
-      const { gamification } = await recordScanEvent(req.user.id, "barcode", {
-        summary: product.name,
-        product: product._id,
-      });
+      const listing = await cheapestAvailableListing(product._id);
 
-      return res.json({
-        success: true,
-        data: { ...product.toObject(), gamification },
-      });
+      if (listing) {
+        const { gamification } = await recordScanEvent(req.user.id, "barcode", {
+          summary: listing.product.name,
+          product: listing.product._id,
+        });
+
+        return res.json({
+          success: true,
+          data: {
+            _id: listing._id,
+            product: listing.product._id,
+            name: listing.product.name,
+            description: listing.product.description,
+            category: listing.product.category,
+            imageUrl: listing.product.imageUrl,
+            isGlutenFree: listing.product.isGlutenFree,
+            barcode: listing.product.barcode,
+            price: listing.price,
+            stock: listing.stock,
+            gamification,
+          },
+        });
+      }
+      // Catalog entry exists but nobody currently sells it — fall through
+      // to the community-report check exactly like a product that was
+      // never in the catalog at all.
     }
 
-    // Not in the real shop catalog — check community-reported barcodes
-    // before giving up. These aren't sellable listings, just a shared
-    // "someone already confirmed this is/isn't gluten-free" flag.
+    // Not sellable in the real shop catalog — check community-reported
+    // barcodes before giving up. These aren't sellable listings, just a
+    // shared "someone already confirmed this is/isn't gluten-free" flag.
     const communityEntry = await CommunityProduct.findOne({ barcode: req.params.code });
     if (communityEntry) {
       const { gamification } = await recordScanEvent(req.user.id, "barcode", {
@@ -131,21 +153,6 @@ exports.getProductById = async (req, res, next) => {
   }
 };
 
-exports.getMyProducts = async (req, res, next) => {
-  try {
-    const products = await Product.find({ createdBy: req.user.id }).sort({
-      createdAt: -1,
-    });
-
-    return res.json({
-      success: true,
-      data: products,
-    });
-  } catch (error) {
-    return next(error);
-  }
-};
-
 exports.createProduct = async (req, res, next) => {
   try {
     const product = await Product.create({
@@ -170,13 +177,6 @@ exports.updateProduct = async (req, res, next) => {
       return res.status(404).json({
         success: false,
         message: "Product not found",
-      });
-    }
-
-    if (!canManageProduct(req, product)) {
-      return res.status(403).json({
-        success: false,
-        message: "You can only manage your own products",
       });
     }
 
@@ -222,13 +222,6 @@ exports.uploadProductImage = async (req, res, next) => {
       });
     }
 
-    if (!canManageProduct(req, product)) {
-      return res.status(403).json({
-        success: false,
-        message: "You can only manage your own products",
-      });
-    }
-
     product.imageUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
     await product.save();
 
@@ -249,13 +242,6 @@ exports.deleteProduct = async (req, res, next) => {
       return res.status(404).json({
         success: false,
         message: "Product not found",
-      });
-    }
-
-    if (!canManageProduct(req, product)) {
-      return res.status(403).json({
-        success: false,
-        message: "You can only manage your own products",
       });
     }
 

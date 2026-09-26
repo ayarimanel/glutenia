@@ -32,11 +32,16 @@ import CreateEventScreen from "../screens/user/CreateEventScreen";
 import NotificationsScreen from "../screens/user/NotificationsScreen";
 import AdminDashboardScreen from "../screens/admin/AdminDashboardScreen";
 import AdminEventsScreen from "../screens/admin/AdminEventsScreen";
+import AdminEstablishmentsScreen from "../screens/admin/AdminEstablishmentsScreen";
 import AdminProductsScreen from "../screens/admin/AdminProductsScreen";
 import AdminProductFormScreen from "../screens/admin/AdminProductFormScreen";
+import SellerListingsScreen from "../screens/user/SellerListingsScreen";
+import SellerListingFormScreen from "../screens/user/SellerListingFormScreen";
 import AdminOrdersScreen from "../screens/admin/AdminOrdersScreen";
 import AdminOrderDetailScreen from "../screens/admin/AdminOrderDetailScreen";
 import AdminAnalyticsScreen from "../screens/admin/AdminAnalyticsScreen";
+import AdminUsersScreen from "../screens/admin/AdminUsersScreen";
+import AdminUserDetailScreen from "../screens/admin/AdminUserDetailScreen";
 import AdminProfessionalRequestsScreen from "../screens/admin/AdminProfessionalRequestsScreen";
 import AdminRecipesScreen from "../screens/admin/AdminRecipesScreen";
 import AdminRecipeFormScreen from "../screens/admin/AdminRecipeFormScreen";
@@ -97,10 +102,13 @@ function UserTabs() {
   );
 }
 
-function UserStack({ bg }: { bg: string }) {
+// Every customer-facing screen pushed on top of the tabs. Registered in
+// both UserStack and AdminStack: an Administrator can use every customer
+// feature (shop, cart, orders, scan, map, events) in addition to the admin
+// panel. "Settings" is left out because each role has its own version.
+function customerScreens() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: bg } }}>
-      <Stack.Screen name="UserTabs" component={UserTabs} />
+    <>
       <Stack.Screen name="CartPage" component={CartScreen} />
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <Stack.Screen name="Checkout" component={CheckoutScreen} />
@@ -117,13 +125,12 @@ function UserStack({ bg }: { bg: string }) {
       <Stack.Screen name="ResourceDetail" component={ResourceDetailScreen} />
       <Stack.Screen name="Recipes" component={RecipesScreen} />
       <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} />
-      <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       <Stack.Screen name="LabelScan" component={LabelScanScreen} />
       <Stack.Screen name="SubmitProduct" component={SubmitProductScreen} />
-      <Stack.Screen name="SellerProducts" component={AdminProductsScreen} />
-      <Stack.Screen name="SellerProductForm" component={AdminProductFormScreen} />
+      <Stack.Screen name="SellerProducts" component={SellerListingsScreen} />
+      <Stack.Screen name="SellerProductForm" component={SellerListingFormScreen} />
       <Stack.Screen name="SellerVisibility" component={SellerVisibilityScreen} />
       <Stack.Screen name="SellerOrders" component={SellerOrdersScreen} />
       <Stack.Screen name="SellerEstablishment" component={SellerEstablishmentScreen} />
@@ -131,6 +138,16 @@ function UserStack({ bg }: { bg: string }) {
       <Stack.Screen name="Legal" component={LegalScreen} />
       <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
       <Stack.Screen name="EditJourney" component={EditJourneyScreen} />
+    </>
+  );
+}
+
+function UserStack({ bg }: { bg: string }) {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false, contentStyle: { backgroundColor: bg } }}>
+      <Stack.Screen name="UserTabs" component={UserTabs} />
+      {customerScreens()}
+      <Stack.Screen name="Settings" component={SettingsScreen} />
     </Stack.Navigator>
   );
 }
@@ -156,15 +173,24 @@ function AdminStack({ bg }: { bg: string }) {
       <Stack.Screen name="AdminTabs" component={AdminTabs} />
       <Stack.Screen name="AdminProductForm" component={AdminProductFormScreen} />
       <Stack.Screen name="AdminEvents" component={AdminEventsScreen} />
+      <Stack.Screen name="AdminEstablishments" component={AdminEstablishmentsScreen} />
       <Stack.Screen name="AdminProfessionalRequests" component={AdminProfessionalRequestsScreen} />
       <Stack.Screen name="AdminOrderDetail" component={AdminOrderDetailScreen} />
       <Stack.Screen name="AdminAnalytics" component={AdminAnalyticsScreen} />
+      <Stack.Screen name="AdminUsers" component={AdminUsersScreen} />
+      <Stack.Screen name="AdminUserDetail" component={AdminUserDetailScreen} />
       <Stack.Screen name="AdminRecipes" component={AdminRecipesScreen} />
       <Stack.Screen name="AdminRecipeForm" component={AdminRecipeFormScreen} />
       <Stack.Screen name="AdminPatientResources" component={AdminPatientResourcesScreen} />
       <Stack.Screen name="AdminPatientResourceForm" component={AdminPatientResourceFormScreen} />
       <Stack.Screen name="CreateEvent" component={CreateEventScreen} />
       <Stack.Screen name="Settings" component={AdminSettingsScreen} />
+      {/* The customer app ("Customer space" on the dashboard) and every
+          screen it can open. "MyOrders" is the admin's own purchases -
+          "Orders" inside AdminTabs is already the all-orders tab. */}
+      <Stack.Screen name="UserTabs" component={UserTabs} />
+      <Stack.Screen name="MyOrders" component={UserOrdersScreen} />
+      {customerScreens()}
     </Stack.Navigator>
   );
 }

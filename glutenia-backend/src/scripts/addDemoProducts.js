@@ -9,6 +9,7 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const connectDB = require("../config/db");
 const Product = require("../models/Product");
+const Listing = require("../models/Listing");
 const User = require("../models/User");
 
 const img = (id) => `https://images.unsplash.com/photo-${id}?w=800&q=75&auto=format&fit=crop`;
@@ -128,13 +129,27 @@ const run = async () => {
   await connectDB();
   try {
     const admin = await User.findOne({ role: "admin" }).select("_id");
-    for (const product of DEMO_PRODUCTS) {
-      const result = await Product.findOneAndUpdate(
-        { name: product.name },
-        { ...product, isGlutenFree: true, createdBy: admin?._id },
+    const professional = await User.findOne({ role: "professional" }).select("_id");
+    if (!professional) {
+      console.warn("No professional account found — catalog products will be created with no listing (nothing sellable) until one adds a listing.");
+    }
+
+    for (const { price, stock, ...catalogFields } of DEMO_PRODUCTS) {
+      const product = await Product.findOneAndUpdate(
+        { name: catalogFields.name },
+        { ...catalogFields, isGlutenFree: true, createdBy: admin?._id },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       );
-      console.log(`Product ready: ${result.name} (${result._id})`);
+      console.log(`Product ready: ${product.name} (${product._id})`);
+
+      if (professional) {
+        const listing = await Listing.findOneAndUpdate(
+          { product: product._id, professional: professional._id },
+          { price, stock, isAvailable: true },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+        console.log(`  Listing ready: ${listing.price} TND, stock ${listing.stock}`);
+      }
     }
   } catch (error) {
     console.error(`Failed: ${error.message}`);

@@ -56,7 +56,7 @@ describe("CartContext persistence", () => {
     const stored = await AsyncStorage.getItem("glutenia.cart.user-123");
     const items = JSON.parse(stored as string);
     expect(items).toEqual([
-      expect.objectContaining({ productId: "prod-1", name: "Gluten-Free Bread", qty: 1 }),
+      expect.objectContaining({ listingId: "prod-1", name: "Gluten-Free Bread", qty: 1 }),
     ]);
   });
 });

@@ -572,13 +572,20 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
     [token]
   );
 
-  const allSpots = useMemo(() => [...SPOTS, ...realSpots], [SPOTS, realSpots]);
+  // Real establishments now come pre-filtered by category from the backend
+  // (see the useFocusEffect below); the demo spots are local-only data, so
+  // they still need their own client-side filter to stay in sync with them.
+  const allSpots = useMemo(() => {
+    const demoSpots =
+      activeFilter === "All" ? SPOTS : SPOTS.filter((s) => s.type === activeFilter);
+    return [...demoSpots, ...realSpots];
+  }, [SPOTS, realSpots, activeFilter]);
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
       api
-        .establishments()
+        .establishments({ category: activeFilter === "All" ? "" : activeFilter })
         .then((list) => {
           if (cancelled) return;
           const normalized = (list || [])
@@ -586,15 +593,18 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
             .map((e) => normalizeEstablishment(e, categoryVisual));
           setRealSpots(normalized);
         })
-        .catch(() => {});
+        .catch(() => {
+          if (cancelled) return;
+          setRealSpots([]);
+          Alert.alert(t("map.errorTitle"), t("map.loadError"));
+        });
       return () => {
         cancelled = true;
       };
-    }, [categoryVisual])
+    }, [categoryVisual, activeFilter, t])
   );
 
-  const filtered =
-    activeFilter === "All" ? allSpots : allSpots.filter((s) => s.type === activeFilter);
+  const filtered = allSpots;
 
   const selectedSpot =
     filtered.find((s) => s.id === selectedId) ?? filtered[0] ?? null;
@@ -608,12 +618,10 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
   }, []);
 
   useEffect(() => {
-    if (!mapWebViewReady || realSpots.length === 0) return;
-    const next =
-      activeFilter === "All" ? allSpots : allSpots.filter((s) => s.type === activeFilter);
+    if (!mapWebViewReady) return;
     sendToMap({
       type: "updateSpots",
-      spots: next
+      spots: allSpots
         .filter(hasCoordinate)
         .map((s) => ({
           id: s.id,
@@ -624,8 +632,7 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
           type: s.type,
         })),
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [realSpots, mapWebViewReady]);
+  }, [allSpots, mapWebViewReady, sendToMap]);
 
   // Unused elsewhere in this screen (markers are flown-to only via
   // handleFilterChange/handleLocateMe), kept as-is from the JS version.
@@ -662,26 +669,14 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
     [allSpots]
   );
 
-  const handleFilterChange = useCallback(
-    (f: string) => {
-      bottomSheetRef.current?.close();
-      setActiveFilter(f);
-      const next = f === "All" ? allSpots : allSpots.filter((s) => s.type === f);
-      const nextData = next
-        .filter(hasCoordinate)
-        .map((s) => ({
-          id: s.id,
-          lat: s.coordinate.latitude,
-          lng: s.coordinate.longitude,
-          emoji: s.emoji,
-          color: s.color,
-          type: s.type,
-        }));
-      sendToMap({ type: "updateSpots", spots: nextData });
-      if (next[0]) setSelectedId(next[0].id);
-    },
-    [sendToMap, allSpots]
-  );
+  // Selecting a category just changes state — the useFocusEffect above
+  // re-fetches real establishments filtered by it, and the allSpots/
+  // useEffect pair above reactively pushes the updated markers to the map
+  // once that resolves (or immediately for the local demo spots).
+  const handleFilterChange = useCallback((f: string) => {
+    bottomSheetRef.current?.close();
+    setActiveFilter(f);
+  }, []);
 
   const handleContact = useCallback(() => {
     if (!selectedSpot) return;

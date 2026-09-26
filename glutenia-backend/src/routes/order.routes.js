@@ -12,7 +12,7 @@ const createOrderValidators = [
   body("items")
     .isArray({ min: 1 })
     .withMessage("Order must contain at least one item"),
-  body("items.*.productId").isMongoId().withMessage("Invalid product id"),
+  body("items.*.listingId").isMongoId().withMessage("Invalid listing id"),
   body("items.*.name").optional().trim().isString(),
   body("items.*.qty")
     .isInt({ min: 1 })
@@ -73,6 +73,14 @@ router.put(
   statusValidators,
   validateRequest,
   orderController.updateOrderStatus
+);
+router.delete(
+  "/:id",
+  verifyToken,
+  isAdmin,
+  idValidator,
+  validateRequest,
+  orderController.deleteOrder
 );
 
 module.exports = router;

@@ -105,10 +105,15 @@ export type RootParamList = {
   Profile: undefined;
   UserTabs: NavigatorScreenParams<UserTabParamList> | undefined;
   CartPage: undefined;
-  ProductDetail: { productId: string };
+  // `productId` is the legacy entry point from a scan-history rail (which
+  // only ever stored the catalog product's id, not a specific listing) -
+  // ProductDetailScreen resolves that case to the cheapest available listing
+  // itself. Prefer `listingId` everywhere a listing is already known.
+  ProductDetail: { listingId: string } | { productId: string };
   Checkout: undefined;
   OrderSuccess: { order: CreatedOrder };
   Orders: undefined;
+  MyOrders: undefined;
   EventDetail: { event: Event };
   Notifications: undefined;
   BadgeCollection: undefined;
@@ -126,7 +131,7 @@ export type RootParamList = {
   LabelScan: undefined;
   SubmitProduct: { barcode: string };
   SellerProducts: undefined;
-  SellerProductForm: { productId?: string } | undefined;
+  SellerProductForm: { listingId?: string } | undefined;
   SellerVisibility: undefined;
   SellerOrders: undefined;
   SellerEstablishment: undefined;
@@ -139,9 +144,12 @@ export type RootParamList = {
   Products: undefined;
   AdminProductForm: { productId?: string } | undefined;
   AdminEvents: undefined;
+  AdminEstablishments: undefined;
   AdminProfessionalRequests: undefined;
   AdminOrderDetail: { order: OrderWithBuyer };
   AdminAnalytics: undefined;
+  AdminUsers: undefined;
+  AdminUserDetail: { userId: string };
   AdminRecipes: undefined;
   AdminRecipeForm: { recipeId?: string } | undefined;
   AdminPatientResources: undefined;

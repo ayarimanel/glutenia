@@ -30,6 +30,7 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<OrderWithBuyer[]>([]);
   const [pendingRequests, setPendingRequests] = useState<User[]>([]);
+  const [userCount, setUserCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
   const load = async () => {
@@ -37,14 +38,16 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
 
     try {
       setLoading(true);
-      const [nextProducts, nextOrders, nextRequests] = await Promise.all([
+      const [nextProducts, nextOrders, nextRequests, nextUsers] = await Promise.all([
         api.products(),
         api.allOrders(token),
         api.professionalRequests(token, "pending").catch(() => []),
+        api.users(token).catch(() => null),
       ]);
       setProducts(Array.isArray(nextProducts) ? nextProducts : []);
       setOrders(Array.isArray(nextOrders) ? nextOrders : []);
       setPendingRequests(Array.isArray(nextRequests) ? nextRequests : []);
+      setUserCount(Array.isArray(nextUsers) ? nextUsers.length : null);
     } catch (err) {
       if (isApiError(err) && err.status === 401) {
         Alert.alert(
@@ -71,12 +74,11 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
 
   const revenue = orders.reduce((sum, order) => sum + (Number(order.total) || 0), 0);
 
-  const lowStockProducts = products.filter(
-    (p) => typeof p.stock === "number" && p.stock <= 5
-  );
-  const lowStockCount = lowStockProducts.length;
+  // Stock lives on Listing now, not on the catalog Product Administrator
+  // manages here - low-stock oversight belongs to each Professional's own
+  // SellerVisibilityScreen instead.
   const pendingCount = pendingRequests.length;
-  const hasAlerts = pendingCount > 0 || lowStockCount > 0;
+  const hasAlerts = pendingCount > 0;
 
   // Recent 3 orders sorted by date
   const recentOrders = [...orders]
@@ -158,7 +160,7 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
               </View>
               <View style={styles.alertBadge}>
                 <Text style={styles.alertBadgeText}>
-                  {pendingCount + lowStockCount}
+                  {pendingCount}
                 </Text>
               </View>
             </View>
@@ -194,37 +196,6 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
                   </View>
                 </Pressable>
               )}
-
-              {lowStockCount > 0 && (
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.alertItem,
-                    pressed && styles.pressed,
-                  ]}
-                  onPress={() => navigation.navigate("Products")}
-                >
-                  <View style={[styles.alertItemIconWrapper, { backgroundColor: colors.warning + "20" }]}>
-                    <AppIcon name="cube" size={18} color={colors.warning} />
-                  </View>
-                  <View style={styles.alertItemContent}>
-                    <Text style={styles.alertItemTitle}>
-                      {t("admin.dashboard.lowStockWarning", "Low Stock Alert")}
-                    </Text>
-                    <Text style={styles.alertItemSub}>
-                      {t("admin.dashboard.lowStockCountText", "{{count}} product(s) with ≤ 5 units left", {
-                        count: lowStockCount,
-                        defaultValue: `${lowStockCount} product(s) with ≤ 5 units left`,
-                      })}
-                    </Text>
-                  </View>
-                  <View style={styles.alertActionChip}>
-                    <Text style={styles.alertActionChipText}>
-                      {t("admin.dashboard.view", "View")}
-                    </Text>
-                    <AppIcon name="chevron-right" size={14} color={colors.secondary} />
-                  </View>
-                </Pressable>
-              )}
             </View>
           </View>
         ) : (
@@ -233,7 +204,7 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
               <AppIcon name="checkmark" size={18} color={colors.primary} />
             </View>
             <Text style={styles.normalStatusText}>
-              {t("admin.dashboard.allClear", "All clear • No pending approvals or low-stock alerts")}
+              {t("admin.dashboard.allClear", "All clear • No pending approvals")}
             </Text>
           </View>
         )}
@@ -285,39 +256,6 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
               <Text style={styles.kpiValue}>{pendingCount}</Text>
               <Text style={styles.kpiLabel} numberOfLines={1}>
                 {t("admin.dashboard.pendingApprovalsShort", "Pending Requests")}
-              </Text>
-            </Pressable>
-
-            {/* Low Stock KPI */}
-            <Pressable
-              style={({ pressed }) => [styles.kpiCard, pressed && styles.pressed]}
-              onPress={() => navigation.navigate("Products")}
-            >
-              <View style={styles.kpiCardHeader}>
-                <View
-                  style={[
-                    styles.kpiIconContainer,
-                    {
-                      backgroundColor:
-                        lowStockCount > 0 ? colors.warning + "20" : colors.primaryPale,
-                    },
-                  ]}
-                >
-                  <AppIcon
-                    name="cube"
-                    size={18}
-                    color={lowStockCount > 0 ? colors.warning : colors.primary}
-                  />
-                </View>
-                {lowStockCount > 0 && (
-                  <View style={[styles.kpiAlertBadge, { backgroundColor: colors.warning }]}>
-                    <Text style={styles.kpiAlertBadgeText}>{lowStockCount}</Text>
-                  </View>
-                )}
-              </View>
-              <Text style={styles.kpiValue}>{lowStockCount}</Text>
-              <Text style={styles.kpiLabel} numberOfLines={1}>
-                {t("admin.dashboard.lowStockLabel", "Low Stock Products")}
               </Text>
             </Pressable>
 
@@ -435,6 +373,22 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
 
         {/* Action Menu Sections */}
         <View style={styles.menuContainer}>
+          {/* Customer features - the Administrator can use the whole customer app */}
+          <View style={styles.menuSection}>
+            <Text style={styles.sectionTitle}>{t("admin.dashboard.customerSection")}</Text>
+            <View style={styles.sectionCards}>
+              <ActionItem
+                title={t("admin.dashboard.customerSpace")}
+                subtitle={t("admin.dashboard.customerSpaceSub")}
+                icon="home"
+                onPress={() => navigation.navigate("UserTabs")}
+                themeColor="primary"
+                colors={colors}
+                styles={styles}
+              />
+            </View>
+          </View>
+
           {/* Products Category */}
           <View style={styles.menuSection}>
             <Text style={styles.sectionTitle}>{t("admin.dashboard.products", "Products & Inventory")}</Text>
@@ -449,14 +403,12 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
               />
               <ActionItem
                 title={t("admin.dashboard.manageProducts", "Manage products")}
-                subtitle={`${products.length} catalog items${lowStockCount > 0 ? ` • ${lowStockCount} low stock` : ""}`}
+                subtitle={`${products.length} catalog items`}
                 icon="list"
                 onPress={() => navigation.navigate("Products")}
                 themeColor="primary"
                 colors={colors}
                 styles={styles}
-                badgeText={lowStockCount > 0 ? `${lowStockCount} low` : null}
-                badgeColor={colors.warning}
               />
             </View>
           </View>
@@ -489,6 +441,19 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
             <Text style={styles.sectionTitle}>{t("admin.dashboard.orders", "Operations & Management")}</Text>
             <View style={styles.sectionCards}>
               <ActionItem
+                title={t("admin.dashboard.manageUsers", "Manage users")}
+                subtitle={
+                  userCount !== null
+                    ? t("admin.dashboard.usersCount", { count: userCount })
+                    : undefined
+                }
+                icon="people"
+                onPress={() => navigation.navigate("AdminUsers")}
+                themeColor="secondary"
+                colors={colors}
+                styles={styles}
+              />
+              <ActionItem
                 title={t("admin.dashboard.viewOrders", "View orders")}
                 subtitle={`${orders.length} total orders`}
                 icon="receipt"
@@ -512,6 +477,14 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
                 icon="activity"
                 onPress={() => navigation.navigate("AdminAnalytics")}
                 themeColor="primary"
+                colors={colors}
+                styles={styles}
+              />
+              <ActionItem
+                title={t("admin.dashboard.establishments", "Establishment requests")}
+                icon="shield-check"
+                onPress={() => navigation.navigate("AdminEstablishments")}
+                themeColor="secondary"
                 colors={colors}
                 styles={styles}
               />
