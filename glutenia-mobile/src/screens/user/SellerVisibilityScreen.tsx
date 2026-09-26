@@ -9,14 +9,14 @@ import { useAuth } from "../../context/AuthContext";
 import { api, isApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
-import type { OrderWithBuyer, Product } from "../../types/models";
+import type { Listing, OrderWithBuyer } from "../../types/models";
 
 export default function SellerVisibilityScreen() {
   const { token, logout } = useAuth();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [listings, setListings] = useState<Listing[]>([]);
   const [orders, setOrders] = useState<OrderWithBuyer[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -27,11 +27,11 @@ export default function SellerVisibilityScreen() {
 
     try {
       setLoading(true);
-      const [myProducts, myOrders] = await Promise.all([
-        api.myProducts(token),
+      const [myListings, myOrders] = await Promise.all([
+        api.myListings(token),
         api.sellerOrders(token),
       ]);
-      setProducts(myProducts);
+      setListings(myListings);
       setOrders(myOrders);
     } catch (err) {
       if (isApiError(err) && err.status === 401) {
@@ -57,7 +57,7 @@ export default function SellerVisibilityScreen() {
       sum + order.items.reduce((itemSum, item) => itemSum + item.qty * item.price, 0),
     0
   );
-  const lowStockCount = products.filter((product) => (product.stock ?? 0) <= 5).length;
+  const lowStockCount = listings.filter((listing) => (listing.stock ?? 0) <= 5).length;
 
   return (
     <Screen>
@@ -70,7 +70,7 @@ export default function SellerVisibilityScreen() {
           title={t("seller.visibility.title")}
         />
         <View style={styles.stats}>
-          <Metric label={t("seller.visibility.products")} value={products.length} icon="cube" />
+          <Metric label={t("seller.visibility.products")} value={listings.length} icon="cube" />
           <Metric label={t("seller.visibility.orders")} value={orders.length} icon="receipt" />
           <Metric label={t("seller.visibility.revenue")} value={revenue.toFixed(2)} icon="cash" />
         </View>

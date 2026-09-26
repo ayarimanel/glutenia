@@ -3,28 +3,28 @@ import { Alert } from "react-native";
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "./AuthContext";
-import type { Product } from "../types/models";
+import type { Listing } from "../types/models";
 
 const storageKey = (userId: string) => `glutenia.cart.${userId}`;
 
 export interface CartItem {
-  productId: string;
+  listingId: string;
   name: string;
   price: number;
   imageUrl?: string;
-  category: Product["category"];
+  category: Listing["category"];
   stock: number;
   qty: number;
 }
 
-export type CartProductInput = Pick<Product, "_id" | "name" | "price" | "imageUrl" | "category" | "stock">;
+export type CartProductInput = Pick<Listing, "_id" | "name" | "price" | "imageUrl" | "category" | "stock">;
 
 export interface CartContextValue {
   items: CartItem[];
-  addItem: (product: CartProductInput, qty?: number) => void;
-  addItemWithStockCheck: (product: CartProductInput, qty?: number) => boolean;
-  updateQty: (productId: string, qty: number) => void;
-  removeItem: (productId: string) => void;
+  addItem: (listing: CartProductInput, qty?: number) => void;
+  addItemWithStockCheck: (listing: CartProductInput, qty?: number) => boolean;
+  updateQty: (listingId: string, qty: number) => void;
+  removeItem: (listingId: string) => void;
   clearCart: () => void;
   total: number;
   count: number;
@@ -32,11 +32,11 @@ export interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-// A product with no numeric stock (shouldn't happen given the backend
+// A listing with no numeric stock (shouldn't happen given the backend
 // schema defaults to 0, but defensive) is treated as unlimited rather than
 // silently blocking every add.
-const availableStock = (product: { stock?: number }): number =>
-  typeof product?.stock === "number" ? product.stock : Infinity;
+const availableStock = (listing: { stock?: number }): number =>
+  typeof listing?.stock === "number" ? listing.stock : Infinity;
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const { t } = useTranslation();
@@ -58,21 +58,21 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     AsyncStorage.setItem(storageKey(user._id), JSON.stringify(items));
   }, [items, user?._id]);
 
-  // Adds a product to the cart, always capped at its available stock — the
+  // Adds a listing to the cart, always capped at its available stock — the
   // one place every screen (Home/Shop/ProductDetail) should call through so
   // the "can't add more than what's in stock" rule and its user feedback
   // only exist once instead of being copy-pasted at every call site.
-  const addItemWithStockCheck = (product: CartProductInput, qty = 1): boolean => {
-    const stock = availableStock(product);
+  const addItemWithStockCheck = (listing: CartProductInput, qty = 1): boolean => {
+    const stock = availableStock(listing);
 
     if (stock <= 0) {
-      Alert.alert(t("cart.outOfStockTitle"), t("cart.outOfStockMsg", { name: product.name }));
+      Alert.alert(t("cart.outOfStockTitle"), t("cart.outOfStockMsg", { name: listing.name }));
       return false;
     }
 
     let added = 0;
     setItems((current) => {
-      const existing = current.find((item) => item.productId === product._id);
+      const existing = current.find((item) => item.listingId === listing._id);
       const currentQty = existing?.qty ?? 0;
       const nextQty = Math.min(currentQty + qty, stock);
       added = nextQty - currentQty;
@@ -81,18 +81,18 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
       if (existing) {
         return current.map((item) =>
-          item.productId === product._id ? { ...item, qty: nextQty, stock } : item
+          item.listingId === listing._id ? { ...item, qty: nextQty, stock } : item
         );
       }
 
       return [
         ...current,
         {
-          productId: product._id,
-          name: product.name,
-          price: product.price,
-          imageUrl: product.imageUrl,
-          category: product.category,
+          listingId: listing._id,
+          name: listing.name,
+          price: listing.price,
+          imageUrl: listing.imageUrl,
+          category: listing.category,
           stock,
           qty: nextQty,
         },
@@ -104,35 +104,35 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       return false;
     }
 
-    Alert.alert(t("cart.addedTitle"), t("cart.addedMsg", { name: product.name }));
+    Alert.alert(t("cart.addedTitle"), t("cart.addedMsg", { name: listing.name }));
     return true;
   };
 
   // Lower-level setter kept for callers that already know exactly what they
   // want the cart to contain (e.g. syncing from persisted storage) — still
   // clamps to stock as a last line of defense, but doesn't show any alert.
-  const addItem = (product: CartProductInput, qty = 1): void => {
-    const stock = availableStock(product);
+  const addItem = (listing: CartProductInput, qty = 1): void => {
+    const stock = availableStock(listing);
     setItems((current) => {
-      const existing = current.find((item) => item.productId === product._id);
+      const existing = current.find((item) => item.listingId === listing._id);
       const currentQty = existing?.qty ?? 0;
       const nextQty = Math.min(currentQty + qty, stock);
       if (nextQty <= 0) return current;
 
       if (existing) {
         return current.map((item) =>
-          item.productId === product._id ? { ...item, qty: nextQty, stock } : item
+          item.listingId === listing._id ? { ...item, qty: nextQty, stock } : item
         );
       }
 
       return [
         ...current,
         {
-          productId: product._id,
-          name: product.name,
-          price: product.price,
-          imageUrl: product.imageUrl,
-          category: product.category,
+          listingId: listing._id,
+          name: listing.name,
+          price: listing.price,
+          imageUrl: listing.imageUrl,
+          category: listing.category,
           stock,
           qty: nextQty,
         },
@@ -140,23 +140,23 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
-  const updateQty = (productId: string, qty: number): void => {
+  const updateQty = (listingId: string, qty: number): void => {
     if (qty <= 0) {
-      removeItem(productId);
+      removeItem(listingId);
       return;
     }
 
     setItems((current) =>
       current.map((item) =>
-        item.productId === productId
+        item.listingId === listingId
           ? { ...item, qty: Math.min(qty, availableStock(item)) }
           : item
       )
     );
   };
 
-  const removeItem = (productId: string): void => {
-    setItems((current) => current.filter((item) => item.productId !== productId));
+  const removeItem = (listingId: string): void => {
+    setItems((current) => current.filter((item) => item.listingId !== listingId));
   };
 
   const clearCart = (): void => setItems([]);

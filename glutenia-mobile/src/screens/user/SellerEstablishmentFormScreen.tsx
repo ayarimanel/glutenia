@@ -174,6 +174,7 @@ export default function SellerEstablishmentFormScreen({ navigation }: { navigati
   const [mapReady, setMapReady] = useState(false);
   const [errors, setErrors] = useState<EstablishmentFormErrors>({});
   const [loading, setLoading] = useState(false);
+  const [hasEstablishment, setHasEstablishment] = useState(false);
   const [imageProcessing, setImageProcessing] = useState(false);
   const mapWebViewRef = useRef<WebView>(null);
 
@@ -191,6 +192,7 @@ export default function SellerEstablishmentFormScreen({ navigation }: { navigati
       try {
         const establishment = await api.myEstablishment(token);
         if (establishment) {
+          setHasEstablishment(true);
           setName(establishment.name || "");
           setCategory(establishment.category || "Restaurant");
           setDescription(establishment.description || "");
@@ -359,6 +361,35 @@ export default function SellerEstablishmentFormScreen({ navigation }: { navigati
     }
   };
 
+  const remove = () => {
+    Alert.alert(t("seller.form.delete"), t("seller.form.deleteMsg"), [
+      { text: t("seller.form.deleteCancel"), style: "cancel" },
+      {
+        text: t("seller.form.deleteConfirm"),
+        style: "destructive",
+        onPress: async () => {
+          try {
+            if (!token) {
+              Alert.alert(t("admin.sessionExpired"), t("admin.sessionMsgShort"));
+              return;
+            }
+
+            setLoading(true);
+            await api.deleteMyEstablishment(token);
+
+            Alert.alert(t("seller.form.deleted"), t("seller.form.deletedMsg"), [
+              { text: t("admin.ok"), onPress: () => navigation.goBack() },
+            ]);
+          } catch (error) {
+            Alert.alert(t("seller.form.deleteFailed"), (error as ApiError).message);
+          } finally {
+            setLoading(false);
+          }
+        },
+      },
+    ]);
+  };
+
   return (
     <Screen>
       <ScrollView contentContainerStyle={styles.container}>
@@ -520,6 +551,14 @@ export default function SellerEstablishmentFormScreen({ navigation }: { navigati
           disabled={imageProcessing}
           onPress={save}
         />
+        {hasEstablishment ? (
+          <SecondaryButton
+            title={t("seller.form.delete")}
+            icon="trash"
+            disabled={loading || imageProcessing}
+            onPress={remove}
+          />
+        ) : null}
       </ScrollView>
     </Screen>
   );

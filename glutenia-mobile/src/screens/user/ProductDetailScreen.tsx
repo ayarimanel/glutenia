@@ -12,7 +12,7 @@ import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import type { RouteProp } from "@react-navigation/native";
 import type { AppNavigation, RootParamList } from "../../navigation/types";
-import type { Product } from "../../types/models";
+import type { Listing } from "../../types/models";
 
 interface ProductDetailScreenProps {
   navigation: AppNavigation;
@@ -23,9 +23,9 @@ export default function ProductDetailScreen({ navigation, route }: ProductDetail
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const { productId } = route.params;
+  const params = route.params;
   const { addItemWithStockCheck } = useCart();
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<Listing | null>(null);
   const [qty, setQty] = useState(1);
   const [loading, setLoading] = useState(true);
 
@@ -33,7 +33,24 @@ export default function ProductDetailScreen({ navigation, route }: ProductDetail
     const load = async () => {
       try {
         setLoading(true);
-        setProduct(await api.product(productId));
+
+        if ("listingId" in params) {
+          setProduct(await api.listing(params.listingId));
+        } else {
+          // Legacy entry point (a scan-history rail) that only ever knew the
+          // catalog product's id, not a specific listing — resolve to the
+          // cheapest available listing, same rule the barcode scan uses.
+          const listings = await api.listings({ product: params.productId });
+          const cheapest = listings
+            .filter((listing) => listing.isAvailable && listing.stock > 0)
+            .sort((a, b) => a.price - b.price)[0];
+
+          if (!cheapest) {
+            throw new Error(t("productDetail.noLongerAvailable"));
+          }
+          setProduct(cheapest);
+        }
+
         setQty(1);
       } catch (err) {
         Alert.alert(t("productDetail.errorTitle"), (err as ApiError).message);
@@ -43,7 +60,7 @@ export default function ProductDetailScreen({ navigation, route }: ProductDetail
       }
     };
     load();
-  }, [productId]);
+  }, ["listingId" in params ? params.listingId : params.productId]);
 
   if (loading || !product) {
     return (

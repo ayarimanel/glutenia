@@ -22,7 +22,11 @@ const pickFields = (body) =>
 exports.getEstablishments = async (req, res, next) => {
   try {
     const { category } = req.query;
-    const filter = {};
+    // Public browse (Map/Shop) only ever shows establishments an admin has
+    // verified - an unverified one is still visible to its owning
+    // Professional via getMyEstablishment, and to Admin via
+    // getPendingEstablishments, regardless of this filter.
+    const filter = { verified: true };
 
     if (category) {
       filter.category = category;
@@ -98,6 +102,94 @@ exports.upsertMyEstablishment = async (req, res, next) => {
     return res.json({
       success: true,
       data: establishment,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.deleteMyEstablishment = async (req, res, next) => {
+  try {
+    const establishment = await Establishment.findOne({ owner: req.user.id });
+
+    if (!establishment) {
+      return res.status(404).json({
+        success: false,
+        message: "Establishment not found",
+      });
+    }
+
+    await establishment.deleteOne();
+
+    return res.json({
+      success: true,
+      data: { _id: establishment._id },
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+// Admin oversight: an establishment sits unverified from the moment a
+// Professional creates/updates it (upsertMyEstablishment never touches
+// `verified`) until an admin explicitly verifies it here - there is no
+// separate "request verification" step, same as how a professional signup
+// is itself the approval request in professional.controller.js.
+exports.getPendingEstablishments = async (req, res, next) => {
+  try {
+    const establishments = await Establishment.find({ verified: false })
+      .populate("owner", "name email")
+      .sort({ createdAt: -1 });
+
+    return res.json({
+      success: true,
+      data: establishments,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.verifyEstablishment = async (req, res, next) => {
+  try {
+    const establishment = await Establishment.findByIdAndUpdate(
+      req.params.id,
+      { verified: true },
+      { new: true }
+    );
+
+    if (!establishment) {
+      return res.status(404).json({
+        success: false,
+        message: "Establishment not found",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: establishment,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.deleteEstablishment = async (req, res, next) => {
+  try {
+    const establishment = await Establishment.findById(req.params.id);
+
+    if (!establishment) {
+      return res.status(404).json({
+        success: false,
+        message: "Establishment not found",
+      });
+    }
+
+    await establishment.deleteOne();
+
+    return res.json({
+      success: true,
+      data: { _id: establishment._id },
     });
   } catch (error) {
     return next(error);

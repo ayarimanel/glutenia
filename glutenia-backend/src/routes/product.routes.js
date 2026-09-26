@@ -19,20 +19,11 @@ const categories = ["Bread", "Pasta", "Snacks", "Flour", "Sweets", "Other"];
 const productValidators = [
   body("name").trim().notEmpty().withMessage("Product name is required"),
   body("description").optional({ checkFalsy: true }).trim().isString(),
-  body("price")
-    .isFloat({ min: 0 })
-    .withMessage("Price must be a number greater than or equal to 0")
-    .toFloat(),
   body("category")
     .optional()
     .isIn(categories)
     .withMessage(`Category must be one of: ${categories.join(", ")}`),
   body("imageUrl").optional({ checkFalsy: true }).trim().isString(),
-  body("stock")
-    .optional()
-    .isInt({ min: 0 })
-    .withMessage("Stock must be an integer greater than or equal to 0")
-    .toInt(),
   body("isGlutenFree")
     .optional()
     .isBoolean()
@@ -48,21 +39,11 @@ const productUpdateValidators = [
     .notEmpty()
     .withMessage("Product name cannot be empty"),
   body("description").optional({ checkFalsy: true }).trim().isString(),
-  body("price")
-    .optional()
-    .isFloat({ min: 0 })
-    .withMessage("Price must be a number greater than or equal to 0")
-    .toFloat(),
   body("category")
     .optional()
     .isIn(categories)
     .withMessage(`Category must be one of: ${categories.join(", ")}`),
   body("imageUrl").optional({ checkFalsy: true }).trim().isString(),
-  body("stock")
-    .optional()
-    .isInt({ min: 0 })
-    .withMessage("Stock must be an integer greater than or equal to 0")
-    .toInt(),
   body("isGlutenFree")
     .optional()
     .isBoolean()
@@ -75,19 +56,16 @@ const idValidator = [
   param("id").isMongoId().withMessage("Invalid product id"),
 ];
 
+// Catalog is admin-only to manage: Professionals attach their own listing
+// (price/stock/availability) to an existing catalog product instead — see
+// listing.routes.js.
 router.get("/", productController.getProducts);
 router.get("/barcode/:code", verifyToken, productController.getProductByBarcode);
-router.get(
-  "/mine",
-  verifyToken,
-  requireRole("admin", "professional"),
-  productController.getMyProducts
-);
 router.get("/:id", idValidator, validateRequest, productController.getProductById);
 router.post(
   "/",
   verifyToken,
-  requireRole("admin", "professional"),
+  requireRole("admin"),
   productValidators,
   validateRequest,
   productController.createProduct
@@ -95,7 +73,7 @@ router.post(
 router.put(
   "/:id/image",
   verifyToken,
-  requireRole("admin", "professional"),
+  requireRole("admin"),
   idValidator,
   validateRequest,
   upload.single("image"),
@@ -104,7 +82,7 @@ router.put(
 router.put(
   "/:id",
   verifyToken,
-  requireRole("admin", "professional"),
+  requireRole("admin"),
   idValidator,
   productUpdateValidators,
   validateRequest,
@@ -113,7 +91,7 @@ router.put(
 router.delete(
   "/:id",
   verifyToken,
-  requireRole("admin", "professional"),
+  requireRole("admin"),
   idValidator,
   validateRequest,
   productController.deleteProduct

@@ -59,19 +59,40 @@ export interface User {
   createdAt: string;
 }
 
+// Catalog entry only — canonical product data owned by Administrator.
+// No price/stock here: those are per-seller and live on Listing below.
 export interface Product {
   _id: string;
   name: string;
   description?: string;
-  price: number;
   category: ProductCategory;
   imageUrl?: string;
-  stock: number;
   isGlutenFree: boolean;
   createdBy: string | null;
   createdAt: string;
   // Sparse/unique on the backend — absent entirely on docs that never set it,
   // not just an empty string.
+  barcode?: string;
+}
+
+// A Professional's sellable offer against an existing catalog Product.
+// The backend's listing.controller.js flattens the populated catalog
+// product's display fields onto the listing itself (name/description/
+// category/imageUrl/isGlutenFree/barcode), so this is the one shape used
+// everywhere a "sellable item" is rendered (Shop, ProductDetail, cart, scan).
+export interface Listing {
+  _id: string;
+  product: string;
+  professional: string;
+  price: number;
+  stock: number;
+  isAvailable: boolean;
+  createdAt: string;
+  name: string;
+  description?: string;
+  category: ProductCategory;
+  imageUrl?: string;
+  isGlutenFree: boolean;
   barcode?: string;
 }
 
@@ -179,6 +200,7 @@ export interface Notification {
 
 export interface OrderItem {
   product: string;
+  listing: string;
   name: string;
   qty: number;
   price: number;
@@ -336,6 +358,20 @@ export interface LabelScanResult {
   confidence_note: string | null;
   error: string | null;
   gamification: GamificationDelta | null;
+}
+
+// GET /users/:id (admin) - the user plus a small read-only summary of their
+// activity, so the admin user-detail screen needs only one request.
+export interface AdminUserDetail {
+  user: User;
+  gamification: {
+    totalXp: number;
+    currentLevel: number;
+    currentStreak: number;
+    longestStreak: number;
+  } | null;
+  orderCount: number;
+  establishment: Pick<Establishment, "_id" | "name" | "category" | "verified"> | null;
 }
 
 export interface UserAnalytics {

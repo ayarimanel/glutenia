@@ -8,6 +8,7 @@ const ROUTE_FILES = [
   { file: "establishment.routes.js", prefix: "/api/establishments", tag: "Establishments" },
   { file: "event.routes.js", prefix: "/api/events", tag: "Events" },
   { file: "gamification.routes.js", prefix: "/api/gamification", tag: "Gamification" },
+  { file: "listing.routes.js", prefix: "/api/listings", tag: "Listings" },
   { file: "notification.routes.js", prefix: "/api/notifications", tag: "Notifications" },
   { file: "onboarding.routes.js", prefix: "/api/onboarding", tag: "Onboarding" },
   { file: "order.routes.js", prefix: "/api/orders", tag: "Orders" },

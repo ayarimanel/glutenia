@@ -12,7 +12,9 @@ process.env.MONGO_URI =
 
 const app = require("../src/app");
 const Cart = require("../src/models/Cart");
+const Establishment = require("../src/models/Establishment");
 const Event = require("../src/models/Event");
+const Listing = require("../src/models/Listing");
 const Notification = require("../src/models/Notification");
 const Order = require("../src/models/Order");
 const PatientResource = require("../src/models/PatientResource");
@@ -23,7 +25,9 @@ const User = require("../src/models/User");
 const resetDatabase = async () => {
   await Promise.all([
     Cart.deleteMany({}),
+    Establishment.deleteMany({}),
     Event.deleteMany({}),
+    Listing.deleteMany({}),
     Notification.deleteMany({}),
     Order.deleteMany({}),
     PatientResource.deleteMany({}),
@@ -61,6 +65,27 @@ const registerCustomer = async ({ name, email, password, role }) => {
     .expect(201);
 
   return registerResponse.body.data;
+};
+
+// Directly inserts an approved professional (bypassing the pending-approval
+// flow, which is covered elsewhere) and logs in, for suites that just need a
+// seller account to attach listings to.
+const createApprovedProfessional = async ({ name, email, password }) => {
+  const hashed = await bcrypt.hash(password, 12);
+  const user = await User.create({
+    name,
+    email,
+    password: hashed,
+    role: "professional",
+    professionalStatus: "approved",
+  });
+
+  const login = await request(app)
+    .post("/api/auth/login")
+    .send({ email, password })
+    .expect(200);
+
+  return { id: user._id.toString(), token: login.body.data.token };
 };
 
 describe("Authentication", () => {
@@ -145,6 +170,16 @@ describe("Authentication", () => {
       .expect(200);
 
     ctx.adminToken = adminLogin.body.data.token;
+
+    // A seller account used throughout the Products/Listings/Orders suites
+    // below to attach listings to the admin's catalog.
+    const professional = await createApprovedProfessional({
+      name: "Professional One",
+      email: "professional@glutenia.test",
+      password: "seller123",
+    });
+    ctx.professionalId = professional.id;
+    ctx.professionalToken = professional.token;
   });
 });
 
@@ -206,47 +241,72 @@ describe("Profile", () => {
   });
 });
 
-describe("Products", () => {
-  test("lets an admin create, update and search for products", async () => {
+describe("Products & Listings", () => {
+  test("lets an admin manage the catalog, and a professional attach a listing to it", async () => {
     const createdProduct = await request(app)
       .post("/api/products")
       .set("Authorization", `Bearer ${ctx.adminToken}`)
       .send({
         name: "Pain sans gluten",
         description: "Pain moelleux sans gluten.",
-        price: 4.5,
         category: "Bread",
         imageUrl: "https://example.com/pain.jpg",
-        stock: 25,
         isGlutenFree: true,
       })
       .expect(201);
 
     assert.equal(createdProduct.body.success, true);
     assert.equal(createdProduct.body.data.createdBy, ctx.adminId);
+    assert.equal(createdProduct.body.data.price, undefined);
+    assert.equal(createdProduct.body.data.stock, undefined);
 
     ctx.productId = createdProduct.body.data._id;
-
-    const products = await request(app)
-      .get("/api/products?category=Bread&search=pain")
-      .expect(200);
-
-    assert.equal(products.body.data.length, 1);
-    assert.equal(products.body.data[0]._id, ctx.productId);
 
     const productDetail = await request(app)
       .get(`/api/products/${ctx.productId}`)
       .expect(200);
-
     assert.equal(productDetail.body.data.name, "Pain sans gluten");
 
-    const updatedProduct = await request(app)
-      .put(`/api/products/${ctx.productId}`)
-      .set("Authorization", `Bearer ${ctx.adminToken}`)
+    // A Professional can never create a catalog product from scratch -
+    // only pick an existing one and attach a listing to it.
+    await request(app)
+      .post("/api/products")
+      .set("Authorization", `Bearer ${ctx.professionalToken}`)
+      .send({ name: "Should be blocked", category: "Snacks" })
+      .expect(403);
+
+    const createdListing = await request(app)
+      .post("/api/listings")
+      .set("Authorization", `Bearer ${ctx.professionalToken}`)
+      .send({ productId: ctx.productId, price: 4.5, stock: 25 })
+      .expect(201);
+
+    assert.equal(createdListing.body.success, true);
+    assert.equal(createdListing.body.data.name, "Pain sans gluten");
+    assert.equal(createdListing.body.data.price, 4.5);
+    assert.equal(createdListing.body.data.stock, 25);
+
+    ctx.listingId = createdListing.body.data._id;
+
+    // The same professional can't list the same catalog product twice.
+    await request(app)
+      .post("/api/listings")
+      .set("Authorization", `Bearer ${ctx.professionalToken}`)
+      .send({ productId: ctx.productId, price: 5, stock: 10 })
+      .expect(409);
+
+    const listings = await request(app)
+      .get("/api/listings?category=Bread&search=pain")
+      .expect(200);
+    assert.equal(listings.body.data.length, 1);
+    assert.equal(listings.body.data[0]._id, ctx.listingId);
+
+    const updatedListing = await request(app)
+      .put(`/api/listings/${ctx.listingId}`)
+      .set("Authorization", `Bearer ${ctx.professionalToken}`)
       .send({ stock: 20 })
       .expect(200);
-
-    assert.equal(updatedProduct.body.data.stock, 20);
+    assert.equal(updatedListing.body.data.stock, 20);
 
     const uploadedImage = await request(app)
       .put(`/api/products/${ctx.productId}/image`)
@@ -260,16 +320,131 @@ describe("Products", () => {
     assert.match(uploadedImage.body.data.imageUrl, /^data:image\/png;base64,/);
   });
 
-  test("blocks non-admin users from creating products", async () => {
+  test("blocks non-admin users from creating catalog products", async () => {
     await request(app)
       .post("/api/products")
       .set("Authorization", `Bearer ${ctx.customerToken}`)
       .send({
         name: "Blocked Product",
-        price: 1,
         category: "Snacks",
       })
       .expect(403);
+  });
+
+  test("blocks a professional from managing another professional's listing, but admin can moderate it", async () => {
+    const outsider = await createApprovedProfessional({
+      name: "Other Professional",
+      email: "other-seller@glutenia.test",
+      password: "secret123",
+    });
+
+    await request(app)
+      .put(`/api/listings/${ctx.listingId}`)
+      .set("Authorization", `Bearer ${outsider.token}`)
+      .send({ price: 999 })
+      .expect(403);
+
+    await request(app)
+      .put(`/api/listings/${ctx.listingId}`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .send({ price: 4.5 })
+      .expect(200);
+  });
+});
+
+describe("Establishments", () => {
+  test("lets a professional set up their establishment, and an admin verify or delete it", async () => {
+    const upserted = await request(app)
+      .put("/api/establishments/mine")
+      .set("Authorization", `Bearer ${ctx.professionalToken}`)
+      .send({ name: "Test Bakery", category: "Bakery", latitude: 36.8, longitude: 10.18 })
+      .expect(200);
+
+    assert.equal(upserted.body.data.verified, false);
+    ctx.establishmentId = upserted.body.data._id;
+
+    // Unverified establishments are hidden from the public map/shop browse.
+    const publicListBefore = await request(app).get("/api/establishments").expect(200);
+    assert.equal(
+      publicListBefore.body.data.some((e) => e._id === ctx.establishmentId),
+      false
+    );
+
+    // Non-admin can't see the moderation queue or verify/delete.
+    await request(app)
+      .get("/api/establishments/pending")
+      .set("Authorization", `Bearer ${ctx.professionalToken}`)
+      .expect(403);
+
+    await request(app)
+      .put(`/api/establishments/${ctx.establishmentId}/verify`)
+      .set("Authorization", `Bearer ${ctx.professionalToken}`)
+      .expect(403);
+
+    const pending = await request(app)
+      .get("/api/establishments/pending")
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .expect(200);
+
+    assert.ok(pending.body.data.some((e) => e._id === ctx.establishmentId));
+
+    const verified = await request(app)
+      .put(`/api/establishments/${ctx.establishmentId}/verify`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .expect(200);
+
+    assert.equal(verified.body.data.verified, true);
+
+    const publicListAfter = await request(app).get("/api/establishments").expect(200);
+    assert.ok(publicListAfter.body.data.some((e) => e._id === ctx.establishmentId));
+
+    const pendingAfter = await request(app)
+      .get("/api/establishments/pending")
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .expect(200);
+
+    assert.equal(pendingAfter.body.data.some((e) => e._id === ctx.establishmentId), false);
+
+    await request(app)
+      .delete(`/api/establishments/${ctx.establishmentId}`)
+      .set("Authorization", `Bearer ${ctx.professionalToken}`)
+      .expect(403);
+
+    await request(app)
+      .delete(`/api/establishments/${ctx.establishmentId}`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .expect(200);
+  });
+});
+
+describe("Own establishment deletion", () => {
+  test("lets a professional delete their own establishment, and 404s when none is left", async () => {
+    await request(app)
+      .delete("/api/establishments/mine")
+      .expect(401);
+
+    const upserted = await request(app)
+      .put("/api/establishments/mine")
+      .set("Authorization", `Bearer ${ctx.professionalToken}`)
+      .send({ name: "Delete Me Cafe", category: "Restaurant", latitude: 36.8, longitude: 10.18 })
+      .expect(200);
+
+    const removed = await request(app)
+      .delete("/api/establishments/mine")
+      .set("Authorization", `Bearer ${ctx.professionalToken}`)
+      .expect(200);
+    assert.equal(removed.body.data._id, upserted.body.data._id);
+
+    const mine = await request(app)
+      .get("/api/establishments/mine")
+      .set("Authorization", `Bearer ${ctx.professionalToken}`)
+      .expect(200);
+    assert.equal(mine.body.data, null);
+
+    await request(app)
+      .delete("/api/establishments/mine")
+      .set("Authorization", `Bearer ${ctx.professionalToken}`)
+      .expect(404);
   });
 });
 
@@ -392,7 +567,7 @@ describe("Patient Resources", () => {
 });
 
 describe("Barcode", () => {
-  test("finds a product by its barcode", async () => {
+  test("finds a sellable listing by its catalog product's barcode", async () => {
     await Product.findByIdAndUpdate(ctx.productId, {
       barcode: "3017620422003",
     });
@@ -402,8 +577,13 @@ describe("Barcode", () => {
       .set("Authorization", `Bearer ${ctx.customerToken}`)
       .expect(200);
 
-    assert.equal(found.body.data._id, ctx.productId);
+    // Resolves to the cheapest in-stock listing for that catalog product,
+    // not the bare catalog record - see product.controller.js's
+    // getProductByBarcode/cheapestAvailableListing.
+    assert.equal(found.body.data._id, ctx.listingId);
+    assert.equal(found.body.data.product, ctx.productId);
     assert.equal(found.body.data.name, "Pain sans gluten");
+    assert.equal(found.body.data.price, 4.5);
   });
 
   test("returns 404 for an unknown barcode", async () => {
@@ -437,7 +617,7 @@ describe("Orders", () => {
       .send({
         items: [
           {
-            productId: ctx.productId,
+            listingId: ctx.listingId,
             name: "Client supplied name ignored",
             qty: 2,
             price: 999,
@@ -457,6 +637,7 @@ describe("Orders", () => {
     assert.equal(order.body.data.total, 16);
     assert.equal(order.body.data.items[0].name, "Pain sans gluten");
     assert.equal(order.body.data.items[0].price, 4.5);
+    assert.equal(order.body.data.items[0].listing, ctx.listingId);
     assert.equal(order.body.data.status, "confirmed");
 
     ctx.orderId = order.body.data._id;
@@ -478,6 +659,18 @@ describe("Orders", () => {
 
     assert.equal(adminOrders.body.data.length, 1);
     assert.equal(adminOrders.body.data[0].user.email, "customer@glutenia.test");
+  });
+
+  test("lets the professional see the order among their seller orders", async () => {
+    const sellerOrders = await request(app)
+      .get("/api/orders/seller")
+      .set("Authorization", `Bearer ${ctx.professionalToken}`)
+      .expect(200);
+
+    assert.equal(sellerOrders.body.data.length, 1);
+    assert.equal(sellerOrders.body.data[0]._id, ctx.orderId);
+    assert.equal(sellerOrders.body.data[0].items.length, 1);
+    assert.equal(sellerOrders.body.data[0].items[0].listing, ctx.listingId);
   });
 
   test("restricts order details to the owner or an admin", async () => {
@@ -504,7 +697,7 @@ describe("Orders", () => {
       .set("Authorization", `Bearer ${ctx.adminToken}`)
       .expect(200);
 
-    assert.equal(users.body.data.length, 3);
+    assert.equal(users.body.data.length, 5);
     assert.equal(users.body.data.some((user) => user.password), false);
 
     const userOrders = await request(app)
@@ -524,13 +717,23 @@ describe("Orders", () => {
 });
 
 describe("Orders - stock integrity", () => {
-  const createStockedProduct = async (stock, name = `Stock Test ${Date.now()}-${Math.random()}`) => {
-    const created = await request(app)
+  // Creates a catalog product (admin) plus one listing for it (the shared
+  // test professional) with the given stock, and returns the listing id -
+  // that's what createOrder/reserveStock actually reserve against now.
+  const createStockedListing = async (stock, name = `Stock Test ${Date.now()}-${Math.random()}`) => {
+    const product = await request(app)
       .post("/api/products")
       .set("Authorization", `Bearer ${ctx.adminToken}`)
-      .send({ name, price: 3, category: "Bread", stock })
+      .send({ name, category: "Bread" })
       .expect(201);
-    return created.body.data._id;
+
+    const listing = await request(app)
+      .post("/api/listings")
+      .set("Authorization", `Bearer ${ctx.professionalToken}`)
+      .send({ productId: product.body.data._id, price: 3, stock })
+      .expect(201);
+
+    return listing.body.data._id;
   };
 
   const address = {
@@ -541,89 +744,89 @@ describe("Orders - stock integrity", () => {
   };
 
   test("decrements stock by the ordered quantity on success", async () => {
-    const productId = await createStockedProduct(2);
+    const listingId = await createStockedListing(2);
 
     await request(app)
       .post("/api/orders")
       .set("Authorization", `Bearer ${ctx.customerToken}`)
-      .send({ items: [{ productId, qty: 2 }], address })
+      .send({ items: [{ listingId, qty: 2 }], address })
       .expect(201);
 
-    const product = await request(app).get(`/api/products/${productId}`).expect(200);
-    assert.equal(product.body.data.stock, 0);
+    const listing = await request(app).get(`/api/listings/${listingId}`).expect(200);
+    assert.equal(listing.body.data.stock, 0);
   });
 
   test("rejects an order that exceeds available stock, leaving stock unchanged", async () => {
-    const productId = await createStockedProduct(1);
+    const listingId = await createStockedListing(1);
 
     const rejected = await request(app)
       .post("/api/orders")
       .set("Authorization", `Bearer ${ctx.customerToken}`)
-      .send({ items: [{ productId, qty: 2 }], address })
+      .send({ items: [{ listingId, qty: 2 }], address })
       .expect(409);
     assert.equal(rejected.body.success, false);
     assert.match(rejected.body.message, /only 1/i);
 
-    const product = await request(app).get(`/api/products/${productId}`).expect(200);
-    assert.equal(product.body.data.stock, 1);
+    const listing = await request(app).get(`/api/listings/${listingId}`).expect(200);
+    assert.equal(listing.body.data.stock, 1);
   });
 
-  test("rejects ordering an out-of-stock product", async () => {
-    const productId = await createStockedProduct(0);
+  test("rejects ordering an out-of-stock listing", async () => {
+    const listingId = await createStockedListing(0);
 
     const rejected = await request(app)
       .post("/api/orders")
       .set("Authorization", `Bearer ${ctx.customerToken}`)
-      .send({ items: [{ productId, qty: 1 }], address })
+      .send({ items: [{ listingId, qty: 1 }], address })
       .expect(409);
     assert.match(rejected.body.message, /out of stock/i);
   });
 
   test("rolls back the whole order when one of several items has insufficient stock", async () => {
-    const plentyId = await createStockedProduct(5);
-    const scarceId = await createStockedProduct(1);
+    const plentyId = await createStockedListing(5);
+    const scarceId = await createStockedListing(1);
 
     await request(app)
       .post("/api/orders")
       .set("Authorization", `Bearer ${ctx.customerToken}`)
       .send({
         items: [
-          { productId: plentyId, qty: 2 },
-          { productId: scarceId, qty: 5 },
+          { listingId: plentyId, qty: 2 },
+          { listingId: scarceId, qty: 5 },
         ],
         address,
       })
       .expect(409);
 
-    const plenty = await request(app).get(`/api/products/${plentyId}`).expect(200);
-    const scarce = await request(app).get(`/api/products/${scarceId}`).expect(200);
+    const plenty = await request(app).get(`/api/listings/${plentyId}`).expect(200);
+    const scarce = await request(app).get(`/api/listings/${scarceId}`).expect(200);
     assert.equal(plenty.body.data.stock, 5, "unaffected item's stock must not be decremented when the order as a whole fails");
     assert.equal(scarce.body.data.stock, 1);
   });
 
-  test("returns 404 for a product that doesn't exist", async () => {
+  test("returns 404 for a listing that doesn't exist", async () => {
     await request(app)
       .post("/api/orders")
       .set("Authorization", `Bearer ${ctx.customerToken}`)
-      .send({ items: [{ productId: new mongoose.Types.ObjectId().toString(), qty: 1 }], address })
+      .send({ items: [{ listingId: new mongoose.Types.ObjectId().toString(), qty: 1 }], address })
       .expect(404);
   });
 
   test("lets only one of two concurrent orders win the last unit of stock", async () => {
-    const productId = await createStockedProduct(1);
+    const listingId = await createStockedListing(1);
 
     const placeOrder = () =>
       request(app)
         .post("/api/orders")
         .set("Authorization", `Bearer ${ctx.customerToken}`)
-        .send({ items: [{ productId, qty: 1 }], address });
+        .send({ items: [{ listingId, qty: 1 }], address });
 
     const [first, second] = await Promise.all([placeOrder(), placeOrder()]);
     const statuses = [first.status, second.status].sort();
     assert.deepEqual(statuses, [201, 409], "exactly one concurrent order for the last unit should succeed");
 
-    const product = await request(app).get(`/api/products/${productId}`).expect(200);
-    assert.equal(product.body.data.stock, 0);
+    const listing = await request(app).get(`/api/listings/${listingId}`).expect(200);
+    assert.equal(listing.body.data.stock, 0);
   });
 });
 
@@ -747,5 +950,104 @@ describe("Notifications", () => {
     );
     assert.ok(shippedNotification, "expected an order_status notification");
     assert.match(shippedNotification.body, /on its way/i);
+  });
+});
+
+describe("Admin user management", () => {
+  test("lets an admin view, update, and delete a user; blocks non-admins", async () => {
+    const target = await registerCustomer({
+      name: "Managed User",
+      email: "managed@glutenia.test",
+      password: "secret123",
+    });
+    const targetId = target.user._id;
+
+    await request(app)
+      .get(`/api/users/${targetId}`)
+      .set("Authorization", `Bearer ${target.token}`)
+      .expect(403);
+
+    const detail = await request(app)
+      .get(`/api/users/${targetId}`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .expect(200);
+
+    assert.equal(detail.body.data.user.email, "managed@glutenia.test");
+    assert.equal(detail.body.data.user.password, undefined);
+    assert.equal(detail.body.data.orderCount, 0);
+
+    await request(app)
+      .put(`/api/users/${targetId}`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .send({ email: "customer@glutenia.test" })
+      .expect(409);
+
+    const updated = await request(app)
+      .put(`/api/users/${targetId}`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .send({ name: "Renamed User", phone: "+216 20 123 456" })
+      .expect(200);
+
+    assert.equal(updated.body.data.name, "Renamed User");
+    assert.equal(updated.body.data.phone, "+216 20 123 456");
+
+    const admin = await User.findOne({ email: "admin@glutenia.test" });
+    await request(app)
+      .delete(`/api/users/${admin._id}`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .expect(400);
+
+    await request(app)
+      .delete(`/api/users/${targetId}`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .expect(200);
+
+    assert.equal(await User.exists({ _id: targetId }), null);
+
+    await request(app)
+      .get(`/api/users/${targetId}`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .expect(404);
+  });
+});
+
+describe("Admin order deletion", () => {
+  test("lets only an admin delete an order, restoring reserved stock", async () => {
+    const product = await Product.create({ name: "Deletable Bread", category: "Bread" });
+    const pro = await createApprovedProfessional({
+      name: "Stock Seller",
+      email: "stockseller@glutenia.test",
+      password: "secret123",
+    });
+    const listing = await Listing.create({
+      product: product._id,
+      professional: pro.id,
+      price: 5,
+      stock: 10,
+    });
+
+    const created = await request(app)
+      .post("/api/orders")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .send({
+        items: [{ listingId: listing._id.toString(), qty: 3 }],
+        address: { fullName: "C", addressLine: "1 St", city: "Tunis", phone: "20123456" },
+      })
+      .expect(201);
+
+    assert.equal((await Listing.findById(listing._id)).stock, 7);
+
+    await request(app)
+      .delete(`/api/orders/${created.body.data._id}`)
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .expect(403);
+
+    await request(app)
+      .delete(`/api/orders/${created.body.data._id}`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .expect(200);
+
+    assert.equal(await Order.exists({ _id: created.body.data._id }), null);
+    assert.equal((await Listing.findById(listing._id)).stock, 10);
   });
 });

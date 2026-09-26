@@ -39,18 +39,16 @@ const readUriAsDataUrl = async (uri: string, mimeType: string): Promise<string> 
   });
 };
 
+// Admin-only: creates/edits a master catalog entry (canonical name/
+// description/category/image/gluten-free flag/barcode). No price/stock here
+// - those are per-seller and set on a Listing instead (SellerListingFormScreen).
 interface AdminProductFormScreenProps {
   navigation: AppNavigation;
-  // This component is mounted under both "AdminProductForm" (admin stack)
-  // and "SellerProductForm" (seller/user stack) - same identical params
-  // shape, different route names depending on which stack renders it.
-  route: RouteProp<RootParamList, "AdminProductForm" | "SellerProductForm">;
+  route: RouteProp<RootParamList, "AdminProductForm">;
 }
 
 interface ProductFormErrors {
   name?: string;
-  price?: string;
-  stock?: string;
 }
 
 export default function AdminProductFormScreen({ navigation, route }: AdminProductFormScreenProps) {
@@ -62,12 +60,10 @@ export default function AdminProductFormScreen({ navigation, route }: AdminProdu
   const imageDataUrlRef = useRef("");
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
   const [category, setCategory] = useState<ProductCategory>("Bread");
   const [imageUrl, setImageUrl] = useState("");
   const [imageStatus, setImageStatus] = useState("");
   const [removeImage, setRemoveImage] = useState(false);
-  const [stock, setStock] = useState("");
   const [barcode, setBarcode] = useState("");
   const [isGlutenFree, setIsGlutenFree] = useState(true);
   const [errors, setErrors] = useState<ProductFormErrors>({});
@@ -93,13 +89,11 @@ export default function AdminProductFormScreen({ navigation, route }: AdminProdu
         const product = await api.product(productId);
         setName(product.name);
         setDescription(product.description || "");
-        setPrice(String(product.price));
         setCategory(product.category);
         setImageUrl(product.imageUrl || "");
         imageDataUrlRef.current = "";
         setImageStatus(product.imageUrl ? t("admin.form.currentImage") : "");
         setRemoveImage(false);
-        setStock(String(product.stock ?? 0));
         setBarcode(product.barcode || "");
         setIsGlutenFree(Boolean(product.isGlutenFree));
       } catch (err) {
@@ -112,26 +106,10 @@ export default function AdminProductFormScreen({ navigation, route }: AdminProdu
   }, [productId]);
 
   const save = async () => {
-    const trimmedPrice = price.trim();
-    const trimmedStock = stock.trim();
-    const numericPrice = Number(trimmedPrice);
-    const numericStock = Number(trimmedStock);
     const nextErrors: ProductFormErrors = {};
 
     if (!name.trim()) {
       nextErrors.name = t("admin.form.errors.nameRequired");
-    }
-
-    if (!trimmedPrice) {
-      nextErrors.price = t("admin.form.errors.priceRequired");
-    } else if (Number.isNaN(numericPrice) || numericPrice < 0) {
-      nextErrors.price = t("admin.form.errors.priceInvalid");
-    }
-
-    if (!trimmedStock) {
-      nextErrors.stock = t("admin.form.errors.stockRequired");
-    } else if (!Number.isInteger(numericStock) || numericStock < 0) {
-      nextErrors.stock = t("admin.form.errors.stockInvalid");
     }
 
     setErrors(nextErrors);
@@ -150,9 +128,7 @@ export default function AdminProductFormScreen({ navigation, route }: AdminProdu
       const body: ProductInput = {
         name: name.trim(),
         description,
-        price: numericPrice,
         category,
-        stock: numericStock,
         barcode: barcode.trim(),
         isGlutenFree,
       };
@@ -281,30 +257,6 @@ export default function AdminProductFormScreen({ navigation, route }: AdminProdu
           onChangeText={setDescription}
           multiline
         />
-        <View style={styles.split}>
-          <Field
-            label={t("admin.form.price")}
-            value={price}
-            error={errors.price}
-            onChangeText={(value) => {
-              setPrice(value);
-              setErrors((current) => ({ ...current, price: "" }));
-            }}
-            keyboardType="decimal-pad"
-            style={styles.flex}
-          />
-          <Field
-            label={t("admin.form.stock")}
-            value={stock}
-            error={errors.stock}
-            onChangeText={(value) => {
-              setStock(value);
-              setErrors((current) => ({ ...current, stock: "" }));
-            }}
-            keyboardType="number-pad"
-            style={styles.flex}
-          />
-        </View>
         <Field
           label={t("admin.form.barcode")}
           value={barcode}
@@ -405,13 +357,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     padding: Spacing.md,
     gap: Spacing.md,
-  },
-  split: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  flex: {
-    flex: 1,
   },
   categoryWrap: {
     gap: 8,

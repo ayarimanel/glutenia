@@ -65,11 +65,9 @@ export default function ScanScreen({ navigation }: { navigation: AppNavigation }
     }, [])
   );
 
-  // Fix 6: admin stack has no CartPage — avoid a navigation crash.
-  const handleCartPress =
-    user?.role === "admin"
-      ? undefined
-      : () => navigation.navigate("CartPage");
+  // The admin stack registers every customer screen too, so CartPage is
+  // reachable for every role.
+  const handleCartPress = () => navigation.navigate("CartPage");
 
   // Fix 5: compute bottom padding once so every state uses the same value.
   const bottomPad = insets.bottom + TAB_BAR_HEIGHT + Spacing.lg;

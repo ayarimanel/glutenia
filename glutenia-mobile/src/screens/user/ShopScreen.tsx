@@ -13,7 +13,7 @@ import { useTranslation } from "react-i18next";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { getShopCategoryOrder } from "../../utils/personalization";
 import type { AppNavigation } from "../../navigation/types";
-import type { Product } from "../../types/models";
+import type { Listing } from "../../types/models";
 
 const categories = ["All", "Bread", "Pasta", "Snacks", "Flour", "Sweets"];
 
@@ -23,7 +23,7 @@ export default function ShopScreen({ navigation }: { navigation: AppNavigation }
   const { addItemWithStockCheck } = useCart();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Listing[]>([]);
   const [category, setCategory] = useState("All");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
@@ -35,7 +35,7 @@ export default function ShopScreen({ navigation }: { navigation: AppNavigation }
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const data = await api.products({
+      const data = await api.listings({
         category: category === "All" ? "" : category,
         search,
       });
@@ -110,7 +110,7 @@ export default function ShopScreen({ navigation }: { navigation: AppNavigation }
           renderItem={({ item }) => (
             <ProductCard
               product={item}
-              onPress={() => navigation.navigate("ProductDetail", { productId: item._id })}
+              onPress={() => navigation.navigate("ProductDetail", { listingId: item._id })}
               onAdd={() => addItemWithStockCheck(item, 1)}
             />
           )}

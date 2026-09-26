@@ -56,7 +56,13 @@ function daysSince(dateString?: string | null): number {
 
 const mascot = require("../../assets/mascot.png");
 
-export default function AccountScreen({ navigation }: { navigation: AppNavigation }) {
+export default function AccountScreen({
+  navigation,
+  route,
+}: {
+  navigation: AppNavigation;
+  route: { name: string };
+}) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
@@ -102,16 +108,11 @@ export default function AccountScreen({ navigation }: { navigation: AppNavigatio
     label: t(`account.stageTitles.${titleTrack}.${key}`),
   }));
   const [profileData, setProfileData] = useState<ProfileGamificationData | null>(null);
-  const [loading, setLoading] = useState(!isAdmin);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
 
   const fetchProfile = useCallback(async () => {
-    if (isAdmin) {
-      // Admins are staff accounts, not gamified end users — nothing to fetch.
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     setError(null);
     try {
@@ -122,7 +123,7 @@ export default function AccountScreen({ navigation }: { navigation: AppNavigatio
     } finally {
       setLoading(false);
     }
-  }, [token, isAdmin]);
+  }, [token]);
 
   useFocusEffect(
     useCallback(() => {
@@ -131,7 +132,6 @@ export default function AccountScreen({ navigation }: { navigation: AppNavigatio
   );
 
   useEffect(() => {
-    if (isAdmin) return;
     let cancelled = false;
     api
       .events(token)
@@ -142,7 +142,13 @@ export default function AccountScreen({ navigation }: { navigation: AppNavigatio
     return () => {
       cancelled = true;
     };
-  }, [token, isAdmin]);
+  }, [token]);
+
+  // An Administrator reaches this screen from two places: the admin
+  // panel's "Account" tab, or the "Profile" tab of the customer space
+  // (every customer feature is available to the Administrator too). Each
+  // one offers a way over to the other.
+  const inAdminPanel = route.name === "Account";
 
   const handleLogout = () => {
     Alert.alert(t("account.logoutTitle"), t("account.logoutMsg"), [
@@ -261,8 +267,8 @@ export default function AccountScreen({ navigation }: { navigation: AppNavigatio
           ) : null}
         </View>
 
-        {/* ── B. XP / Level card (not applicable to professional/seller or admin accounts) ── */}
-        {!isProfessional && !isAdmin && (
+        {/* ── B. XP / Level card (not applicable to professional/seller accounts) ── */}
+        {!isProfessional && (
           <View style={styles.xpCard}>
             <View style={styles.xpRow}>
               <View>
@@ -288,8 +294,8 @@ export default function AccountScreen({ navigation }: { navigation: AppNavigatio
           </View>
         )}
 
-        {/* ── C. Stats row (not applicable to professional/seller or admin accounts) ── */}
-        {!isProfessional && !isAdmin && (
+        {/* ── C. Stats row (not applicable to professional/seller accounts) ── */}
+        {!isProfessional && (
           <View style={styles.statsCard}>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>🔥 {currentStreak}</Text>
@@ -549,14 +555,19 @@ export default function AccountScreen({ navigation }: { navigation: AppNavigatio
 
         {/* ── J. Orders + Settings ───────────────────────────────────────── */}
         <View style={styles.settingsList}>
-          {!isAdmin && (
+          {isAdmin && (
             <>
-              <Pressable style={styles.settingsRow} onPress={() => navigation.navigate("Orders")}>
+              <Pressable
+                style={styles.settingsRow}
+                onPress={() => navigation.navigate(inAdminPanel ? "UserTabs" : "AdminTabs")}
+              >
                 <View style={styles.settingsLeft}>
                   <View style={[styles.iconWrap, { backgroundColor: colors.secondaryPale }]}>
-                    <AppIcon name="receipt" size={20} color={colors.secondary} />
+                    <AppIcon name={inAdminPanel ? "home" : "grid"} size={20} color={colors.secondary} />
                   </View>
-                  <Text style={styles.settingsLabel}>{t("account.myOrders")}</Text>
+                  <Text style={styles.settingsLabel}>
+                    {inAdminPanel ? t("account.customerSpace") : t("account.adminPanel")}
+                  </Text>
                 </View>
                 <AppIcon name="chevron-right" size={20} color={colors.textMuted} />
               </Pressable>
@@ -564,6 +575,22 @@ export default function AccountScreen({ navigation }: { navigation: AppNavigatio
               <View style={styles.divider} />
             </>
           )}
+          <Pressable
+            style={styles.settingsRow}
+            // Inside the admin panel "Orders" is the all-orders tab, so
+            // the Administrator's own purchases live under "MyOrders".
+            onPress={() => navigation.navigate(isAdmin ? "MyOrders" : "Orders")}
+          >
+            <View style={styles.settingsLeft}>
+              <View style={[styles.iconWrap, { backgroundColor: colors.secondaryPale }]}>
+                <AppIcon name="receipt" size={20} color={colors.secondary} />
+              </View>
+              <Text style={styles.settingsLabel}>{t("account.myOrders")}</Text>
+            </View>
+            <AppIcon name="chevron-right" size={20} color={colors.textMuted} />
+          </Pressable>
+
+          <View style={styles.divider} />
 
           <Pressable style={styles.settingsRow} onPress={() => navigation.navigate("Settings")}>
             <View style={styles.settingsLeft}>

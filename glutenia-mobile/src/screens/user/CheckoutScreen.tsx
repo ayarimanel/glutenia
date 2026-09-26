@@ -44,7 +44,7 @@ export default function CheckoutScreen({ navigation }: { navigation: AppNavigati
       const trimmedPhone = phone.trim();
       const order = await api.createOrder(token, {
         items: items.map((item) => ({
-          productId: item.productId,
+          listingId: item.listingId,
           name: item.name,
           qty: item.qty,
           price: item.price,
@@ -95,7 +95,7 @@ export default function CheckoutScreen({ navigation }: { navigation: AppNavigati
           />
           <View style={styles.summary}>
             {items.map((item) => (
-              <View key={item.productId} style={styles.line}>
+              <View key={item.listingId} style={styles.line}>
                 <Text style={styles.lineName} numberOfLines={1}>
                   {item.qty} x {item.name}
                 </Text>

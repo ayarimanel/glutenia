@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Cart = require("../models/Cart");
 const Order = require("../models/Order");
-const Product = require("../models/Product");
+const Listing = require("../models/Listing");
 const { notify } = require("../services/notificationService");
 const gamificationService = require("../services/gamificationService");
 
@@ -16,16 +16,16 @@ const STATUS_NOTIFICATIONS = {
 
 exports.getSellerOrders = async (req, res, next) => {
   try {
-    const productIds = await Product.find({ createdBy: req.user.id }).distinct("_id");
-    const ownedIds = new Set(productIds.map((id) => id.toString()));
+    const listingIds = await Listing.find({ professional: req.user.id }).distinct("_id");
+    const ownedIds = new Set(listingIds.map((id) => id.toString()));
 
-    const orders = await Order.find({ "items.product": { $in: productIds } })
+    const orders = await Order.find({ "items.listing": { $in: listingIds } })
       .populate("user", "name email")
       .sort({ createdAt: -1 });
 
     const sellerOrders = orders.map((order) => {
       const plain = order.toObject();
-      plain.items = plain.items.filter((item) => ownedIds.has(item.product.toString()));
+      plain.items = plain.items.filter((item) => ownedIds.has(item.listing.toString()));
       return plain;
     });
 
@@ -47,30 +47,36 @@ exports.getSellerOrders = async (req, res, next) => {
 // in the same order — an order is all-or-nothing, never partially reserved.
 const reserveStock = async (item, session) => {
   const qty = item.qty;
-  const updated = await Product.findOneAndUpdate(
-    { _id: item.productId, stock: { $gte: qty } },
+  const updated = await Listing.findOneAndUpdate(
+    { _id: item.listingId, stock: { $gte: qty } },
     { $inc: { stock: -qty } },
     { new: true, session }
-  );
+  ).populate("product");
 
   if (updated) {
-    return { product: updated._id, name: updated.name, qty, price: updated.price };
+    return {
+      product: updated.product._id,
+      listing: updated._id,
+      name: updated.product.name,
+      qty,
+      price: updated.price,
+    };
   }
 
   // The guarded update matched nothing — figure out whether that's because
-  // the product doesn't exist at all, or it exists but doesn't have enough
+  // the listing doesn't exist at all, or it exists but doesn't have enough
   // stock left, so the error message actually tells the user what happened.
-  const product = await Product.findById(item.productId).session(session);
-  if (!product) {
-    const error = new Error(`Product not found: ${item.productId}`);
+  const listing = await Listing.findById(item.listingId).session(session).populate("product");
+  if (!listing) {
+    const error = new Error(`Listing not found: ${item.listingId}`);
     error.statusCode = 404;
     throw error;
   }
 
   const error = new Error(
-    product.stock > 0
-      ? `Only ${product.stock} of "${product.name}" left in stock (you requested ${qty}).`
-      : `"${product.name}" is out of stock.`
+    listing.stock > 0
+      ? `Only ${listing.stock} of "${listing.product.name}" left in stock (you requested ${qty}).`
+      : `"${listing.product.name}" is out of stock.`
   );
   error.statusCode = 409;
   throw error;
@@ -210,9 +216,9 @@ exports.updateOrderStatus = async (req, res, next) => {
     }
 
     if (req.user.role !== "admin") {
-      const productIds = await Product.find({ createdBy: req.user.id }).distinct("_id");
-      const ownedIds = new Set(productIds.map((id) => id.toString()));
-      const ownsItem = order.items.some((item) => ownedIds.has(item.product.toString()));
+      const listingIds = await Listing.find({ professional: req.user.id }).distinct("_id");
+      const ownedIds = new Set(listingIds.map((id) => id.toString()));
+      const ownsItem = order.items.some((item) => ownedIds.has(item.listing.toString()));
 
       if (!ownsItem) {
         return res.status(403).json({
@@ -235,6 +241,39 @@ exports.updateOrderStatus = async (req, res, next) => {
     return res.json({
       success: true,
       data: order,
+    });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.deleteOrder = async (req, res, next) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    // An order that never left the seller still holds reserved stock -
+    // hand it back so deleting the order doesn't silently shrink inventory.
+    // Shipped/delivered goods are already gone, so nothing to restore.
+    if (order.status === "pending" || order.status === "confirmed") {
+      await Promise.all(
+        order.items.map((item) =>
+          Listing.updateOne({ _id: item.listing }, { $inc: { stock: item.qty } })
+        )
+      );
+    }
+
+    await order.deleteOne();
+
+    return res.json({
+      success: true,
+      data: { _id: order._id },
     });
   } catch (error) {
     return next(error);

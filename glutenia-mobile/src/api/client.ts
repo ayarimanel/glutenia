@@ -1,6 +1,7 @@
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 import type {
+  AdminUserDetail,
   Badge,
   CommunityProduct,
   Establishment,
@@ -10,6 +11,7 @@ import type {
   GamificationDelta,
   HomeGamificationSummary,
   Language,
+  Listing,
   Notification,
   Order,
   OrderWithBuyer,
@@ -193,15 +195,22 @@ export interface ChangePasswordBody {
   newPassword: string;
 }
 
+// Catalog fields only (admin-only endpoints) — price/stock/availability are
+// listing-specific, see ListingInput below.
 export type ProductInput = Partial<{
   name: string;
   description: string;
-  price: number;
   category: ProductCategory;
   imageUrl: string;
-  stock: number;
   isGlutenFree: boolean;
   barcode: string;
+}>;
+
+export type ListingInput = Partial<{
+  productId: string;
+  price: number;
+  stock: number;
+  isAvailable: boolean;
 }>;
 
 export interface ImageUploadInput {
@@ -241,19 +250,22 @@ export interface SubmitCommunityProductBody {
   category?: ProductCategory;
 }
 
+// A barcode scan now resolves to a Listing (the cheapest in-stock offer for
+// that catalog product, auto-picked server-side), not a bare catalog Product
+// — there's no price/stock on Product to show otherwise.
 export type ProductScanResult =
-  | (Product & { isCommunityReport?: false; gamification: GamificationDelta | null })
+  | (Listing & { isCommunityReport?: false; gamification: GamificationDelta | null })
   | (CommunityProduct & { isCommunityReport: true; gamification: GamificationDelta | null });
 
 // The request body's field names don't match the Order schema's stored
-// shape: the backend reads `item.productId` (not `product`) and re-fetches
+// shape: the backend reads `item.listingId` (not `product`) and re-fetches
 // the real name/price from the database itself rather than trusting the
 // client's copies; it also computes `total`/`deliveryFee` server-side, so
 // the client never sends them at all. Verified directly against
 // order.controller.js's createOrder/reserveStock, not assumed from the
 // Order model.
 export interface CreateOrderBody {
-  items: { productId: string; name: string; qty: number; price: number }[];
+  items: { listingId: string; name: string; qty: number; price: number }[];
   address: { fullName: string; addressLine: string; city: string; phone: string };
 }
 
@@ -323,6 +335,8 @@ export const api = {
     request<{ message: string }>("/auth/change-password", { method: "PUT", token, body }),
   deleteAccount: (token: string, password: string) =>
     request<{ message: string }>("/auth/me", { method: "DELETE", token, body: { password } }),
+  // Catalog (admin-only to mutate) — used to browse/pick a catalog product
+  // when creating a listing, and by the admin catalog screens.
   products: (params: ListParams = {}) => request<Product[]>(`/products${toQueryString(params)}`),
   product: (id: string) => request<Product>(`/products/${id}`),
   createProduct: (token: string, body: ProductInput) =>
@@ -345,7 +359,18 @@ export const api = {
     });
   },
   deleteProduct: (token: string, id: string) => request<Product>(`/products/${id}`, { method: "DELETE", token }),
-  myProducts: (token: string) => request<Product[]>("/products/mine", { token }),
+  // Listings — sellable offers (price/stock/availability) a Professional
+  // attaches to an existing catalog Product. This is what Shop/Home/
+  // ProductDetail/Scan actually browse and add to cart from.
+  listings: (params: ListParams = {}) => request<Listing[]>(`/listings${toQueryString(params)}`),
+  listing: (id: string) => request<Listing>(`/listings/${id}`),
+  myListings: (token: string) => request<Listing[]>("/listings/mine", { token }),
+  createListing: (token: string, body: ListingInput) =>
+    request<Listing>("/listings", { method: "POST", token, body }),
+  updateListing: (token: string, id: string, body: ListingInput) =>
+    request<Listing>(`/listings/${id}`, { method: "PUT", token, body }),
+  deleteListing: (token: string, id: string) =>
+    request<Listing>(`/listings/${id}`, { method: "DELETE", token }),
   recipes: (params: ListParams = {}) => request<Recipe[]>(`/recipes${toQueryString(params)}`),
   recipe: (id: string) => request<Recipe>(`/recipes/${id}`),
   createRecipe: (token: string, body: RecipeInput) =>
@@ -380,6 +405,8 @@ export const api = {
   sellerOrders: (token: string) => request<OrderWithBuyer[]>("/orders/seller", { token }),
   updateOrderStatus: (token: string, id: string, status: Order["status"]) =>
     request<Order>(`/orders/${id}/status`, { method: "PUT", token, body: { status } }),
+  deleteOrder: (token: string, id: string) =>
+    request<{ _id: string }>(`/orders/${id}`, { method: "DELETE", token }),
   saveOnboardingProfile: (token: string, data: OnboardingProfileBody) =>
     request<{ user: User }>("/onboarding/profile", { method: "PUT", token, body: data }),
   getGamificationProfile: (token: string) => request<ProfileGamificationData>("/gamification/profile", { token }),
@@ -406,6 +433,12 @@ export const api = {
   deleteEvent: (token: string, id: string) =>
     request<{ message: string }>(`/events/${id}`, { method: "DELETE", token }),
   rsvpEvent: (token: string, id: string) => request<RsvpResult>(`/events/${id}/rsvp`, { method: "POST", token }),
+  users: (token: string) => request<User[]>("/users", { token }),
+  user: (token: string, id: string) => request<AdminUserDetail>(`/users/${id}`, { token }),
+  updateUser: (token: string, id: string, body: Partial<Pick<User, "name" | "email" | "phone">>) =>
+    request<User>(`/users/${id}`, { method: "PUT", token, body }),
+  deleteUser: (token: string, id: string) =>
+    request<{ _id: string }>(`/users/${id}`, { method: "DELETE", token }),
   userAnalytics: (token: string) => request<UserAnalytics>("/users/analytics", { token }),
   professionalRequests: (token: string, status: ProfessionalStatus | "all" = "pending") =>
     request<User[]>(`/professionals/requests?status=${status}`, { token }),
@@ -421,6 +454,13 @@ export const api = {
   myEstablishment: (token: string) => request<Establishment | null>("/establishments/mine", { token }),
   upsertMyEstablishment: (token: string, body: EstablishmentInput) =>
     request<Establishment>("/establishments/mine", { method: "PUT", token, body }),
+  deleteMyEstablishment: (token: string) =>
+    request<{ _id: string }>("/establishments/mine", { method: "DELETE", token }),
+  pendingEstablishments: (token: string) => request<Establishment[]>("/establishments/pending", { token }),
+  verifyEstablishment: (token: string, id: string) =>
+    request<Establishment>(`/establishments/${id}/verify`, { method: "PUT", token }),
+  deleteEstablishment: (token: string, id: string) =>
+    request<Establishment>(`/establishments/${id}`, { method: "DELETE", token }),
   notifications: (token: string) => request<Notification[]>("/notifications", { token }),
   markNotificationRead: (token: string, id: string) =>
     request<Notification>(`/notifications/${id}/read`, { method: "PUT", token }),

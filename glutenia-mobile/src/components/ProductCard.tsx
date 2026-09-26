@@ -5,10 +5,10 @@ import { Radius, Shadow } from "../theme/colors";
 import { useTheme, type ThemeColors } from "../context/ThemeContext";
 import GlutenFreeBadge from "./GlutenFreeBadge";
 import ProductVisual from "./ProductVisual";
-import type { Product } from "../types/models";
+import type { Listing } from "../types/models";
 
 interface ProductCardProps {
-  product: Pick<Product, "stock" | "name" | "category" | "price" | "imageUrl">;
+  product: Pick<Listing, "stock" | "name" | "category" | "price" | "imageUrl">;
   onPress?: () => void;
   onAdd?: () => void;
 }

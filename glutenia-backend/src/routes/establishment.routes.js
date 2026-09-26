@@ -2,6 +2,7 @@ const express = require("express");
 const { body, param, query } = require("express-validator");
 const multer = require("multer");
 const establishmentController = require("../controllers/establishment.controller");
+const isAdmin = require("../middleware/isAdmin");
 const requireRole = require("../middleware/requireRole");
 const validateRequest = require("../middleware/validateRequest");
 const verifyToken = require("../middleware/verifyToken");
@@ -53,6 +54,12 @@ router.put(
   validateRequest,
   establishmentController.upsertMyEstablishment
 );
+router.delete(
+  "/mine",
+  verifyToken,
+  requireRole("admin", "professional"),
+  establishmentController.deleteMyEstablishment
+);
 router.put(
   "/mine/image",
   verifyToken,
@@ -60,6 +67,30 @@ router.put(
   upload.single("image"),
   establishmentController.uploadEstablishmentImage
 );
+// Admin oversight (moderation) - declared before the generic "/:id" GET
+// below so it isn't swallowed by that route's id param matching.
+router.get(
+  "/pending",
+  verifyToken,
+  isAdmin,
+  establishmentController.getPendingEstablishments
+);
 router.get("/:id", idValidator, validateRequest, establishmentController.getEstablishmentById);
+router.put(
+  "/:id/verify",
+  verifyToken,
+  isAdmin,
+  idValidator,
+  validateRequest,
+  establishmentController.verifyEstablishment
+);
+router.delete(
+  "/:id",
+  verifyToken,
+  isAdmin,
+  idValidator,
+  validateRequest,
+  establishmentController.deleteEstablishment
+);
 
 module.exports = router;

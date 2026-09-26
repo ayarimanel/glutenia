@@ -1,7 +1,11 @@
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useState } from "react";
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
+import { SecondaryButton } from "../../components/Buttons";
+import { useAuthenticated } from "../../context/AuthContext";
+import { api, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import type { RouteProp } from "@react-navigation/native";
@@ -15,8 +19,10 @@ interface AdminOrderDetailScreenProps {
 export default function AdminOrderDetailScreen({ navigation, route }: AdminOrderDetailScreenProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const { token } = useAuthenticated();
   const styles = getStyles(colors);
   const order = route.params?.order;
+  const [deleting, setDeleting] = useState(false);
 
   if (!order) {
     return (
@@ -37,6 +43,28 @@ export default function AdminOrderDetailScreen({ navigation, route }: AdminOrder
     0
   );
   const deliveryFee = order.deliveryFee ?? order.total - subtotal;
+  const orderRef = `#${order._id.slice(-6).toUpperCase()}`;
+
+  const deleteOrder = () => {
+    Alert.alert(t("admin.orders.deleteTitle"), t("admin.orders.deleteMsg", { id: orderRef }), [
+      { text: t("admin.orders.deleteCancel"), style: "cancel" },
+      {
+        text: t("admin.orders.deleteConfirm"),
+        style: "destructive",
+        onPress: async () => {
+          try {
+            setDeleting(true);
+            await api.deleteOrder(token, order._id);
+            navigation.goBack();
+          } catch (err) {
+            Alert.alert(t("admin.orders.deleteFailed"), (err as ApiError).message);
+          } finally {
+            setDeleting(false);
+          }
+        },
+      },
+    ]);
+  };
 
   return (
     <Screen>
@@ -50,7 +78,7 @@ export default function AdminOrderDetailScreen({ navigation, route }: AdminOrder
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.topRow}>
-          <Text style={styles.id}>#{order._id.slice(-6).toUpperCase()}</Text>
+          <Text style={styles.id}>{orderRef}</Text>
           <View style={styles.statusPill}>
             <Text style={styles.statusText}>{order.status}</Text>
           </View>
@@ -121,6 +149,13 @@ export default function AdminOrderDetailScreen({ navigation, route }: AdminOrder
             <Text style={styles.grandValue}>{order.total.toFixed(2)} TND</Text>
           </View>
         </View>
+
+        <SecondaryButton
+          title={t("admin.orders.deleteOrder")}
+          icon="trash"
+          disabled={deleting}
+          onPress={deleteOrder}
+        />
       </ScrollView>
     </Screen>
   );

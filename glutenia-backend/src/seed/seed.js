@@ -4,9 +4,13 @@ const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 const connectDB = require("../config/db");
 const Product = require("../models/Product");
+const Listing = require("../models/Listing");
 const User = require("../models/User");
 const Badge = require("../models/Badge");
 
+// name/description/category/barcode are catalog fields (owned by the admin);
+// price/stock are listing fields (owned by the seeded demo professional) —
+// kept in one array here for readability, split apart below.
 const products = [
   {
     name: "Pain sans gluten",
@@ -58,12 +62,26 @@ const products = [
   },
 ];
 
+// This script wipes User/Product/Listing before reseeding - it must never
+// run just from being require()'d or imported by tooling. Requires an
+// explicit flag so the only way to trigger the wipe is a deliberate,
+// human-typed command.
+if (!process.argv.includes("--yes-i-mean-it")) {
+  console.error(
+    "Refusing to run: this wipes the User/Product/Listing collections in whatever database MONGO_URI points to.\n" +
+    "Re-run with --yes-i-mean-it if that's really what you want:\n" +
+    "  node src/seed/seed.js --yes-i-mean-it"
+  );
+  process.exit(1);
+}
+
 const seed = async () => {
   try {
     await connectDB();
 
     await User.deleteMany({});
     await Product.deleteMany({});
+    await Listing.deleteMany({});
 
     const hashedPassword = await bcrypt.hash("admin123", 12);
     const admin = await User.create({
@@ -73,11 +91,28 @@ const seed = async () => {
       role: "admin",
     });
 
-    await Product.insertMany(
-      products.map((product) => ({
-        ...product,
+    const professional = await User.create({
+      name: "Demo Professional",
+      email: "professional@glutenia.tn",
+      password: hashedPassword,
+      role: "professional",
+    });
+
+    const createdProducts = await Product.insertMany(
+      products.map(({ price, stock, ...catalogFields }) => ({
+        ...catalogFields,
         isGlutenFree: true,
         createdBy: admin._id,
+      }))
+    );
+
+    await Listing.insertMany(
+      createdProducts.map((product, index) => ({
+        product: product._id,
+        professional: professional._id,
+        price: products[index].price,
+        stock: products[index].stock,
+        isAvailable: true,
       }))
     );
 

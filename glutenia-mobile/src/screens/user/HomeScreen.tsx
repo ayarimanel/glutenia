@@ -18,7 +18,7 @@ import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { useTranslation } from "react-i18next";
 import { getHomeQuickAccessOrder, type QuickAccessId } from "../../utils/personalization";
 import type { AppNavigation } from "../../navigation/types";
-import type { Event, HomeGamificationSummary, Product, ScanHistoryEntry } from "../../types/models";
+import type { Event, HomeGamificationSummary, Listing, ScanHistoryEntry } from "../../types/models";
 
 // Quick Access card catalog, keyed so the display order can be reordered
 // per-user without duplicating the card markup itself.
@@ -36,7 +36,7 @@ export default function HomeScreen({ navigation }: { navigation: AppNavigation }
 
   const { user, token } = useAuthenticated();
   const { addItemWithStockCheck } = useCart();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Listing[]>([]);
   const [productsError, setProductsError] = useState(false);
   const [events, setEvents] = useState<Event[]>([]);
   const [scanHistory, setScanHistory] = useState<ScanHistoryEntry[]>([]);
@@ -46,7 +46,7 @@ export default function HomeScreen({ navigation }: { navigation: AppNavigation }
 
   useEffect(() => {
     setProductsError(false);
-    api.products({})
+    api.listings({})
       .then((data) => setProducts(data.slice(0, 8)))
       .catch(() => setProductsError(true));
   }, []);
@@ -220,7 +220,7 @@ export default function HomeScreen({ navigation }: { navigation: AppNavigation }
               <ProductCard
                 product={item}
                 onPress={() =>
-                  navigation.navigate("ProductDetail", { productId: item._id })
+                  navigation.navigate("ProductDetail", { listingId: item._id })
                 }
                 onAdd={() => addItemWithStockCheck(item, 1)}
               />

@@ -137,6 +137,28 @@ export default function AdminSettingsScreen({ navigation }: { navigation: AppNav
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: Spacing.md }}
       >
+        {/* ACCOUNT */}
+        <SectionLabel text={t("settings.account")} colors={colors} />
+        <View style={{ backgroundColor: colors.surface, borderRadius: Radius.lg, overflow: "hidden" }}>
+          <SettingRow
+            icon="person"
+            label={t("settings.editProfile")}
+            isFirst
+            colors={colors}
+            onPress={() => navigation.navigate("EditProfile")}
+            right={<AppIcon name="chevron-right" size={18} color={colors.textMuted} />}
+          />
+          <Divider colors={colors} />
+          <SettingRow
+            icon="shield"
+            label={t("settings.changePassword")}
+            isLast
+            colors={colors}
+            onPress={() => navigation.navigate("ChangePassword")}
+            right={<AppIcon name="chevron-right" size={18} color={colors.textMuted} />}
+          />
+        </View>
+
         {/* MANAGEMENT */}
         <SectionLabel text={t("settings.management")} colors={colors} />
         <View style={{ backgroundColor: colors.surface, borderRadius: Radius.lg, overflow: "hidden" }}>
