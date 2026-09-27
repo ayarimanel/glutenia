@@ -36,7 +36,7 @@ export default function UserOrdersScreen() {
   return (
     <Screen>
       <View style={styles.container}>
-        <SectionHeader eyebrow={t("userOrders.history")} title={t("userOrders.title")} />
+        <SectionHeader back eyebrow={t("userOrders.history")} title={t("userOrders.title")} />
         <FlatList
           data={orders}
           keyExtractor={(item) => item._id}

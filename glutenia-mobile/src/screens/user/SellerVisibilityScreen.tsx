@@ -66,6 +66,7 @@ export default function SellerVisibilityScreen() {
         refreshControl={<RefreshControl refreshing={loading} onRefresh={load} />}
       >
         <SectionHeader
+          back
           eyebrow={t("seller.visibility.eyebrow")}
           title={t("seller.visibility.title")}
         />

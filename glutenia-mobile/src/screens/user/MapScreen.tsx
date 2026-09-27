@@ -8,6 +8,7 @@ import {
   Alert,
   Linking,
   Image,
+  Platform,
 } from "react-native";
 import { WebView } from "react-native-webview";
 import type { WebViewMessageEvent } from "react-native-webview";
@@ -379,8 +380,14 @@ function buildLeafletHTML(spots: PositionedSpot[]): string {
   var map = L.map('map', { zoomControl: false, attributionControl: false })
     .setView([36.82, 10.2], 12);
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    subdomains: 'abcd', maxZoom: 19
+  // Esri light-gray base + labels: keyless, unlike CARTO basemaps, which
+  // now return "API KEY REQUIRED" tiles.
+  var ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/';
+  L.tileLayer(ESRI + 'World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+    maxNativeZoom: 16, maxZoom: 19
+  }).addTo(map);
+  L.tileLayer(ESRI + 'World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+    maxNativeZoom: 16, maxZoom: 19
   }).addTo(map);
 
   function getSvgIcon(type) {
@@ -457,10 +464,12 @@ function buildLeafletHTML(spots: PositionedSpot[]): string {
         }).addTo(map);
         m.on('click', function() {
           selectMarker(s.id);
+          var payload = JSON.stringify({ type: 'markerPress', spotId: s.id });
           if (window.ReactNativeWebView) {
-            window.ReactNativeWebView.postMessage(
-              JSON.stringify({ type: 'markerPress', spotId: s.id })
-            );
+            window.ReactNativeWebView.postMessage(payload);
+          } else if (window.parent !== window) {
+            // Web build: the map runs in an iframe instead of a WebView.
+            window.parent.postMessage(payload, '*');
           }
         });
         markers[s.id] = m;
@@ -531,6 +540,9 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
     }
   };
   const webViewRef = useRef<WebView>(null);
+  // react-native-webview has no web implementation, so the web build renders
+  // the same Leaflet page in an iframe (see the map layer below).
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
 
   const [activeFilter, setActiveFilter] = useState("All");
@@ -612,6 +624,15 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   const sendToMap = useCallback((data: MapMessage) => {
+    if (Platform.OS === "web") {
+      // srcDoc iframes share our origin, so the map's handler is callable directly.
+      const frame = iframeRef.current?.contentWindow as
+        | (Window & { handleFromRN?: (msg: MapMessage) => void })
+        | null
+        | undefined;
+      frame?.handleFromRN?.(data);
+      return;
+    }
     webViewRef.current?.injectJavaScript(
       `if (window.handleFromRN) { window.handleFromRN(${JSON.stringify(data)}); } true;`
     );
@@ -653,10 +674,10 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
     setSheetIndex(0);
   }, []);
 
-  const handleWebViewMessage = useCallback(
-    (event: WebViewMessageEvent) => {
+  const handleMapMessage = useCallback(
+    (raw: string) => {
       try {
-        const msg = JSON.parse(event.nativeEvent.data);
+        const msg = JSON.parse(raw);
         if (msg.type === "markerPress") {
           const spot = allSpots.find((s) => s.id === msg.spotId);
           if (spot) {
@@ -668,6 +689,21 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
     },
     [allSpots]
   );
+
+  const handleWebViewMessage = useCallback(
+    (event: WebViewMessageEvent) => handleMapMessage(event.nativeEvent.data),
+    [handleMapMessage]
+  );
+
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const onMessage = (event: MessageEvent) => {
+      if (event.source !== iframeRef.current?.contentWindow) return;
+      if (typeof event.data === "string") handleMapMessage(event.data);
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [handleMapMessage]);
 
   // Selecting a category just changes state — the useFocusEffect above
   // re-fetches real establishments filtered by it, and the allSpots/
@@ -736,17 +772,27 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
     <View style={styles.root}>
 
       {/* ── Layer 1: Leaflet Map (WebView) ───────────────────────────────────── */}
-      <WebView
-        ref={webViewRef}
-        style={StyleSheet.absoluteFillObject}
-        source={{ html: leafletHTML }}
-        onMessage={handleWebViewMessage}
-        onLoadEnd={() => setMapWebViewReady(true)}
-        javaScriptEnabled
-        originWhitelist={["*"]}
-        scrollEnabled={false}
-        mixedContentMode="compatibility"
-      />
+      {Platform.OS === "web" ? (
+        <iframe
+          ref={iframeRef}
+          title="map"
+          srcDoc={leafletHTML}
+          onLoad={() => setMapWebViewReady(true)}
+          style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }}
+        />
+      ) : (
+        <WebView
+          ref={webViewRef}
+          style={StyleSheet.absoluteFillObject}
+          source={{ html: leafletHTML }}
+          onMessage={handleWebViewMessage}
+          onLoadEnd={() => setMapWebViewReady(true)}
+          javaScriptEnabled
+          originWhitelist={["*"]}
+          scrollEnabled={false}
+          mixedContentMode="compatibility"
+        />
+      )}
 
       {/* ── Layer 2: Header ──────────────────────────────────────────────────── */}
       <View

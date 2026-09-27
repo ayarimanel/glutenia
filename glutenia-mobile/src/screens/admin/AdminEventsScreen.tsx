@@ -84,6 +84,7 @@ export default function AdminEventsScreen({ navigation }: { navigation: AppNavig
     <Screen>
       <View style={styles.container}>
         <SectionHeader
+          back
           eyebrow={t("admin.events.eyebrow")}
           title={t("admin.events.title")}
           right={

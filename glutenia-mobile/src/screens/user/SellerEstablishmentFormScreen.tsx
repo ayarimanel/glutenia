@@ -1,4 +1,4 @@
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { WebView } from "react-native-webview";
 import type { WebViewMessageEvent } from "react-native-webview";
@@ -107,15 +107,25 @@ function buildPickerHTML(lat: number | null, lng: number | null): string {
 <script>
   var map = L.map('map', { zoomControl: false }).setView([${initLat}, ${initLng}], ${hasPoint ? 15 : 12});
 
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    subdomains: 'abcd', maxZoom: 19
+  // Esri light-gray base + labels: keyless, unlike CARTO basemaps, which
+  // now return "API KEY REQUIRED" tiles.
+  var ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/';
+  L.tileLayer(ESRI + 'World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+    maxNativeZoom: 16, maxZoom: 19
+  }).addTo(map);
+  L.tileLayer(ESRI + 'World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+    maxNativeZoom: 16, maxZoom: 19
   }).addTo(map);
 
   var marker = null;
 
   function notify(lat, lng) {
+    var payload = JSON.stringify({ type: 'locationPicked', lat: lat, lng: lng });
     if (window.ReactNativeWebView) {
-      window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'locationPicked', lat: lat, lng: lng }));
+      window.ReactNativeWebView.postMessage(payload);
+    } else if (window.parent !== window) {
+      // Web build: the picker runs in an iframe instead of a WebView.
+      window.parent.postMessage(payload, '*');
     }
   }
 
@@ -177,6 +187,9 @@ export default function SellerEstablishmentFormScreen({ navigation }: { navigati
   const [hasEstablishment, setHasEstablishment] = useState(false);
   const [imageProcessing, setImageProcessing] = useState(false);
   const mapWebViewRef = useRef<WebView>(null);
+  // react-native-webview has no web implementation; the web build renders
+  // the picker page in an iframe instead.
+  const mapIframeRef = useRef<HTMLIFrameElement | null>(null);
 
   const categoryLabels: Record<string, string> = {
     Supermarket: t("map.supermarket"),
@@ -220,16 +233,31 @@ export default function SellerEstablishmentFormScreen({ navigation }: { navigati
 
   const leafletHTML = useMemo(() => buildPickerHTML(latitude, longitude), [mapReady]);
 
-  const handleMapMessage = (event: WebViewMessageEvent) => {
+  const handleMapMessage = (event: WebViewMessageEvent) => handlePickerMessage(event.nativeEvent.data);
+
+  // Latest handler in a ref so the window listener below never goes stale.
+  const pickerMessageRef = useRef<(raw: string) => void>(() => {});
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+    const onMessage = (event: MessageEvent) => {
+      if (event.source !== mapIframeRef.current?.contentWindow) return;
+      if (typeof event.data === "string") pickerMessageRef.current(event.data);
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, []);
+
+  function handlePickerMessage(raw: string) {
     try {
-      const msg = JSON.parse(event.nativeEvent.data);
+      const msg = JSON.parse(raw);
       if (msg.type === "locationPicked") {
         setLatitude(msg.lat);
         setLongitude(msg.lng);
         setErrors((current) => ({ ...current, location: "" }));
       }
     } catch (_) {}
-  };
+  }
+  pickerMessageRef.current = handlePickerMessage;
 
   const applyPastedCoordinates = () => {
     const parsed = parseCoordinatesInput(coordsInput);
@@ -242,9 +270,17 @@ export default function SellerEstablishmentFormScreen({ navigation }: { navigati
     setLongitude(parsed.longitude);
     setErrors((current) => ({ ...current, location: "" }));
     setCoordsInput("");
-    mapWebViewRef.current?.injectJavaScript(
-      `if (window.placeFromRN) { window.placeFromRN(${parsed.latitude}, ${parsed.longitude}); } true;`
-    );
+    if (Platform.OS === "web") {
+      const frame = mapIframeRef.current?.contentWindow as
+        | (Window & { placeFromRN?: (lat: number, lng: number) => void })
+        | null
+        | undefined;
+      frame?.placeFromRN?.(parsed.latitude, parsed.longitude);
+    } else {
+      mapWebViewRef.current?.injectJavaScript(
+        `if (window.placeFromRN) { window.placeFromRN(${parsed.latitude}, ${parsed.longitude}); } true;`
+      );
+    }
   };
 
   const pickImage = async () => {
@@ -495,7 +531,14 @@ export default function SellerEstablishmentFormScreen({ navigation }: { navigati
           <Text style={styles.label}>{t("seller.form.location")}</Text>
           <Text style={styles.locationHint}>{t("seller.form.locationHint")}</Text>
           <View style={[styles.mapBox, errors.location && styles.mapBoxError]}>
-            {mapReady ? (
+            {mapReady && Platform.OS === "web" ? (
+              <iframe
+                ref={mapIframeRef}
+                title="location-picker"
+                srcDoc={leafletHTML}
+                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }}
+              />
+            ) : mapReady ? (
               <WebView
                 ref={mapWebViewRef}
                 style={StyleSheet.absoluteFillObject}

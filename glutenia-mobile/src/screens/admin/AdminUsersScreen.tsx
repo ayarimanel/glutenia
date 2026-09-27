@@ -77,7 +77,7 @@ export default function AdminUsersScreen({ navigation }: { navigation: AppNaviga
   return (
     <Screen>
       <View style={styles.container}>
-        <SectionHeader eyebrow={t("admin.users.eyebrow")} title={t("admin.users.title")} />
+        <SectionHeader back eyebrow={t("admin.users.eyebrow")} title={t("admin.users.title")} />
         <View style={styles.searchBox}>
           <AppIcon name="search" size={19} color={colors.textMuted} />
           <TextInput

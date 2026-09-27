@@ -2,6 +2,7 @@ import type { NavigatorScreenParams } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type {
   EatingOutFrequency,
+  Establishment,
   Event,
   ExperienceLevel,
   GamificationDelta,
@@ -145,6 +146,7 @@ export type RootParamList = {
   AdminProductForm: { productId?: string } | undefined;
   AdminEvents: undefined;
   AdminEstablishments: undefined;
+  AdminEstablishmentDetail: { establishment: Establishment };
   AdminProfessionalRequests: undefined;
   AdminOrderDetail: { order: OrderWithBuyer };
   AdminAnalytics: undefined;

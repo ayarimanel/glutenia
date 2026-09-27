@@ -83,6 +83,7 @@ export default function AdminRecipesScreen({ navigation }: { navigation: AppNavi
     <Screen>
       <View style={styles.container}>
         <SectionHeader
+          back
           eyebrow={t("admin.recipes.eyebrow")}
           title={t("admin.recipes.title")}
           right={

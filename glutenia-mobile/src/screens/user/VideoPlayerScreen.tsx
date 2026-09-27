@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { WebView } from "react-native-webview";
 import type { RouteProp } from "@react-navigation/native";
 import Screen from "../../components/Screen";
@@ -28,14 +28,27 @@ export default function VideoPlayerScreen({ route, navigation }: Props) {
         <View style={styles.navSpacer} />
       </View>
 
-      {/* YouTube embed */}
-      <WebView
-        style={styles.player}
-        source={{ uri: `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0` }}
-        allowsFullscreenVideo
-        allowsInlineMediaPlayback
-        mediaPlaybackRequiresUserAction={false}
-      />
+      {/* YouTube embed - react-native-webview has no web implementation,
+          so the web build uses a plain iframe. */}
+      {Platform.OS === "web" ? (
+        <View style={styles.player}>
+          <iframe
+            title={title}
+            src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0`}
+            allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
+            allowFullScreen
+            style={{ width: "100%", height: "100%", border: 0 }}
+          />
+        </View>
+      ) : (
+        <WebView
+          style={styles.player}
+          source={{ uri: `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0` }}
+          allowsFullscreenVideo
+          allowsInlineMediaPlayback
+          mediaPlaybackRequiresUserAction={false}
+        />
+      )}
     </Screen>
   );
 }

@@ -14,9 +14,12 @@ interface AppHeaderProps {
   avatarUri?: string;
   onCartPress?: () => void;
   safeTop?: boolean;
+  // Back arrow for screens pushed on top of the tabs (Shop, Recipes, label
+  // scan) - on web there's no hardware back button to fall back on.
+  back?: boolean;
 }
 
-export default function AppHeader({ userName, avatarUri, onCartPress, safeTop = false }: AppHeaderProps) {
+export default function AppHeader({ userName, avatarUri, onCartPress, safeTop = false, back }: AppHeaderProps) {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp<RootParamList>>();
   const { count } = useCart();
@@ -28,6 +31,11 @@ export default function AppHeader({ userName, avatarUri, onCartPress, safeTop = 
     <View style={[styles.container, safeTop && { paddingTop: insets.top + 12 }]}>
       {/* Left: avatar + shield badge + user name */}
       <View style={styles.left}>
+        {back && navigation.canGoBack() ? (
+          <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <AppIcon name="arrow-back" size={22} color={colors.textDark} />
+          </Pressable>
+        ) : null}
         <View style={styles.avatarWrap}>
           {avatarUri ? (
             <Image source={{ uri: avatarUri }} style={styles.avatar} />
@@ -88,6 +96,9 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     gap: 10,
     flex: 1,
     marginRight: 8,
+  },
+  backBtn: {
+    padding: 4,
   },
   avatarWrap: {
     width: 42,

@@ -96,7 +96,7 @@ export default function LabelScanScreen({ navigation }: { navigation: AppNavigat
   if (screenState === LOADING) {
     return (
       <View style={styles.root}>
-        <AppHeader userName={user?.name ?? ""} avatarUri={user?.avatar ?? undefined} safeTop />
+        <AppHeader back userName={user?.name ?? ""} avatarUri={user?.avatar ?? undefined} safeTop />
         <View style={[styles.center, { paddingBottom: bottomPad }]}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.headingText}>{t("labelScan.analyzing")}</Text>
@@ -130,7 +130,7 @@ export default function LabelScanScreen({ navigation }: { navigation: AppNavigat
 
     return (
       <View style={styles.root}>
-        <AppHeader userName={user?.name ?? ""} avatarUri={user?.avatar ?? undefined} safeTop />
+        <AppHeader back userName={user?.name ?? ""} avatarUri={user?.avatar ?? undefined} safeTop />
         <ScrollView
           contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad }]}
           showsVerticalScrollIndicator={false}
@@ -212,7 +212,7 @@ export default function LabelScanScreen({ navigation }: { navigation: AppNavigat
   // ── IDLE ─────────────────────────────────────────────────────────────────
   return (
     <View style={styles.root}>
-      <AppHeader userName={user?.name ?? ""} avatarUri={user?.avatar ?? undefined} safeTop />
+      <AppHeader back userName={user?.name ?? ""} avatarUri={user?.avatar ?? undefined} safeTop />
       <View style={[styles.center, { paddingBottom: bottomPad }]}>
         <View style={styles.iconCircle}>
           <AppIcon name="scan" size={48} color={colors.primary} />

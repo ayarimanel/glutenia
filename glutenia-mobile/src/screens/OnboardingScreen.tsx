@@ -8,7 +8,8 @@ import {
   useWindowDimensions,
   View,
   type ImageSourcePropType,
-  type ViewToken,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, ArrowRight } from "lucide-react-native";
@@ -17,8 +18,6 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme, type ThemeColors } from "../context/ThemeContext";
 import { Spacing } from "../theme/colors";
 import LanguageSelector from "../components/LanguageSelector";
-
-const VIEWABILITY_CONFIG = { viewAreaCoveragePercentThreshold: 50 };
 
 interface SlideAsset {
   id: string;
@@ -50,9 +49,18 @@ export default function OnboardingScreen() {
 
   const isLast = activeIndex === SLIDES.length - 1;
 
+  // The arrows set the index themselves and scroll to an exact offset,
+  // instead of waiting for FlatList's viewability callback: on web that
+  // callback often doesn't fire after a programmatic scroll, which left
+  // activeIndex stuck at 0 and the arrows jumping to the wrong slide.
+  const goTo = (index: number) => {
+    setActiveIndex(index);
+    flatListRef.current?.scrollToOffset({ offset: index * width, animated: true });
+  };
+
   const handleNext = () => {
     if (!isLast) {
-      flatListRef.current?.scrollToIndex({ index: activeIndex + 1, animated: true });
+      goTo(activeIndex + 1);
     } else {
       completeOnboarding();
     }
@@ -60,15 +68,17 @@ export default function OnboardingScreen() {
 
   const handleBack = () => {
     if (activeIndex > 0) {
-      flatListRef.current?.scrollToIndex({ index: activeIndex - 1, animated: true });
+      goTo(activeIndex - 1);
     }
   };
 
-  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
-    if (viewableItems.length > 0) {
-      setActiveIndex(viewableItems[0].index ?? 0);
+  // Keeps the dots in sync when the user swipes instead of using the arrows.
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const index = Math.round(event.nativeEvent.contentOffset.x / width);
+    if (index !== activeIndex && index >= 0 && index < SLIDES.length) {
+      setActiveIndex(index);
     }
-  }).current;
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -87,8 +97,9 @@ export default function OnboardingScreen() {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         bounces={false}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={VIEWABILITY_CONFIG}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
         renderItem={({ item }) => (
           <View style={[styles.slide, { width }]}>
             <View style={[styles.imageWrap, { width: IMAGE_SIZE, height: IMAGE_SIZE }]}>

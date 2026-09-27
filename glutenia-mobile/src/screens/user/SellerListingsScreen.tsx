@@ -73,6 +73,7 @@ export default function SellerListingsScreen({ navigation }: { navigation: AppNa
     <Screen>
       <View style={styles.container}>
         <SectionHeader
+          back
           eyebrow={t("seller.listings.eyebrow")}
           title={t("seller.listings.title")}
           right={

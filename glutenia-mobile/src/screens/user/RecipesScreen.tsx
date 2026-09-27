@@ -62,6 +62,7 @@ export default function RecipesScreen({ navigation }: { navigation: AppNavigatio
   return (
     <Screen>
       <AppHeader
+        back
         userName={user?.name ?? ""}
         avatarUri={user?.avatar ?? undefined}
         onCartPress={() => navigation.navigate("CartPage")}

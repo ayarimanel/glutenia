@@ -138,7 +138,7 @@ exports.deleteMyEstablishment = async (req, res, next) => {
 exports.getPendingEstablishments = async (req, res, next) => {
   try {
     const establishments = await Establishment.find({ verified: false })
-      .populate("owner", "name email")
+      .populate("owner", "name email phone")
       .sort({ createdAt: -1 });
 
     return res.json({

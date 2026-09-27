@@ -1051,3 +1051,36 @@ describe("Admin order deletion", () => {
     assert.equal((await Listing.findById(listing._id)).stock, 10);
   });
 });
+
+describe("Self-service account deletion", () => {
+  test("removes a professional's establishment and listings along with the account", async () => {
+    const seller = await createApprovedProfessional({
+      name: "Leaving Seller",
+      email: "leaving-seller@glutenia.test",
+      password: "seller123",
+    });
+    const product = await Product.create({ name: "Farewell Bread", category: "Bread" });
+
+    await request(app)
+      .put("/api/establishments/mine")
+      .set("Authorization", `Bearer ${seller.token}`)
+      .send({ name: "Closing Shop", category: "Bakery", latitude: 36.8, longitude: 10.18 })
+      .expect(200);
+
+    await request(app)
+      .post("/api/listings")
+      .set("Authorization", `Bearer ${seller.token}`)
+      .send({ productId: product._id, price: 3, stock: 5 })
+      .expect(201);
+
+    await request(app)
+      .delete("/api/auth/me")
+      .set("Authorization", `Bearer ${seller.token}`)
+      .send({ password: "seller123" })
+      .expect(200);
+
+    assert.equal(await User.exists({ _id: seller.id }), null);
+    assert.equal(await Establishment.exists({ owner: seller.id }), null);
+    assert.equal(await Listing.exists({ professional: seller.id }), null);
+  });
+});

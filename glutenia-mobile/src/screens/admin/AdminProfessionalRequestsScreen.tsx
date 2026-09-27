@@ -92,6 +92,7 @@ export default function AdminProfessionalRequestsScreen() {
     <Screen>
       <View style={styles.container}>
         <SectionHeader
+          back
           eyebrow={t("admin.requests.eyebrow")}
           title={t("admin.requests.title")}
         />

@@ -8,6 +8,8 @@ const UserGamification = require("../models/UserGamification");
 const UserBadge = require("../models/UserBadge");
 const XpLedger = require("../models/XpLedger");
 const Event = require("../models/Event");
+const Establishment = require("../models/Establishment");
+const Listing = require("../models/Listing");
 
 const createToken = (user) => {
   return jwt.sign(
@@ -289,7 +291,10 @@ exports.deleteAccount = async (req, res, next) => {
 
     const userId = user._id;
 
-    // Order records are intentionally kept for accounting/history purposes.
+    // Same cleanup as the admin delete (user.controller deleteUser),
+    // including a professional's establishment/listings so they don't stay
+    // on the map/shop with no owner. Order records are intentionally kept
+    // for accounting/history purposes.
     await Promise.all([
       Cart.deleteOne({ user: userId }),
       Notification.deleteMany({ user: userId }),
@@ -297,6 +302,8 @@ exports.deleteAccount = async (req, res, next) => {
       UserBadge.deleteMany({ userId }),
       XpLedger.deleteMany({ userId }),
       Event.updateMany({ attendees: userId }, { $pull: { attendees: userId } }),
+      Establishment.deleteOne({ owner: userId }),
+      Listing.deleteMany({ professional: userId }),
     ]);
 
     await User.findByIdAndDelete(userId);

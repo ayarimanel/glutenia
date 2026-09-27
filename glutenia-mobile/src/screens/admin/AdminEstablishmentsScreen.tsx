@@ -19,13 +19,14 @@ import { api, isApiError, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import type { Establishment, EstablishmentOwnerSummary } from "../../types/models";
+import type { AppNavigation } from "../../navigation/types";
 
 // Admin oversight of Professional-submitted establishments. There is no
 // separate "request verification" step - upsertMyEstablishment never sets
 // `verified`, so any establishment sits here (verified: false) from the
 // moment it's created/updated until an admin acts on it, same as how a
 // professional signup is itself the approval request.
-export default function AdminEstablishmentsScreen() {
+export default function AdminEstablishmentsScreen({ navigation }: { navigation: AppNavigation }) {
   const { token, logout } = useAuthenticated();
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -98,6 +99,7 @@ export default function AdminEstablishmentsScreen() {
     <Screen>
       <View style={styles.container}>
         <SectionHeader
+          back
           eyebrow={t("admin.establishments.eyebrow")}
           title={t("admin.establishments.title")}
         />
@@ -116,7 +118,10 @@ export default function AdminEstablishmentsScreen() {
           renderItem={({ item }) => {
             const owner = item.owner as EstablishmentOwnerSummary;
             return (
-              <View style={styles.card}>
+              <Pressable
+                style={styles.card}
+                onPress={() => navigation.navigate("AdminEstablishmentDetail", { establishment: item })}
+              >
                 <View style={styles.top}>
                   <Text style={styles.name} numberOfLines={1}>{item.name}</Text>
                   <View style={styles.categoryPill}>
@@ -126,6 +131,10 @@ export default function AdminEstablishmentsScreen() {
                 <Text style={styles.owner} numberOfLines={1}>
                   {owner?.name || owner?.email || t("admin.establishments.unknownOwner")}
                 </Text>
+                <View style={styles.detailsHint}>
+                  <Text style={styles.detailsHintText}>{t("admin.establishments.viewDetails")}</Text>
+                  <AppIcon name="chevron-right" size={14} color={colors.secondary} />
+                </View>
                 <View style={styles.actions}>
                   <Pressable
                     style={[styles.actionButton, styles.verifyButton]}
@@ -144,7 +153,7 @@ export default function AdminEstablishmentsScreen() {
                     <Text style={styles.deleteText}>{t("admin.establishments.delete")}</Text>
                   </Pressable>
                 </View>
-              </View>
+              </Pressable>
             );
           }}
         />
@@ -197,6 +206,16 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.textMuted,
     fontSize: 13,
     fontWeight: "600",
+  },
+  detailsHint: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+  },
+  detailsHintText: {
+    color: colors.secondary,
+    fontSize: 12,
+    fontWeight: "700",
   },
   actions: {
     flexDirection: "row",

@@ -93,6 +93,7 @@ export default function AdminPatientResourcesScreen({ navigation }: { navigation
     <Screen>
       <View style={styles.container}>
         <SectionHeader
+          back
           eyebrow={t("admin.patientResources.eyebrow")}
           title={t("admin.patientResources.title")}
           right={

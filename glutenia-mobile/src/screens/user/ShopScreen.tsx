@@ -55,6 +55,7 @@ export default function ShopScreen({ navigation }: { navigation: AppNavigation }
   return (
     <Screen>
       <AppHeader
+        back
         userName={user?.name ?? ""}
         avatarUri={user?.avatar ?? undefined}
         onCartPress={() => navigation.navigate("CartPage")}

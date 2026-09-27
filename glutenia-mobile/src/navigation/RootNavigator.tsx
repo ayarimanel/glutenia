@@ -33,6 +33,7 @@ import NotificationsScreen from "../screens/user/NotificationsScreen";
 import AdminDashboardScreen from "../screens/admin/AdminDashboardScreen";
 import AdminEventsScreen from "../screens/admin/AdminEventsScreen";
 import AdminEstablishmentsScreen from "../screens/admin/AdminEstablishmentsScreen";
+import AdminEstablishmentDetailScreen from "../screens/admin/AdminEstablishmentDetailScreen";
 import AdminProductsScreen from "../screens/admin/AdminProductsScreen";
 import AdminProductFormScreen from "../screens/admin/AdminProductFormScreen";
 import SellerListingsScreen from "../screens/user/SellerListingsScreen";
@@ -174,6 +175,7 @@ function AdminStack({ bg }: { bg: string }) {
       <Stack.Screen name="AdminProductForm" component={AdminProductFormScreen} />
       <Stack.Screen name="AdminEvents" component={AdminEventsScreen} />
       <Stack.Screen name="AdminEstablishments" component={AdminEstablishmentsScreen} />
+      <Stack.Screen name="AdminEstablishmentDetail" component={AdminEstablishmentDetailScreen} />
       <Stack.Screen name="AdminProfessionalRequests" component={AdminProfessionalRequestsScreen} />
       <Stack.Screen name="AdminOrderDetail" component={AdminOrderDetailScreen} />
       <Stack.Screen name="AdminAnalytics" component={AdminAnalyticsScreen} />

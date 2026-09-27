@@ -144,6 +144,8 @@ export interface EstablishmentOwnerSummary {
   _id: string;
   name: string;
   email: string;
+  // Only populated by the admin-only GET /establishments/pending.
+  phone?: string;
 }
 
 export interface Establishment {

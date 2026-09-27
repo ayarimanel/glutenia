@@ -62,7 +62,7 @@ export default function SellerOrdersScreen() {
   return (
     <Screen>
       <View style={styles.container}>
-        <SectionHeader eyebrow={t("seller.orders.eyebrow")} title={t("account.sellerOrders")} />
+        <SectionHeader back eyebrow={t("seller.orders.eyebrow")} title={t("account.sellerOrders")} />
         <FlatList
           data={orders}
           keyExtractor={(item) => item._id}

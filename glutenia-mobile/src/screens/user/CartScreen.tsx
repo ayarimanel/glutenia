@@ -25,6 +25,7 @@ export default function CartScreen({ navigation }: { navigation: AppNavigation }
     <Screen>
       <View style={styles.container}>
         <SectionHeader
+          back
           eyebrow={t("cart.basket")}
           title={t("cart.title")}
           right={

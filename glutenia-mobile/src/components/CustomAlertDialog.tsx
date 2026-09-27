@@ -280,8 +280,11 @@ export default function CustomAlertDialog({
                       backgroundColor: btnBgColor,
                       borderColor: btnBorderColor,
                       borderWidth: isCancel ? 1.5 : 0,
-                      flex: alertButtons.length === 2 ? 1 : 0,
                     },
+                    // Only side-by-side buttons share the row. Stacked ones
+                    // must not get `flex: 0`: on web that becomes a 0 flex
+                    // basis, which collapses the button to zero height.
+                    alertButtons.length === 2 && { flex: 1 },
                     pressed && styles.pressed,
                   ]}
                 >
