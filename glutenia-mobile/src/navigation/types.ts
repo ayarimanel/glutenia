@@ -8,31 +8,12 @@ import type {
   GamificationDelta,
   Order,
   OrderWithBuyer,
-  PatientResource,
   PrimaryGoal,
-  Recipe,
   RoleType,
 } from "../types/models";
 import type { IconName } from "../components/AppIcon";
 
 export type CreatedOrder = Order & { gamification: GamificationDelta | null };
-
-// RecipesScreen maps every Recipe through `{ ...r, id: r._id, image: r.imageUrl }`
-// before handing it to RecipeDetailScreen (which reads `recipe.id`/`recipe.image`,
-// not `_id`/`imageUrl`) - so the real navigated shape is Recipe plus these two
-// extra fields, not Recipe itself.
-export type RecipeWithImage = Recipe & { id: string; image: string };
-
-// PatientResourcesScreen's resolveVisuals() adds these fields client-side
-// (derived from category, same mapping the category chips use) before
-// handing a resource to ResourceDetailScreen, which reads resource.icon/
-// bg/color/readTime alongside the normal PatientResource fields.
-export type ResolvedPatientResource = PatientResource & {
-  icon: IconName;
-  bg: string;
-  color: string;
-  readTime: string;
-};
 
 // FavoritePlacesScreen/MapScreen's "spot" shape — a client-side mix of
 // static demo spots (getSpots() in MapScreen) and real Establishment
@@ -121,11 +102,6 @@ export type RootParamList = {
   MapDetail: { spot: MapSpot };
   FavoritePlaces: undefined;
   ShopScreen: undefined;
-  PatientResources: undefined;
-  VideoPlayer: { youtubeId: string; title: string };
-  ResourceDetail: { resource: ResolvedPatientResource };
-  Recipes: undefined;
-  RecipeDetail: { recipe: RecipeWithImage };
   Settings: undefined;
   EditProfile: undefined;
   ChangePassword: undefined;
@@ -152,10 +128,6 @@ export type RootParamList = {
   AdminAnalytics: undefined;
   AdminUsers: undefined;
   AdminUserDetail: { userId: string };
-  AdminRecipes: undefined;
-  AdminRecipeForm: { recipeId?: string } | undefined;
-  AdminPatientResources: undefined;
-  AdminPatientResourceForm: { resourceId?: string } | undefined;
   CreateEvent: { eventId?: string } | undefined;
   Account: undefined;
   Onboarding: undefined;

@@ -44,10 +44,6 @@ import AdminAnalyticsScreen from "../screens/admin/AdminAnalyticsScreen";
 import AdminUsersScreen from "../screens/admin/AdminUsersScreen";
 import AdminUserDetailScreen from "../screens/admin/AdminUserDetailScreen";
 import AdminProfessionalRequestsScreen from "../screens/admin/AdminProfessionalRequestsScreen";
-import AdminRecipesScreen from "../screens/admin/AdminRecipesScreen";
-import AdminRecipeFormScreen from "../screens/admin/AdminRecipeFormScreen";
-import AdminPatientResourcesScreen from "../screens/admin/AdminPatientResourcesScreen";
-import AdminPatientResourceFormScreen from "../screens/admin/AdminPatientResourceFormScreen";
 import AccountScreen from "../screens/AccountScreen";
 import OnboardingScreen from "../screens/OnboardingScreen";
 import OnboardingRoleScreen from "../screens/onboarding/OnboardingRoleScreen";
@@ -57,11 +53,6 @@ import OnboardingEatingOutScreen from "../screens/onboarding/OnboardingEatingOut
 import OnboardingConfidenceScreen from "../screens/onboarding/OnboardingConfidenceScreen";
 import BadgeCollectionScreen from "../screens/user/BadgeCollectionScreen";
 import ShopScreen from "../screens/user/ShopScreen";
-import PatientResourcesScreen from "../screens/user/PatientResourcesScreen";
-import VideoPlayerScreen from "../screens/user/VideoPlayerScreen";
-import ResourceDetailScreen from "../screens/user/ResourceDetailScreen";
-import RecipesScreen from "../screens/user/RecipesScreen";
-import RecipeDetailScreen from "../screens/user/RecipeDetailScreen";
 import SettingsScreen from "../screens/user/SettingsScreen";
 import EditProfileScreen from "../screens/user/EditProfileScreen";
 import ChangePasswordScreen from "../screens/user/ChangePasswordScreen";
@@ -121,11 +112,6 @@ function customerScreens() {
       <Stack.Screen name="MapDetail" component={MapDetailScreen} />
       <Stack.Screen name="FavoritePlaces" component={FavoritePlacesScreen} />
       <Stack.Screen name="ShopScreen" component={ShopScreen} />
-      <Stack.Screen name="PatientResources" component={PatientResourcesScreen} />
-      <Stack.Screen name="VideoPlayer" component={VideoPlayerScreen} />
-      <Stack.Screen name="ResourceDetail" component={ResourceDetailScreen} />
-      <Stack.Screen name="Recipes" component={RecipesScreen} />
-      <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       <Stack.Screen name="LabelScan" component={LabelScanScreen} />
@@ -181,10 +167,6 @@ function AdminStack({ bg }: { bg: string }) {
       <Stack.Screen name="AdminAnalytics" component={AdminAnalyticsScreen} />
       <Stack.Screen name="AdminUsers" component={AdminUsersScreen} />
       <Stack.Screen name="AdminUserDetail" component={AdminUserDetailScreen} />
-      <Stack.Screen name="AdminRecipes" component={AdminRecipesScreen} />
-      <Stack.Screen name="AdminRecipeForm" component={AdminRecipeFormScreen} />
-      <Stack.Screen name="AdminPatientResources" component={AdminPatientResourcesScreen} />
-      <Stack.Screen name="AdminPatientResourceForm" component={AdminPatientResourceFormScreen} />
       <Stack.Screen name="CreateEvent" component={CreateEventScreen} />
       <Stack.Screen name="Settings" component={AdminSettingsScreen} />
       {/* The customer app ("Customer space" on the dashboard) and every

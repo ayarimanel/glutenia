@@ -159,28 +159,6 @@ export default function AdminSettingsScreen({ navigation }: { navigation: AppNav
           />
         </View>
 
-        {/* MANAGEMENT */}
-        <SectionLabel text={t("settings.management")} colors={colors} />
-        <View style={{ backgroundColor: colors.surface, borderRadius: Radius.lg, overflow: "hidden" }}>
-          <SettingRow
-            icon="utensils"
-            label={t("settings.manageRecipes")}
-            isFirst
-            colors={colors}
-            onPress={() => navigation.navigate("AdminRecipes")}
-            right={<AppIcon name="chevron-right" size={18} color={colors.textMuted} />}
-          />
-          <Divider colors={colors} />
-          <SettingRow
-            icon="heart"
-            label={t("settings.managePatientResources")}
-            isLast
-            colors={colors}
-            onPress={() => navigation.navigate("AdminPatientResources")}
-            right={<AppIcon name="chevron-right" size={18} color={colors.textMuted} />}
-          />
-        </View>
-
         {/* APPEARANCE */}
         <SectionLabel text={t("settings.appearance")} colors={colors} />
         <View style={{ backgroundColor: colors.surface, borderRadius: Radius.lg, overflow: "hidden" }}>

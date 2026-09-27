@@ -22,10 +22,10 @@ import type { Event, HomeGamificationSummary, Listing, ScanHistoryEntry } from "
 
 // Quick Access card catalog, keyed so the display order can be reordered
 // per-user without duplicating the card markup itself.
-const QUICK_ACCESS_ITEMS: Record<QuickAccessId, { icon: IconName; labelKey: string; nav: "Recipes" | "Events" | "PatientResources" | "Map" }> = {
-  recipes: { icon: "utensils", labelKey: "home.recipes", nav: "Recipes" },
+const QUICK_ACCESS_ITEMS: Record<QuickAccessId, { icon: IconName; labelKey: string; nav: "ShopScreen" | "Events" | "FavoritePlaces" | "Map" }> = {
+  products: { icon: "utensils", labelKey: "home.products", nav: "ShopScreen" },
   events: { icon: "people", labelKey: "events.title", nav: "Events" },
-  patientResources: { icon: "heart", labelKey: "home.patientResources", nav: "PatientResources" },
+  favorites: { icon: "heart", labelKey: "home.favorites", nav: "FavoritePlaces" },
   map: { icon: "location", labelKey: "home.map", nav: "Map" },
 };
 

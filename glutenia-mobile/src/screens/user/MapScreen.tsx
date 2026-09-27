@@ -283,7 +283,7 @@ const FILTER_ICONS: Record<string, IconName> = {
 
 // ─── Real (professional-submitted) establishments → map spot shape ──────────
 
-const getCategoryVisual = (colors: ThemeColors): Record<EstablishmentCategory, CategoryVisual> => ({
+export const getCategoryVisual = (colors: ThemeColors): Record<EstablishmentCategory, CategoryVisual> => ({
   Supermarket: { emoji: "🛒", color: colors.primary, accentEmoji: "🛒" },
   Restaurant: { emoji: "🍽️", color: colors.secondary, accentEmoji: "🍽️" },
   "Health Store": { emoji: "🌿", color: colors.primary, accentEmoji: "🌿" },
@@ -309,7 +309,8 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
 // always set in practice - but the signature stays honest to what this
 // function alone can guarantee (see hasCoordinate/PositionedSpot below for
 // where that stronger guarantee actually gets used).
-function normalizeEstablishment(
+// Also used by FavoritePlacesScreen to refresh saved favorites.
+export function normalizeEstablishment(
   est: Establishment,
   categoryVisual: Record<EstablishmentCategory, CategoryVisual>
 ): MapSpot {
@@ -560,13 +561,17 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
     setMapWebViewReady(false);
   }, [leafletHTML]);
 
-  useEffect(() => {
-    if (!token) return;
-    api
-      .getFavoriteSpots(token)
-      .then((list) => setFavorites(list || []))
-      .catch(() => {});
-  }, [token]);
+  // Reloaded on focus (not just mount): the tab stays mounted, and favorites
+  // can change from the Favorites screen in between.
+  useFocusEffect(
+    useCallback(() => {
+      if (!token) return;
+      api
+        .getFavoriteSpots(token)
+        .then((list) => setFavorites(list || []))
+        .catch(() => {});
+    }, [token])
+  );
 
   const toggleFavorite = useCallback(
     (spot: MapSpot) => {
@@ -957,14 +962,29 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
                   style={styles.heroImage}
                 />
                 <View style={styles.heroGradient}>
-                  {selectedSpot.verified !== false && (
-                    <View style={styles.heroBadgeRow}>
+                  <View style={styles.heroBadgeRow}>
+                    {/* Same favorite toggle as the small info card, so any
+                        spot opened straight from its marker can be saved too. */}
+                    <TouchableOpacity
+                      style={styles.heroFavoriteBtn}
+                      activeOpacity={0.7}
+                      onPress={() => toggleFavorite(selectedSpot)}
+                    >
+                      <AppIcon
+                        name="heart"
+                        size={18}
+                        color="#C8102E"
+                        fill={favorites.some((f) => f.id === selectedSpot.id) ? "#C8102E" : "none"}
+                        strokeWidth={2.5}
+                      />
+                    </TouchableOpacity>
+                    {selectedSpot.verified !== false && (
                       <View style={styles.gfCertBadge}>
                         <AppIcon name="shield-check" size={12} color="#FFFFFF" strokeWidth={3} />
                         <Text style={styles.gfCertText}>{t("map.certifiedGF")}</Text>
                       </View>
-                    </View>
-                  )}
+                    )}
+                  </View>
 
                   <View style={styles.heroDetailsContainer}>
                     <Text style={styles.heroCategory}>{(filterLabels[selectedSpot.type] ?? selectedSpot.type).toUpperCase()}</Text>
@@ -1369,7 +1389,16 @@ const getSheetStyles = (colors: ThemeColors) =>
     },
     heroBadgeRow: {
       flexDirection: "row",
-      justifyContent: "flex-end",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    heroFavoriteBtn: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      backgroundColor: "rgba(255, 255, 255, 0.92)",
+      alignItems: "center",
+      justifyContent: "center",
     },
     gfCertBadge: {
       flexDirection: "row",

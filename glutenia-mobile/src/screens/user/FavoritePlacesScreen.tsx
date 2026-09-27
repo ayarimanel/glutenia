@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -16,12 +16,14 @@ import { api } from "../../api/client";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import type { AppNavigation, MapSpot } from "../../navigation/types";
+import { getCategoryVisual, normalizeEstablishment } from "./MapScreen";
 
 export default function FavoritePlacesScreen({ navigation }: { navigation: AppNavigation }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
   const { token } = useAuthenticated();
+  const categoryVisual = useMemo(() => getCategoryVisual(colors), [colors]);
 
   const [favorites, setFavorites] = useState<MapSpot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,14 +32,37 @@ export default function FavoritePlacesScreen({ navigation }: { navigation: AppNa
   const fetchFavorites = useCallback(async () => {
     setLoading(true);
     try {
-      const list = await api.getFavoriteSpots(token);
-      setFavorites(list || []);
+      const saved = (await api.getFavoriteSpots(token)) || [];
+
+      // Favorites are stored as snapshots taken when the heart was tapped.
+      // Real establishments get refreshed from the live list so renames,
+      // new photos, etc. show up, and ones that were deleted (or are no
+      // longer verified) are dropped. Built-in demo spots never change.
+      let live: Awaited<ReturnType<typeof api.establishments>>;
+      try {
+        live = await api.establishments({});
+      } catch (_) {
+        setFavorites(saved);
+        return;
+      }
+      const liveById = new Map(live.map((e) => [e._id, e]));
+      const refreshed = saved.flatMap((spot) => {
+        if (!spot.isReal) return [spot];
+        const current = liveById.get(spot.id);
+        return current ? [normalizeEstablishment(current, categoryVisual)] : [];
+      });
+      setFavorites(refreshed);
+
+      if (refreshed.length !== saved.length) {
+        // Persist the cleanup so the map's hearts stay in sync too.
+        api.updateFavoriteSpots(token, refreshed).catch(() => {});
+      }
     } catch (_) {
       // Non-critical — leave whatever was already loaded.
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, categoryVisual]);
 
   useFocusEffect(
     useCallback(() => {

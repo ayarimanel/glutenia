@@ -22,8 +22,6 @@ export type ConfidenceLevel = "low" | "medium" | "high";
 
 export type ProductCategory = "Bread" | "Pasta" | "Snacks" | "Flour" | "Sweets" | "Other";
 export type EventCategory = "Meetups" | "Classes" | "Markets" | "Workshops";
-export type RecipeCategory = "Quick" | "Tunisian" | "Easy";
-export type PatientResourceCategory = "celiac" | "diet" | "safe" | "lifestyle";
 export type EstablishmentCategory = "Supermarket" | "Restaurant" | "Health Store" | "Bakery" | "Pharmacy" | "Other";
 export type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered";
 export type BadgeCategory = "scanner" | "safety" | "community" | "shopper" | "streak" | "journey";
@@ -110,34 +108,6 @@ export interface CommunityProduct {
   disputed: boolean;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface Recipe {
-  _id: string;
-  name: string;
-  description: string;
-  category: RecipeCategory;
-  imageUrl: string;
-  calories: number;
-  carbo: number;
-  protein: number;
-  popular: boolean;
-  ingredients: string[];
-  preparation: string;
-  createdBy: string | null;
-  createdAt: string;
-}
-
-export interface PatientResource {
-  _id: string;
-  title: string;
-  description: string;
-  body: string;
-  category: PatientResourceCategory;
-  readTimeMinutes: number;
-  featured: boolean;
-  createdBy: string | null;
-  createdAt: string;
 }
 
 export interface EstablishmentOwnerSummary {

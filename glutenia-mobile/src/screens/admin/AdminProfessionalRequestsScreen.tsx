@@ -5,6 +5,7 @@ import {
   RefreshControl,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import AppIcon from "../../components/AppIcon";
@@ -28,6 +29,19 @@ export default function AdminProfessionalRequestsScreen() {
   const [requests, setRequests] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [actioningId, setActioningId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+
+  // The approval code is what a professional sees on their "pending" screen,
+  // so the admin can look a request up by it (name/email match too).
+  const query = search.trim().toLowerCase();
+  const visibleRequests = query
+    ? requests.filter(
+        (request) =>
+          (request.approvalCode || "").includes(query) ||
+          request.name.toLowerCase().includes(query) ||
+          request.email.toLowerCase().includes(query)
+      )
+    : requests;
 
   const loadRequests = async () => {
     if (!token) return;
@@ -96,17 +110,37 @@ export default function AdminProfessionalRequestsScreen() {
           eyebrow={t("admin.requests.eyebrow")}
           title={t("admin.requests.title")}
         />
+        <View style={styles.searchBox}>
+          <AppIcon name="search" size={19} color={colors.textMuted} />
+          <TextInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder={t("admin.requests.searchPlaceholder")}
+            placeholderTextColor={colors.textMuted}
+            autoCapitalize="none"
+            style={styles.searchInput}
+          />
+        </View>
         <FlatList
-          data={requests}
+          data={visibleRequests}
           keyExtractor={(item) => item._id}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={loadRequests} />}
           contentContainerStyle={styles.listContent}
+          keyboardShouldPersistTaps="handled"
           ListEmptyComponent={
-            <EmptyState
-              icon="shield-check"
-              title={t("admin.requests.empty")}
-              body={t("admin.requests.emptyBody")}
-            />
+            query && requests.length > 0 ? (
+              <EmptyState
+                icon="search"
+                title={t("admin.requests.noMatch")}
+                body={t("admin.requests.noMatchBody")}
+              />
+            ) : (
+              <EmptyState
+                icon="shield-check"
+                title={t("admin.requests.empty")}
+                body={t("admin.requests.emptyBody")}
+              />
+            )
           }
           renderItem={({ item }) => (
             <View style={styles.card}>
@@ -153,6 +187,22 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     flex: 1,
     padding: Spacing.md,
     gap: Spacing.md,
+  },
+  searchBox: {
+    height: 52,
+    borderRadius: Radius.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    gap: 10,
+  },
+  searchInput: {
+    flex: 1,
+    color: colors.textDark,
+    fontSize: 15,
   },
   listContent: {
     gap: 12,

@@ -15,14 +15,10 @@ import type {
   Notification,
   Order,
   OrderWithBuyer,
-  PatientResource,
-  PatientResourceCategory,
   PrimaryGoal,
   Product,
   ProductCategory,
   ProfileGamificationData,
-  Recipe,
-  RecipeCategory,
   ScanHistoryEntry,
   ThemePreference,
   User,
@@ -219,28 +215,6 @@ export interface ImageUploadInput {
   type?: string;
 }
 
-export type RecipeInput = Partial<{
-  name: string;
-  description: string;
-  category: RecipeCategory;
-  imageUrl: string;
-  calories: number;
-  carbo: number;
-  protein: number;
-  popular: boolean;
-  ingredients: string[];
-  preparation: string;
-}>;
-
-export type PatientResourceInput = Partial<{
-  title: string;
-  description: string;
-  body: string;
-  category: PatientResourceCategory;
-  readTimeMinutes: number;
-  featured: boolean;
-}>;
-
 export interface SubmitCommunityProductBody {
   barcode: string;
   name: string;
@@ -371,23 +345,6 @@ export const api = {
     request<Listing>(`/listings/${id}`, { method: "PUT", token, body }),
   deleteListing: (token: string, id: string) =>
     request<Listing>(`/listings/${id}`, { method: "DELETE", token }),
-  recipes: (params: ListParams = {}) => request<Recipe[]>(`/recipes${toQueryString(params)}`),
-  recipe: (id: string) => request<Recipe>(`/recipes/${id}`),
-  createRecipe: (token: string, body: RecipeInput) =>
-    request<Recipe>("/recipes", { method: "POST", token, body, timeoutMs: 30000 }),
-  updateRecipe: (token: string, id: string, body: RecipeInput) =>
-    request<Recipe>(`/recipes/${id}`, { method: "PUT", token, body, timeoutMs: 30000 }),
-  deleteRecipe: (token: string, id: string) =>
-    request<{ message: string }>(`/recipes/${id}`, { method: "DELETE", token }),
-  patientResources: (params: ListParams = {}) =>
-    request<PatientResource[]>(`/patient-resources${toQueryString(params)}`),
-  patientResource: (id: string) => request<PatientResource>(`/patient-resources/${id}`),
-  createPatientResource: (token: string, body: PatientResourceInput) =>
-    request<PatientResource>("/patient-resources", { method: "POST", token, body }),
-  updatePatientResource: (token: string, id: string, body: PatientResourceInput) =>
-    request<PatientResource>(`/patient-resources/${id}`, { method: "PUT", token, body }),
-  deletePatientResource: (token: string, id: string) =>
-    request<{ message: string }>(`/patient-resources/${id}`, { method: "DELETE", token }),
   productByBarcode: (barcode: string, token?: string) =>
     request<ProductScanResult>(`/products/barcode/${encodeURIComponent(barcode)}`, { token }),
   submitCommunityProduct: (token: string, body: SubmitCommunityProductBody) =>

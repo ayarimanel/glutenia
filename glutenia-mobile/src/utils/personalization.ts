@@ -9,7 +9,7 @@ import type { PrimaryGoal, User } from "../types/models";
 
 export type { PrimaryGoal };
 
-export type QuickAccessId = "recipes" | "events" | "patientResources" | "map";
+export type QuickAccessId = "products" | "events" | "favorites" | "map";
 
 // Derived directly from User (not hand-duplicated) so it stays structurally
 // identical to what AuthContext/useAuth actually provide - including the
@@ -19,59 +19,23 @@ export type PersonalizationUser = Pick<
   "confidence_identifying_gf" | "experience_level" | "eating_out_frequency" | "primary_goal"
 >;
 
-const QUICK_ACCESS_DEFAULT_ORDER: QuickAccessId[] = ["recipes", "events", "patientResources", "map"];
+const QUICK_ACCESS_DEFAULT_ORDER: QuickAccessId[] = ["products", "events", "favorites", "map"];
 
 // Surfaces the most relevant Quick Access card first based on why the user
 // said they're here. Exhaustive over every primary_goal enum value —
-// "exploring" used to fall through to the default order silently by
-// omission; it's now an explicit choice (recipes first, a low-commitment
+// "exploring" is an explicit choice (products first, a low-commitment
 // way to browse without any goal-specific detour).
 const QUICK_ACCESS_ORDER_BY_GOAL: Record<PrimaryGoal, QuickAccessId[]> = {
-  manage_celiac: ["patientResources", "recipes", "map", "events"],
-  manage_intolerance: ["patientResources", "recipes", "map", "events"],
-  support_child: ["recipes", "patientResources", "events", "map"],
-  support_partner: ["recipes", "patientResources", "events", "map"],
-  dietary_choice: ["recipes", "map", "events", "patientResources"],
+  manage_celiac: ["favorites", "products", "map", "events"],
+  manage_intolerance: ["favorites", "products", "map", "events"],
+  support_child: ["products", "favorites", "events", "map"],
+  support_partner: ["products", "favorites", "events", "map"],
+  dietary_choice: ["products", "map", "events", "favorites"],
   exploring: QUICK_ACCESS_DEFAULT_ORDER,
 };
 
 export function getHomeQuickAccessOrder(primaryGoal?: PrimaryGoal): QuickAccessId[] {
   return (primaryGoal && QUICK_ACCESS_ORDER_BY_GOAL[primaryGoal]) || QUICK_ACCESS_DEFAULT_ORDER;
-}
-
-// RecipesScreen's default active category filter. "Easy" is the better
-// starting point for anyone likely to want simple recipes right now — just
-// getting started, not confident identifying gluten yet, or eating out
-// often enough that quick/simple home cooking is the more useful default.
-// Everyone else keeps today's "Tunisian" default.
-export function getRecipeDefaultFilter(user?: PersonalizationUser): "Easy" | "Tunisian" {
-  const isBeginner =
-    user?.confidence_identifying_gf === "low" ||
-    user?.experience_level === "just_started";
-  const eatsOutOften =
-    user?.eating_out_frequency === "weekly" || user?.eating_out_frequency === "multiple_week";
-
-  if (isBeginner || eatsOutOften) return "Easy";
-  return "Tunisian";
-}
-
-// Stable re-sort of the full recipe list so already-popular items surface
-// slightly earlier — doesn't add, remove, or duplicate anything; screens
-// still apply their own category filter afterward exactly as before.
-export function rankRecipes<T extends { popular?: boolean }>(
-  recipes: T[] | null | undefined,
-  user?: PersonalizationUser
-): T[] | null | undefined {
-  if (!Array.isArray(recipes)) return recipes;
-  return recipes
-    .map((recipe, index) => ({ recipe, index }))
-    .sort((a, b) => {
-      const aScore = a.recipe?.popular ? 1 : 0;
-      const bScore = b.recipe?.popular ? 1 : 0;
-      if (aScore !== bScore) return bScore - aScore;
-      return a.index - b.index;
-    })
-    .map(({ recipe }) => recipe);
 }
 
 // Reorders (never hides) ShopScreen's category chips. "All" always stays

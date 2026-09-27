@@ -14,7 +14,7 @@ interface AppHeaderProps {
   avatarUri?: string;
   onCartPress?: () => void;
   safeTop?: boolean;
-  // Back arrow for screens pushed on top of the tabs (Shop, Recipes, label
+  // Back arrow for screens pushed on top of the tabs (Shop, label
   // scan) - on web there's no hardware back button to fall back on.
   back?: boolean;
 }
