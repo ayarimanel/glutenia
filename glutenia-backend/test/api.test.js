@@ -12,6 +12,7 @@ process.env.MONGO_URI =
 
 const app = require("../src/app");
 const Cart = require("../src/models/Cart");
+const CommunityProduct = require("../src/models/CommunityProduct");
 const Establishment = require("../src/models/Establishment");
 const Event = require("../src/models/Event");
 const Listing = require("../src/models/Listing");
@@ -20,11 +21,13 @@ const Order = require("../src/models/Order");
 const PatientResource = require("../src/models/PatientResource");
 const Product = require("../src/models/Product");
 const Recipe = require("../src/models/Recipe");
+const ScanHistory = require("../src/models/ScanHistory");
 const User = require("../src/models/User");
 
 const resetDatabase = async () => {
   await Promise.all([
     Cart.deleteMany({}),
+    CommunityProduct.deleteMany({}),
     Establishment.deleteMany({}),
     Event.deleteMany({}),
     Listing.deleteMany({}),
@@ -33,6 +36,7 @@ const resetDatabase = async () => {
     PatientResource.deleteMany({}),
     Product.deleteMany({}),
     Recipe.deleteMany({}),
+    ScanHistory.deleteMany({}),
     User.deleteMany({}),
   ]);
 };
@@ -1082,5 +1086,68 @@ describe("Self-service account deletion", () => {
     assert.equal(await User.exists({ _id: seller.id }), null);
     assert.equal(await Establishment.exists({ owner: seller.id }), null);
     assert.equal(await Listing.exists({ professional: seller.id }), null);
+  });
+});
+
+describe("Community product submission", () => {
+  // The AI can't be called from tests, so label scans are created directly,
+  // exactly as recordScanEvent stores them.
+  const labelScan = (userId, verdict, extra = {}) =>
+    ScanHistory.create({ userId, scanType: "label", verdict, ...extra });
+
+  const submit = (token, body) =>
+    request(app)
+      .post("/api/community-products")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ name: "Mystery Biscuits", imageUrl: "data:image/jpeg;base64,AAAA", ...body });
+
+  test("takes the gluten status from the user's label scan, never from the client", async () => {
+    const safeScan = await labelScan(ctx.customerId, "safe");
+    const created = await submit(ctx.customerToken, {
+      barcode: "4006381333931",
+      labelScanId: safeScan._id.toString(),
+      isGlutenFree: false,
+    }).expect(201);
+    assert.equal(created.body.data.entry.isGlutenFree, true);
+
+    const unsafeScan = await labelScan(ctx.customerId, "unsafe");
+    const flagged = await submit(ctx.customerToken, {
+      barcode: "5901234123457",
+      labelScanId: unsafeScan._id.toString(),
+      isGlutenFree: true,
+    }).expect(201);
+    assert.equal(flagged.body.data.entry.isGlutenFree, false);
+
+    // One analysis can back one product only.
+    await submit(ctx.customerToken, {
+      barcode: "4007817327098",
+      labelScanId: safeScan._id.toString(),
+    }).expect(400);
+  });
+
+  test("rejects missing, unclear, stale, or someone else's label scans", async () => {
+    await submit(ctx.customerToken, { barcode: "4007817327098" }).expect(400);
+
+    const caution = await labelScan(ctx.customerId, "caution");
+    await submit(ctx.customerToken, {
+      barcode: "4007817327098",
+      labelScanId: caution._id.toString(),
+    }).expect(400);
+
+    const stale = await labelScan(ctx.customerId, "safe", {
+      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+    });
+    await submit(ctx.customerToken, {
+      barcode: "4007817327098",
+      labelScanId: stale._id.toString(),
+    }).expect(400);
+
+    const othersScan = await labelScan(ctx.professionalId, "safe");
+    await submit(ctx.customerToken, {
+      barcode: "4007817327098",
+      labelScanId: othersScan._id.toString(),
+    }).expect(400);
+
+    assert.equal(await CommunityProduct.exists({ barcode: "4007817327098" }), null);
   });
 });

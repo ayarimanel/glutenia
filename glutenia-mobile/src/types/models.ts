@@ -329,6 +329,9 @@ export interface LabelScanResult {
   confidence: "high" | "medium" | "low";
   confidence_note: string | null;
   error: string | null;
+  // The saved scan record; required to add an unknown product from this
+  // analysis (the backend reads the verdict from it, not from the app).
+  scanId: string | null;
   gamification: GamificationDelta | null;
 }
 

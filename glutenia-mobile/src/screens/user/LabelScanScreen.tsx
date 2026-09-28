@@ -19,7 +19,8 @@ import { useAuthenticated } from "../../context/AuthContext";
 import { notifyGamification } from "../../context/GamificationContext";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
-import type { AppNavigation } from "../../navigation/types";
+import type { RouteProp } from "@react-navigation/native";
+import type { AppNavigation, RootParamList } from "../../navigation/types";
 import type { ScanVerdict, LabelScanResult } from "../../types/models";
 
 const TAB_BAR_HEIGHT = 66;
@@ -29,7 +30,14 @@ const RESULT = "result";
 
 type LabelScanResultData = Omit<LabelScanResult, "gamification">;
 
-export default function LabelScanScreen({ navigation }: { navigation: AppNavigation }) {
+interface LabelScanScreenProps {
+  navigation: AppNavigation;
+  route: RouteProp<RootParamList, "LabelScan">;
+}
+
+export default function LabelScanScreen({ navigation, route }: LabelScanScreenProps) {
+  // Only set when the user got here from a barcode that isn't in the database.
+  const barcode = route.params?.barcode;
   const { t } = useTranslation();
   const { user, token } = useAuthenticated();
   const { colors } = useTheme();
@@ -195,6 +203,26 @@ export default function LabelScanScreen({ navigation }: { navigation: AppNavigat
 
           {/* Disclaimer */}
           <Text style={styles.disclaimer}>{t("labelScan.disclaimer")}</Text>
+
+          {/* Unknown barcode: the product can only be added from a clear
+              verdict, and its gluten-free status comes from that verdict. */}
+          {barcode && result.scanId && (result.verdict === "safe" || result.verdict === "unsafe") ? (
+            <Pressable
+              style={styles.primaryBtn}
+              onPress={() =>
+                navigation.navigate("SubmitProduct", {
+                  barcode,
+                  isGlutenFree: result.verdict === "safe",
+                  labelScanId: result.scanId as string,
+                })
+              }
+            >
+              <AppIcon name="add-circle" size={18} color="#fff" />
+              <Text style={styles.primaryBtnText}>{t("scan.addThisProduct")}</Text>
+            </Pressable>
+          ) : barcode ? (
+            <Text style={styles.disclaimer}>{t("labelScan.cannotAdd")}</Text>
+          ) : null}
 
           <Pressable style={styles.primaryBtn} onPress={handleTakePhoto}>
             <AppIcon name="scan" size={18} color="#fff" />

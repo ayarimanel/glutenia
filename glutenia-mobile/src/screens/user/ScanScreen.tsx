@@ -325,17 +325,10 @@ export default function ScanScreen({ navigation }: { navigation: AppNavigation }
           </Pressable>
           <Pressable
             style={styles.secondaryBtn}
-            onPress={() => navigation.navigate("LabelScan")}
+            onPress={() => navigation.navigate("LabelScan", { barcode: scannedBarcode as string })}
           >
             <AppIcon name="image" size={18} color={colors.primary} />
             <Text style={styles.secondaryBtnText}>{t("labelScan.fromScan")}</Text>
-          </Pressable>
-          <Pressable
-            style={styles.secondaryBtn}
-            onPress={() => navigation.navigate("SubmitProduct", { barcode: scannedBarcode as string })}
-          >
-            <AppIcon name="add-circle" size={18} color={colors.primary} />
-            <Text style={styles.secondaryBtnText}>{t("scan.addThisProduct")}</Text>
           </Pressable>
         </View>
       </View>

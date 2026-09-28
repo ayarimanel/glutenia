@@ -108,12 +108,17 @@ exports.scanLabel = async (req, res, next) => {
       error: parsed.error ?? null,
     };
 
-    const { gamification } = await recordScanEvent(req.user.id, "label", {
+    const { historyEntry, gamification } = await recordScanEvent(req.user.id, "label", {
       verdict: safe.verdict,
       summary: safe.flagged[0]?.ingredient || "",
     });
 
-    return res.json({ success: true, data: { ...safe, gamification } });
+    // scanId lets the app submit an unknown product backed by this exact
+    // analysis; the community-product endpoint re-reads the verdict from it.
+    return res.json({
+      success: true,
+      data: { ...safe, scanId: historyEntry?._id ?? null, gamification },
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,

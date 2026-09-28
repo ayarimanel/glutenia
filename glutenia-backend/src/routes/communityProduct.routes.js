@@ -25,10 +25,11 @@ const submitValidators = [
     .notEmpty()
     .withMessage("A photo of the product is required")
     .isString(),
-  body("isGlutenFree")
-    .isBoolean()
-    .withMessage("isGlutenFree must be true or false")
-    .toBoolean(),
+  // No isGlutenFree here on purpose: the gluten status is taken from this
+  // label scan's verdict server-side, never from the client.
+  body("labelScanId")
+    .isMongoId()
+    .withMessage("A label analysis is required to add a product"),
   body("brand").optional({ checkFalsy: true }).trim().isString(),
   body("category")
     .optional({ checkFalsy: true })

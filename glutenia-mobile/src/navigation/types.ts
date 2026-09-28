@@ -105,8 +105,10 @@ export type RootParamList = {
   Settings: undefined;
   EditProfile: undefined;
   ChangePassword: undefined;
-  LabelScan: undefined;
-  SubmitProduct: { barcode: string };
+  // barcode is set when coming from a barcode that wasn't found: the label
+  // analysis then decides whether (and as what) the product can be added.
+  LabelScan: { barcode?: string } | undefined;
+  SubmitProduct: { barcode: string; isGlutenFree: boolean; labelScanId: string };
   SellerProducts: undefined;
   SellerProductForm: { listingId?: string } | undefined;
   SellerVisibility: undefined;

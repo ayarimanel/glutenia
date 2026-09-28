@@ -41,12 +41,15 @@ export default function SubmitProductScreen({ navigation, route }: SubmitProduct
   const styles = getStyles(colors);
   const { token } = useAuthenticated();
   const barcode = route.params?.barcode ?? "";
+  // Decided by the label analysis (LabelScanScreen), not by the user. Shown
+  // for information only: the backend re-derives it from labelScanId.
+  const isGlutenFree = route.params?.isGlutenFree ?? false;
+  const labelScanId = route.params?.labelScanId ?? "";
 
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState("");
   const [image, setImage] = useState<string | null>(null);
   const [imageError, setImageError] = useState("");
-  const [isGlutenFree, setIsGlutenFree] = useState(true);
   const [brand, setBrand] = useState("");
   const [category, setCategory] = useState<ProductCategory | null>(null);
   const [saving, setSaving] = useState(false);
@@ -126,7 +129,7 @@ export default function SubmitProductScreen({ navigation, route }: SubmitProduct
         barcode,
         name: trimmedName,
         imageUrl: image as string,
-        isGlutenFree,
+        labelScanId,
         brand: brand.trim() || undefined,
         category: category || undefined,
       });
@@ -231,8 +234,8 @@ export default function SubmitProductScreen({ navigation, route }: SubmitProduct
               </View>
               <Switch
                 value={isGlutenFree}
-                onValueChange={setIsGlutenFree}
-                trackColor={{ false: colors.divider, true: colors.primary }}
+                disabled
+                trackColor={{ false: colors.danger, true: colors.primary }}
                 thumbColor={colors.surface}
               />
             </View>

@@ -219,7 +219,8 @@ export interface SubmitCommunityProductBody {
   barcode: string;
   name: string;
   imageUrl: string;
-  isGlutenFree: boolean;
+  // Gluten status is derived server-side from this label scan's verdict.
+  labelScanId: string;
   brand?: string;
   category?: ProductCategory;
 }

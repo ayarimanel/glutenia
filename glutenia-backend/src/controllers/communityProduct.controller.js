@@ -1,4 +1,5 @@
 const CommunityProduct = require("../models/CommunityProduct");
+const ScanHistory = require("../models/ScanHistory");
 const gamificationService = require("../services/gamificationService");
 
 // Blunts bulk-submission fraud/spam without blocking genuine occasional
@@ -12,9 +13,28 @@ const MAX_SUBMISSIONS_PER_DAY = 20;
 // that specific gap: enough independent flags marks an entry disputed.
 const DISPUTE_FLAG_THRESHOLD = 3;
 
+// A product can only be added from a clear label analysis (safe/unsafe) by
+// the same user, recently, and each analysis can back one product only.
+const LABEL_SCAN_MAX_AGE_MS = 30 * 60 * 1000;
+const usableLabelScanFilter = (labelScanId, userId) => ({
+  _id: labelScanId,
+  userId,
+  scanType: "label",
+  verdict: { $in: ["safe", "unsafe"] },
+  createdAt: { $gte: new Date(Date.now() - LABEL_SCAN_MAX_AGE_MS) },
+  usedForSubmission: { $ne: true },
+});
+const LABEL_SCAN_REQUIRED_MESSAGE =
+  "A recent, clear label analysis of this product is required to add it";
+
 exports.submitCommunityProduct = async (req, res, next) => {
   try {
-    const { barcode, name, imageUrl, isGlutenFree, brand, category } = req.body;
+    const { barcode, name, imageUrl, labelScanId, brand, category } = req.body;
+
+    const labelScan = await ScanHistory.findOne(usableLabelScanFilter(labelScanId, req.user.id));
+    if (!labelScan) {
+      return res.status(400).json({ success: false, message: LABEL_SCAN_REQUIRED_MESSAGE });
+    }
 
     const existing = await CommunityProduct.findOne({ barcode });
     if (existing) {
@@ -36,11 +56,21 @@ exports.submitCommunityProduct = async (req, res, next) => {
       });
     }
 
+    // Claim the scan atomically, so two simultaneous submissions can't both
+    // use it.
+    const claimed = await ScanHistory.findOneAndUpdate(
+      usableLabelScanFilter(labelScanId, req.user.id),
+      { $set: { usedForSubmission: true } }
+    );
+    if (!claimed) {
+      return res.status(400).json({ success: false, message: LABEL_SCAN_REQUIRED_MESSAGE });
+    }
+
     const entry = await CommunityProduct.create({
       barcode,
       name,
       imageUrl,
-      isGlutenFree,
+      isGlutenFree: claimed.verdict === "safe",
       brand: brand || null,
       category: category || null,
       submittedBy: req.user.id,
