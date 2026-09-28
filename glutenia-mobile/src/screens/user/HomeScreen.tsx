@@ -1,4 +1,5 @@
 import {
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -254,7 +255,11 @@ export default function HomeScreen({ navigation }: { navigation: AppNavigation }
                   onPress={() => navigation.navigate("EventDetail", { event })}
                 >
                   <View style={[styles.eventImg, { backgroundColor: event.color }]}>
-                    <Text style={styles.eventEmoji}>{event.emoji}</Text>
+                    {event.imageUrl ? (
+                      <Image source={{ uri: event.imageUrl }} style={styles.eventPhoto} />
+                    ) : (
+                      <Text style={styles.eventEmoji}>{event.emoji}</Text>
+                    )}
                     <View style={styles.eventBadge}>
                       <Text style={styles.eventBadgeText}>{event.category}</Text>
                     </View>
@@ -495,6 +500,10 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     height: 120,
     alignItems: "center",
     justifyContent: "center",
+  },
+  eventPhoto: {
+    ...StyleSheet.absoluteFillObject,
+    resizeMode: "cover",
   },
   eventEmoji: {
     fontSize: 48,

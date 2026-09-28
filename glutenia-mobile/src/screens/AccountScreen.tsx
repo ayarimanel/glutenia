@@ -538,7 +538,11 @@ export default function AccountScreen({
                   style={[styles.eventRow, idx > 0 && styles.eventBorder]}
                 >
                   <View style={[styles.eventEmoji, { backgroundColor: ev.color }]}>
-                    <Text style={styles.eventEmojiText}>{ev.emoji}</Text>
+                    {ev.imageUrl ? (
+                      <Image source={{ uri: ev.imageUrl }} style={styles.eventPhoto} />
+                    ) : (
+                      <Text style={styles.eventEmojiText}>{ev.emoji}</Text>
+                    )}
                   </View>
                   <View style={styles.eventInfo}>
                     <Text style={styles.eventTitle} numberOfLines={1}>{ev.title}</Text>
@@ -931,7 +935,9 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     borderRadius: Radius.md,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
   },
+  eventPhoto: { width: "100%", height: "100%" },
   eventEmojiText: { fontSize: 22 },
   eventInfo: { flex: 1 },
   eventTitle: { fontSize: 14, fontWeight: "700", color: colors.textDark, marginBottom: 3 },

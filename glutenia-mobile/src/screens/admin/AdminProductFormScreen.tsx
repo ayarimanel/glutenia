@@ -297,7 +297,7 @@ export default function AdminProductFormScreen({ navigation, route }: AdminProdu
             </Text>
           </View>
           <View style={styles.imagePreview}>
-            <ProductVisual product={{ imageUrl, category }} size="large" />
+            <ProductVisual product={{ imageUrl, category }} size="large" stockFallback={false} />
           </View>
           <View style={styles.imageActions}>
             <SecondaryButton
