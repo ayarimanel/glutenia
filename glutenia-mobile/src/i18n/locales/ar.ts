@@ -1280,7 +1280,6 @@ export default {
       orders: "الطلبات",
       revenue: "الإيرادات",
       lowStockHint: "{{count}} منتج (منتجات) ذات مخزون منخفض.",
-      allGoodHint: "مستويات مخزونك جيدة.",
       errorTitle: "الظهور",
     },
     listings: {

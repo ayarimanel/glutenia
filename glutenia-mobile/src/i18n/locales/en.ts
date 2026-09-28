@@ -1278,7 +1278,6 @@ export default {
       orders: "Orders",
       revenue: "Revenue",
       lowStockHint: "{{count}} product(s) are running low on stock.",
-      allGoodHint: "Your stock levels look good.",
       errorTitle: "Visibility",
     },
     listings: {

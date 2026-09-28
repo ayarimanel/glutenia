@@ -75,14 +75,14 @@ export default function SellerVisibilityScreen() {
           <Metric label={t("seller.visibility.orders")} value={orders.length} icon="receipt" />
           <Metric label={t("seller.visibility.revenue")} value={revenue.toFixed(2)} icon="cash" />
         </View>
-        <View style={styles.hintCard}>
-          <AppIcon name="info" size={18} color={colors.secondary} />
-          <Text style={styles.hintText}>
-            {lowStockCount > 0
-              ? t("seller.visibility.lowStockHint", { count: lowStockCount })
-              : t("seller.visibility.allGoodHint")}
-          </Text>
-        </View>
+        {lowStockCount > 0 && (
+          <View style={styles.hintCard}>
+            <AppIcon name="info" size={18} color={colors.secondary} />
+            <Text style={styles.hintText}>
+              {t("seller.visibility.lowStockHint", { count: lowStockCount })}
+            </Text>
+          </View>
+        )}
       </ScrollView>
     </Screen>
   );
