@@ -185,6 +185,21 @@ export interface OrderAddress {
   phone: string;
 }
 
+// One professional's part of an order (orders can mix several sellers).
+export interface OrderSellerStatus {
+  professional: string | null;
+  status: OrderStatus;
+}
+
+export interface OrderStatusChange {
+  status: OrderStatus;
+  changedBy: string | null;
+  role: "customer" | "professional" | "admin";
+  // Set when a professional moved only their own part of the order.
+  seller: string | null;
+  date: string;
+}
+
 export interface Order {
   _id: string;
   // A raw id string on createOrder/getMyOrders/updateOrderStatus - see
@@ -195,7 +210,13 @@ export interface Order {
   total: number;
   deliveryFee: number;
   address: OrderAddress;
+  // Overall status: the least advanced of sellerStatuses.
   status: OrderStatus;
+  sellerStatuses: OrderSellerStatus[];
+  statusHistory: OrderStatusChange[];
+  // Statuses the current user may move this order to, as decided by the
+  // backend's transition rules. Screens show exactly these as buttons.
+  allowedActions: OrderStatus[];
   createdAt: string;
 }
 
@@ -204,6 +225,10 @@ export interface Order {
 // itself, since call sites always know which shape they have based on
 // which endpoint they called.
 export type OrderWithBuyer = Omit<Order, "user"> & { user: EstablishmentOwnerSummary };
+
+// GET /orders/seller: only the professional's own items, plus the status of
+// their own part of the order.
+export type SellerOrder = OrderWithBuyer & { sellerStatus: OrderStatus };
 
 export interface Badge {
   _id: string;

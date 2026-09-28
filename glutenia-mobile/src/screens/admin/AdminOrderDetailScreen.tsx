@@ -3,13 +3,15 @@ import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "rea
 import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import AppIcon from "../../components/AppIcon";
-import { SecondaryButton } from "../../components/Buttons";
+import { PrimaryButton, SecondaryButton } from "../../components/Buttons";
+import OrderStatusBadge from "../../components/OrderStatusBadge";
 import { useAuthenticated } from "../../context/AuthContext";
 import { api, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import type { RouteProp } from "@react-navigation/native";
 import type { AppNavigation, RootParamList } from "../../navigation/types";
+import type { OrderStatus, OrderWithBuyer } from "../../types/models";
 
 interface AdminOrderDetailScreenProps {
   navigation: AppNavigation;
@@ -21,8 +23,10 @@ export default function AdminOrderDetailScreen({ navigation, route }: AdminOrder
   const { colors } = useTheme();
   const { token } = useAuthenticated();
   const styles = getStyles(colors);
-  const order = route.params?.order;
+  // Kept in state so a status change shows immediately on this screen.
+  const [order, setOrder] = useState<OrderWithBuyer | undefined>(route.params?.order);
   const [deleting, setDeleting] = useState(false);
+  const [updating, setUpdating] = useState(false);
 
   if (!order) {
     return (
@@ -44,6 +48,33 @@ export default function AdminOrderDetailScreen({ navigation, route }: AdminOrder
   );
   const deliveryFee = order.deliveryFee ?? order.total - subtotal;
   const orderRef = `#${order._id.slice(-6).toUpperCase()}`;
+
+  // Admin moves the whole order one step forward; the next step comes from
+  // the backend's allowedActions for this order.
+  const moveOrder = (status: OrderStatus) => {
+    Alert.alert(
+      t("orderStatus.confirmTitle"),
+      t("orderStatus.confirmMsg", { id: orderRef, status: t(`orderStatus.${status}`) }),
+      [
+        { text: t("orderStatus.cancel"), style: "cancel" },
+        {
+          text: t("orderStatus.ok"),
+          onPress: async () => {
+            try {
+              setUpdating(true);
+              const updated = await api.updateOrderStatus(token, order._id, status);
+              // The update response has the raw user id; keep the buyer summary.
+              setOrder({ ...updated, user: order.user });
+            } catch (err) {
+              Alert.alert(t("orderStatus.updateFailed"), (err as ApiError).message);
+            } finally {
+              setUpdating(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const deleteOrder = () => {
     Alert.alert(t("admin.orders.deleteTitle"), t("admin.orders.deleteMsg", { id: orderRef }), [
@@ -79,9 +110,7 @@ export default function AdminOrderDetailScreen({ navigation, route }: AdminOrder
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.topRow}>
           <Text style={styles.id}>{orderRef}</Text>
-          <View style={styles.statusPill}>
-            <Text style={styles.statusText}>{order.status}</Text>
-          </View>
+          <OrderStatusBadge status={order.status} />
         </View>
         <Text style={styles.placedOn}>
           {t("admin.orders.placedOn")} {new Date(order.createdAt).toLocaleString()}
@@ -150,10 +179,38 @@ export default function AdminOrderDetailScreen({ navigation, route }: AdminOrder
           </View>
         </View>
 
+        {order.statusHistory?.length ? (
+          <>
+            <Text style={styles.sectionLabel}>{t("orderStatus.historyTitle")}</Text>
+            <View style={styles.card}>
+              {order.statusHistory.map((entry, idx) => (
+                <View key={`${entry.status}-${idx}`} style={[styles.historyRow, idx > 0 && styles.itemBorder]}>
+                  <OrderStatusBadge status={entry.status} />
+                  <View style={styles.historyInfo}>
+                    <Text style={styles.historyWho}>{t(`orderStatus.by.${entry.role}`)}</Text>
+                    <Text style={styles.historyDate}>{new Date(entry.date).toLocaleString()}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </>
+        ) : null}
+
+        {order.allowedActions?.map((status) => (
+          <PrimaryButton
+            key={status}
+            title={t(`orderStatus.action.${status}`)}
+            icon="checkmark-circle"
+            loading={updating}
+            disabled={deleting}
+            onPress={() => moveOrder(status)}
+          />
+        ))}
+
         <SecondaryButton
           title={t("admin.orders.deleteOrder")}
           icon="trash"
-          disabled={deleting}
+          disabled={deleting || updating}
           onPress={deleteOrder}
         />
       </ScrollView>
@@ -192,17 +249,24 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 22,
     fontWeight: "900",
   },
-  statusPill: {
-    backgroundColor: colors.secondaryPale,
-    borderRadius: Radius.pill,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
+  historyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 6,
   },
-  statusText: {
-    color: colors.secondary,
-    fontWeight: "900",
+  historyInfo: {
+    flex: 1,
+    alignItems: "flex-end",
+  },
+  historyWho: {
+    color: colors.textDark,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  historyDate: {
+    color: colors.textMuted,
     fontSize: 12,
-    textTransform: "uppercase",
   },
   placedOn: {
     color: colors.textMuted,

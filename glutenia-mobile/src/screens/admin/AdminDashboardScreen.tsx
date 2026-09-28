@@ -13,6 +13,7 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import { useTranslation } from "react-i18next";
 import AppIcon, { type IconName } from "../../components/AppIcon";
+import OrderStatusBadge from "../../components/OrderStatusBadge";
 import Screen from "../../components/Screen";
 import { useAuth } from "../../context/AuthContext";
 import { api, isApiError } from "../../api/client";
@@ -96,22 +97,6 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
 
   const formatCurrency = (val?: number) => `${Number(val || 0).toFixed(2)} TND`;
 
-  const getStatusBadge = (status?: string) => {
-    const s = (status || "").toLowerCase();
-    if (s === "pending") {
-      return { bg: colors.warning + "20", text: colors.warning, label: t("admin.orders.statusPending", "Pending") };
-    }
-    if (s === "confirmed" || s === "processing") {
-      return { bg: colors.secondaryPale, text: colors.secondary, label: t("admin.orders.statusConfirmed", "Confirmed") };
-    }
-    if (s === "shipped" || s === "delivered") {
-      return { bg: colors.primaryPale, text: colors.primary, label: status };
-    }
-    if (s === "cancelled") {
-      return { bg: colors.danger + "20", text: colors.danger, label: t("admin.orders.statusCancelled", "Cancelled") };
-    }
-    return { bg: colors.divider, text: colors.textMuted, label: status || "Unknown" };
-  };
 
   return (
     <Screen style={styles.screen}>
@@ -316,7 +301,6 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
           {recentOrders.length > 0 ? (
             <View style={styles.recentOrdersList}>
               {recentOrders.map((order) => {
-                const statusBadge = getStatusBadge(order.status);
                 const orderIdStr = order._id
                   ? `#${order._id.slice(-6).toUpperCase()}`
                   : "#ORDER";
@@ -335,11 +319,7 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
                   >
                     <View style={styles.recentOrderTop}>
                       <Text style={styles.recentOrderId}>{orderIdStr}</Text>
-                      <View style={[styles.statusBadge, { backgroundColor: statusBadge.bg }]}>
-                        <Text style={[styles.statusBadgeText, { color: statusBadge.text }]}>
-                          {statusBadge.label}
-                        </Text>
-                      </View>
+                      <OrderStatusBadge status={order.status} />
                     </View>
 
                     <View style={styles.recentOrderBottom}>

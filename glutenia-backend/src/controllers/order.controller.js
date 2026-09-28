@@ -4,6 +4,7 @@ const Order = require("../models/Order");
 const Listing = require("../models/Listing");
 const { notify } = require("../services/notificationService");
 const gamificationService = require("../services/gamificationService");
+const orderStatus = require("../services/orderStatusService");
 
 const DELIVERY_FEE = 7;
 
@@ -14,6 +15,14 @@ const STATUS_NOTIFICATIONS = {
   delivered: "Your order has been delivered.",
 };
 
+// Every order sent to the app carries the actions the requesting user may
+// take on it, computed from the same transition map the backend enforces,
+// so the screens only ever offer buttons that will be accepted.
+const withActions = (order, user) => ({
+  ...order.toObject(),
+  allowedActions: orderStatus.allowedActions(order, user),
+});
+
 exports.getSellerOrders = async (req, res, next) => {
   try {
     const listingIds = await Listing.find({ professional: req.user.id }).distinct("_id");
@@ -22,10 +31,13 @@ exports.getSellerOrders = async (req, res, next) => {
     const orders = await Order.find({ "items.listing": { $in: listingIds } })
       .populate("user", "name email")
       .sort({ createdAt: -1 });
+    await orderStatus.normalizeOrders(orders);
 
     const sellerOrders = orders.map((order) => {
-      const plain = order.toObject();
+      const plain = withActions(order, req.user);
       plain.items = plain.items.filter((item) => ownedIds.has(item.listing.toString()));
+      // The professional's own part, which is what their screen shows.
+      plain.sellerStatus = orderStatus.sellerPartOf(order, req.user.id)?.status ?? order.status;
       return plain;
     });
 
@@ -57,6 +69,7 @@ const reserveStock = async (item, session) => {
     return {
       product: updated.product._id,
       listing: updated._id,
+      professional: updated.professional,
       name: updated.product.name,
       qty,
       price: updated.price,
@@ -99,6 +112,14 @@ exports.createOrder = async (req, res, next) => {
       );
       const total = subtotal + DELIVERY_FEE;
 
+      // Every seller in the order starts with their own pending part.
+      const sellerStatuses = [];
+      for (const item of orderItems) {
+        if (!sellerStatuses.some((part) => String(part.professional) === String(item.professional))) {
+          sellerStatuses.push({ professional: item.professional, status: "pending" });
+        }
+      }
+
       const [createdOrder] = await Order.create(
         [
           {
@@ -107,7 +128,9 @@ exports.createOrder = async (req, res, next) => {
             total,
             deliveryFee: DELIVERY_FEE,
             address: req.body.address,
-            status: "confirmed",
+            status: "pending",
+            sellerStatuses,
+            statusHistory: [{ status: "pending", changedBy: req.user.id, role: "customer" }],
           },
         ],
         { session }
@@ -130,7 +153,7 @@ exports.createOrder = async (req, res, next) => {
 
     return res.status(201).json({
       success: true,
-      data: { ...order.toObject(), gamification },
+      data: { ...withActions(order, req.user), gamification },
     });
   } catch (error) {
     return next(error);
@@ -144,10 +167,11 @@ exports.getMyOrders = async (req, res, next) => {
     const orders = await Order.find({ user: req.user.id }).sort({
       createdAt: -1,
     });
+    await orderStatus.normalizeOrders(orders);
 
     return res.json({
       success: true,
-      data: orders,
+      data: orders.map((order) => withActions(order, req.user)),
     });
   } catch (error) {
     return next(error);
@@ -159,10 +183,11 @@ exports.getAllOrders = async (req, res, next) => {
     const orders = await Order.find()
       .populate("user", "name email")
       .sort({ createdAt: -1 });
+    await orderStatus.normalizeOrders(orders);
 
     return res.json({
       success: true,
-      data: orders,
+      data: orders.map((order) => withActions(order, req.user)),
     });
   } catch (error) {
     return next(error);
@@ -195,9 +220,11 @@ exports.getOrderById = async (req, res, next) => {
       });
     }
 
+    await orderStatus.normalizeOrders([order]);
+
     return res.json({
       success: true,
-      data: order,
+      data: withActions(order, req.user),
     });
   } catch (error) {
     return next(error);
@@ -215,32 +242,44 @@ exports.updateOrderStatus = async (req, res, next) => {
       });
     }
 
-    if (req.user.role !== "admin") {
-      const listingIds = await Listing.find({ professional: req.user.id }).distinct("_id");
-      const ownedIds = new Set(listingIds.map((id) => id.toString()));
-      const ownsItem = order.items.some((item) => ownedIds.has(item.listing.toString()));
+    await orderStatus.normalizeOrders([order]);
 
-      if (!ownsItem) {
-        return res.status(403).json({
-          success: false,
-          message: "You can only update orders containing your own products",
-        });
+    let previousStatus;
+    try {
+      previousStatus = orderStatus.applyTransition(order, req.user, req.body.status);
+    } catch (error) {
+      if (error instanceof orderStatus.TransitionError) {
+        return res.status(error.statusCode).json({ success: false, message: error.message });
       }
+      throw error;
     }
 
-    order.status = req.body.status;
-    await order.save();
+    try {
+      await order.save();
+    } catch (error) {
+      if (error instanceof mongoose.Error.VersionError) {
+        return res.status(409).json({
+          success: false,
+          message: "This order was just updated by someone else. Refresh and try again.",
+        });
+      }
+      throw error;
+    }
 
-    await notify(order.user, {
-      type: "order_status",
-      title: "Order update",
-      body: STATUS_NOTIFICATIONS[order.status] || `Your order status changed to ${order.status}.`,
-      referenceId: order._id.toString(),
-    });
+    // The customer hears about changes to the order as a whole; one seller
+    // confirming their part of a multi-seller order doesn't change it yet.
+    if (order.status !== previousStatus) {
+      await notify(order.user, {
+        type: "order_status",
+        title: "Order update",
+        body: STATUS_NOTIFICATIONS[order.status] || `Your order status changed to ${order.status}.`,
+        referenceId: order._id.toString(),
+      });
+    }
 
     return res.json({
       success: true,
-      data: order,
+      data: withActions(order, req.user),
     });
   } catch (error) {
     return next(error);
@@ -258,16 +297,15 @@ exports.deleteOrder = async (req, res, next) => {
       });
     }
 
-    // An order that never left the seller still holds reserved stock -
-    // hand it back so deleting the order doesn't silently shrink inventory.
-    // Shipped/delivered goods are already gone, so nothing to restore.
-    if (order.status === "pending" || order.status === "confirmed") {
-      await Promise.all(
-        order.items.map((item) =>
-          Listing.updateOne({ _id: item.listing }, { $inc: { stock: item.qty } })
-        )
-      );
-    }
+    // Parts of the order that never left their seller still hold reserved
+    // stock - hand it back so deleting the order doesn't silently shrink
+    // inventory. Shipped/delivered goods are already gone.
+    await orderStatus.normalizeOrders([order]);
+    await Promise.all(
+      orderStatus.itemsStillInStock(order).map((item) =>
+        Listing.updateOne({ _id: item.listing }, { $inc: { stock: item.qty } })
+      )
+    );
 
     await order.deleteOne();
 

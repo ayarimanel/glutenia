@@ -1,9 +1,10 @@
-import { Alert, FlatList, RefreshControl, StyleSheet, Text, View } from "react-native";
+import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
+import OrderStatusBadge from "../../components/OrderStatusBadge";
 import { useAuthenticated } from "../../context/AuthContext";
 import { api, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
@@ -17,6 +18,7 @@ export default function UserOrdersScreen() {
   const styles = getStyles(colors);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const loadOrders = async () => {
     try {
@@ -32,6 +34,29 @@ export default function UserOrdersScreen() {
   useEffect(() => {
     loadOrders();
   }, []);
+
+  // The only status change a customer makes: confirming a shipped order
+  // arrived. Offered only when the backend lists it in allowedActions.
+  const markReceived = (order: Order) => {
+    const id = `#${order._id.slice(-6).toUpperCase()}`;
+    Alert.alert(t("orderStatus.receivedTitle"), t("orderStatus.receivedMsg", { id }), [
+      { text: t("orderStatus.cancel"), style: "cancel" },
+      {
+        text: t("orderStatus.ok"),
+        onPress: async () => {
+          try {
+            setUpdatingId(order._id);
+            const updated = await api.updateOrderStatus(token, order._id, "delivered");
+            setOrders((current) => current.map((o) => (o._id === updated._id ? updated : o)));
+          } catch (err) {
+            Alert.alert(t("orderStatus.updateFailed"), (err as ApiError).message);
+          } finally {
+            setUpdatingId(null);
+          }
+        },
+      },
+    ]);
+  };
 
   return (
     <Screen>
@@ -53,12 +78,21 @@ export default function UserOrdersScreen() {
             <View style={styles.orderCard}>
               <View style={styles.orderTop}>
                 <Text style={styles.orderId}>#{item._id.slice(-6).toUpperCase()}</Text>
-                <Text style={styles.status}>{item.status}</Text>
+                <OrderStatusBadge status={item.status} />
               </View>
               <Text style={styles.meta}>
                 {item.items.length} {t("userOrders.items")} - {new Date(item.createdAt).toLocaleDateString()}
               </Text>
               <Text style={styles.total}>{item.total.toFixed(2)} TND</Text>
+              {item.allowedActions?.includes("delivered") ? (
+                <Pressable
+                  style={[styles.actionBtn, updatingId === item._id && styles.actionBtnDisabled]}
+                  disabled={updatingId === item._id}
+                  onPress={() => markReceived(item)}
+                >
+                  <Text style={styles.actionBtnText}>{t("orderStatus.action.received")}</Text>
+                </Pressable>
+              ) : null}
             </View>
           )}
         />
@@ -94,11 +128,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 18,
     fontWeight: "900",
   },
-  status: {
-    color: colors.secondary,
-    fontWeight: "900",
-    textTransform: "uppercase",
-  },
   meta: {
     color: colors.textMuted,
   },
@@ -106,5 +135,21 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.primary,
     fontSize: 18,
     fontWeight: "900",
+  },
+  actionBtn: {
+    alignSelf: "flex-start",
+    borderRadius: Radius.md,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    marginTop: 4,
+  },
+  actionBtnDisabled: {
+    opacity: 0.6,
+  },
+  actionBtnText: {
+    color: colors.surface,
+    fontSize: 13,
+    fontWeight: "800",
   },
 });

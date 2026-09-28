@@ -1,5 +1,9 @@
 const mongoose = require("mongoose");
 
+// The four order statuses, in lifecycle order. The allowed transitions
+// between them live in services/orderStatusService.js.
+const ORDER_STATUSES = ["pending", "confirmed", "shipped", "delivered"];
+
 const orderItemSchema = new mongoose.Schema(
   {
     product: {
@@ -11,6 +15,13 @@ const orderItemSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Listing",
       required: true,
+    },
+    // Snapshot of the listing's seller at checkout. Missing on orders placed
+    // before per-seller statuses existed; orderStatusService fills it in.
+    professional: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
     name: {
       type: String,
@@ -57,6 +68,56 @@ const addressSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// One entry per professional whose items are in the order: each seller moves
+// only their own part forward, and the order's overall status is the least
+// advanced of these.
+const sellerStatusSchema = new mongoose.Schema(
+  {
+    professional: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    status: {
+      type: String,
+      enum: ORDER_STATUSES,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
+const statusHistorySchema = new mongoose.Schema(
+  {
+    status: {
+      type: String,
+      enum: ORDER_STATUSES,
+      required: true,
+    },
+    changedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    role: {
+      type: String,
+      enum: ["customer", "professional", "admin"],
+      required: true,
+    },
+    // Set when a professional moved only their own part of the order.
+    seller: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    date: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  { _id: false }
+);
+
 const orderSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -90,8 +151,16 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["pending", "confirmed", "shipped", "delivered"],
-    default: "confirmed",
+    enum: ORDER_STATUSES,
+    default: "pending",
+  },
+  sellerStatuses: {
+    type: [sellerStatusSchema],
+    default: [],
+  },
+  statusHistory: {
+    type: [statusHistorySchema],
+    default: [],
   },
   createdAt: {
     type: Date,
@@ -103,4 +172,10 @@ const orderSchema = new mongoose.Schema({
 // field directly; it had no index before.
 orderSchema.index({ user: 1 });
 
+// Two sellers updating their parts of the same order at once must not
+// silently overwrite each other's sellerStatuses: the second save fails with
+// a VersionError instead (reported as a 409 by updateOrderStatus).
+orderSchema.set("optimisticConcurrency", true);
+
 module.exports = mongoose.model("Order", orderSchema);
+module.exports.ORDER_STATUSES = ORDER_STATUSES;

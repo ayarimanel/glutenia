@@ -20,6 +20,7 @@ import type {
   ProductCategory,
   ProfileGamificationData,
   ScanHistoryEntry,
+  SellerOrder,
   ThemePreference,
   User,
   UserAnalytics,
@@ -360,7 +361,7 @@ export const api = {
     request<Order & { gamification: GamificationDelta | null }>("/orders", { method: "POST", token, body }),
   myOrders: (token: string) => request<Order[]>("/orders/my", { token }),
   allOrders: (token: string) => request<OrderWithBuyer[]>("/orders", { token }),
-  sellerOrders: (token: string) => request<OrderWithBuyer[]>("/orders/seller", { token }),
+  sellerOrders: (token: string) => request<SellerOrder[]>("/orders/seller", { token }),
   updateOrderStatus: (token: string, id: string, status: Order["status"]) =>
     request<Order>(`/orders/${id}/status`, { method: "PUT", token, body: { status } }),
   deleteOrder: (token: string, id: string) =>

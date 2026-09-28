@@ -642,7 +642,10 @@ describe("Orders", () => {
     assert.equal(order.body.data.items[0].name, "Pain sans gluten");
     assert.equal(order.body.data.items[0].price, 4.5);
     assert.equal(order.body.data.items[0].listing, ctx.listingId);
-    assert.equal(order.body.data.status, "confirmed");
+    assert.equal(order.body.data.status, "pending");
+    assert.equal(order.body.data.sellerStatuses.length, 1);
+    assert.equal(order.body.data.sellerStatuses[0].status, "pending");
+    assert.equal(order.body.data.statusHistory[0].role, "customer");
 
     ctx.orderId = order.body.data._id;
 
@@ -936,6 +939,12 @@ describe("Notifications", () => {
       .send({ status: "shipped" })
       .expect(403);
 
+    await request(app)
+      .put(`/api/orders/${ctx.orderId}/status`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .send({ status: "confirmed" })
+      .expect(200);
+
     const updated = await request(app)
       .put(`/api/orders/${ctx.orderId}/status`)
       .set("Authorization", `Bearer ${ctx.adminToken}`)
@@ -1149,5 +1158,190 @@ describe("Community product submission", () => {
     }).expect(400);
 
     assert.equal(await CommunityProduct.exists({ barcode: "4007817327098" }), null);
+  });
+});
+
+describe("Order status transitions", () => {
+  const address = { fullName: "C", addressLine: "1 St", city: "Tunis", phone: "20123456" };
+
+  // Two sellers with one listing each, so one order can contain both.
+  const setup = async () => {
+    const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const sellerA = await createApprovedProfessional({
+      name: "Seller A",
+      email: `seller-a-${stamp}@glutenia.test`,
+      password: "secret123",
+    });
+    const sellerB = await createApprovedProfessional({
+      name: "Seller B",
+      email: `seller-b-${stamp}@glutenia.test`,
+      password: "secret123",
+    });
+    const productA = await Product.create({ name: `Bread ${stamp}`, category: "Bread" });
+    const productB = await Product.create({ name: `Pasta ${stamp}`, category: "Pasta" });
+    const listingA = await Listing.create({ product: productA._id, professional: sellerA.id, price: 5, stock: 10 });
+    const listingB = await Listing.create({ product: productB._id, professional: sellerB.id, price: 3, stock: 10 });
+    return { sellerA, sellerB, listingA, listingB };
+  };
+
+  const placeOrder = async (listings) => {
+    const res = await request(app)
+      .post("/api/orders")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .send({ items: listings.map((l) => ({ listingId: l._id.toString(), qty: 2 })), address })
+      .expect(201);
+    return res.body.data;
+  };
+
+  const setStatus = (token, orderId, status) =>
+    request(app)
+      .put(`/api/orders/${orderId}/status`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({ status });
+
+  test("a seller confirms then ships their order; the customer marks it received", async () => {
+    const { sellerA, listingA } = await setup();
+    const order = await placeOrder([listingA]);
+    assert.deepEqual(order.allowedActions, []);
+
+    // Can't skip a step or act as the customer.
+    await setStatus(sellerA.token, order._id, "shipped").expect(400);
+    await setStatus(sellerA.token, order._id, "delivered").expect(403);
+    await setStatus(ctx.customerToken, order._id, "confirmed").expect(403);
+
+    const confirmed = await setStatus(sellerA.token, order._id, "confirmed").expect(200);
+    assert.equal(confirmed.body.data.status, "confirmed");
+    assert.deepEqual(confirmed.body.data.allowedActions, ["shipped"]);
+
+    // No going back or repeating.
+    await setStatus(sellerA.token, order._id, "confirmed").expect(400);
+    await setStatus(ctx.customerToken, order._id, "delivered").expect(400);
+
+    await setStatus(sellerA.token, order._id, "shipped").expect(200);
+
+    const mine = await request(app)
+      .get("/api/orders/my")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .expect(200);
+    const shipped = mine.body.data.find((o) => o._id === order._id);
+    assert.deepEqual(shipped.allowedActions, ["delivered"]);
+
+    const delivered = await setStatus(ctx.customerToken, order._id, "delivered").expect(200);
+    assert.equal(delivered.body.data.status, "delivered");
+    assert.deepEqual(delivered.body.data.allowedActions, []);
+
+    const saved = await Order.findById(order._id);
+    assert.deepEqual(
+      saved.statusHistory.map((h) => `${h.status}:${h.role}`),
+      ["pending:customer", "confirmed:professional", "shipped:professional", "delivered:customer"]
+    );
+
+    // Nothing moves after delivered, and "pending" is never a target.
+    await setStatus(ctx.adminToken, order._id, "delivered").expect(400);
+    await setStatus(ctx.adminToken, order._id, "pending").expect(400);
+  });
+
+  test("in a multi-seller order each seller moves only their own part", async () => {
+    const { sellerA, sellerB, listingA, listingB } = await setup();
+    const order = await placeOrder([listingA, listingB]);
+    assert.equal(order.sellerStatuses.length, 2);
+
+    const afterA = await setStatus(sellerA.token, order._id, "confirmed").expect(200);
+    // B is still pending, so the order as a whole is still pending.
+    assert.equal(afterA.body.data.status, "pending");
+
+    // A can't confirm B's part by confirming again.
+    await setStatus(sellerA.token, order._id, "confirmed").expect(400);
+
+    const sellerView = await request(app)
+      .get("/api/orders/seller")
+      .set("Authorization", `Bearer ${sellerB.token}`)
+      .expect(200);
+    const bOrder = sellerView.body.data.find((o) => o._id === order._id);
+    assert.equal(bOrder.sellerStatus, "pending");
+    assert.equal(bOrder.items.length, 1);
+    assert.deepEqual(bOrder.allowedActions, ["confirmed"]);
+
+    const afterB = await setStatus(sellerB.token, order._id, "confirmed").expect(200);
+    assert.equal(afterB.body.data.status, "confirmed");
+
+    // Only once every part has shipped can the customer mark it received.
+    await setStatus(sellerA.token, order._id, "shipped").expect(200);
+    await setStatus(ctx.customerToken, order._id, "delivered").expect(400);
+    await setStatus(sellerB.token, order._id, "shipped").expect(200);
+    await setStatus(ctx.customerToken, order._id, "delivered").expect(200);
+  });
+
+  test("an admin moves the whole order forward one step at a time", async () => {
+    const { listingA, listingB } = await setup();
+    const order = await placeOrder([listingA, listingB]);
+
+    await setStatus(ctx.adminToken, order._id, "shipped").expect(400);
+    const confirmed = await setStatus(ctx.adminToken, order._id, "confirmed").expect(200);
+    assert.ok(confirmed.body.data.sellerStatuses.every((p) => p.status === "confirmed"));
+    await setStatus(ctx.adminToken, order._id, "shipped").expect(200);
+    const delivered = await setStatus(ctx.adminToken, order._id, "delivered").expect(200);
+    assert.equal(delivered.body.data.status, "delivered");
+  });
+
+  test("blocks outsiders and other customers", async () => {
+    const { listingA } = await setup();
+    const order = await placeOrder([listingA]);
+    const other = await registerCustomer({
+      name: "Other Customer",
+      email: `other-${Date.now()}@glutenia.test`,
+      password: "secret123",
+    });
+
+    await setStatus(other.token, order._id, "confirmed").expect(403);
+    await setStatus(ctx.professionalToken, order._id, "confirmed").expect(403);
+  });
+
+  test("deleting an order restores stock only for parts that haven't shipped", async () => {
+    const { sellerA, listingA, listingB } = await setup();
+    const order = await placeOrder([listingA, listingB]);
+
+    await setStatus(sellerA.token, order._id, "confirmed").expect(200);
+    await setStatus(sellerA.token, order._id, "shipped").expect(200);
+
+    await request(app)
+      .delete(`/api/orders/${order._id}`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .expect(200);
+
+    // A's goods already left the seller; B's reservation is handed back.
+    assert.equal((await Listing.findById(listingA._id)).stock, 8);
+    assert.equal((await Listing.findById(listingB._id)).stock, 10);
+  });
+
+  test("orders placed before per-seller statuses still work", async () => {
+    const { sellerA, listingA } = await setup();
+    // An old-style order: no seller on items, no sellerStatuses, no history.
+    const legacy = await Order.collection.insertOne({
+      user: new mongoose.Types.ObjectId(ctx.customerId),
+      items: [
+        { product: listingA.product, listing: listingA._id, name: "Old bread", qty: 1, price: 5 },
+      ],
+      total: 12,
+      deliveryFee: 7,
+      address,
+      status: "confirmed",
+      createdAt: new Date(),
+    });
+    const orderId = legacy.insertedId.toString();
+
+    const mine = await request(app)
+      .get("/api/orders/my")
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .expect(200);
+    const listed = mine.body.data.find((o) => o._id === orderId);
+    assert.equal(listed.status, "confirmed");
+    assert.deepEqual(listed.allowedActions, []);
+
+    const shipped = await setStatus(sellerA.token, orderId, "shipped").expect(200);
+    assert.equal(shipped.body.data.status, "shipped");
+    const saved = await Order.findById(orderId);
+    assert.equal(saved.sellerStatuses.length, 1);
+    assert.equal(saved.items[0].professional.toString(), sellerA.id);
   });
 });

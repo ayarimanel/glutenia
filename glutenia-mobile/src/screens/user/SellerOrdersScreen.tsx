@@ -5,18 +5,19 @@ import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
+import OrderStatusBadge from "../../components/OrderStatusBadge";
 import { useAuthenticated } from "../../context/AuthContext";
 import { api, isApiError, type ApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
-import type { OrderWithBuyer } from "../../types/models";
+import type { OrderStatus, SellerOrder } from "../../types/models";
 
 export default function SellerOrdersScreen() {
   const { token, logout } = useAuthenticated();
   const { t } = useTranslation();
   const { colors } = useTheme();
   const styles = getStyles(colors);
-  const [orders, setOrders] = useState<OrderWithBuyer[]>([]);
+  const [orders, setOrders] = useState<SellerOrder[]>([]);
   const [loading, setLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
@@ -47,10 +48,12 @@ export default function SellerOrdersScreen() {
     }, [token])
   );
 
-  const markAsShipped = async (orderId: string) => {
+  // Moves the professional's own part of the order: pending -> confirmed,
+  // then confirmed -> shipped. Buttons come from the backend's allowedActions.
+  const moveOrder = async (orderId: string, status: OrderStatus) => {
     try {
       setUpdatingId(orderId);
-      await api.updateOrderStatus(token, orderId, "shipped");
+      await api.updateOrderStatus(token, orderId, status);
       await loadOrders();
     } catch (error) {
       Alert.alert(t("admin.orders.errorTitle"), (error as ApiError).message);
@@ -84,7 +87,10 @@ export default function SellerOrdersScreen() {
               <View style={styles.card}>
                 <View style={styles.top}>
                   <Text style={styles.id}>#{item._id.slice(-6).toUpperCase()}</Text>
-                  <Text style={styles.status}>{item.status}</Text>
+                  <View style={styles.statusCol}>
+                    <Text style={styles.statusCaption}>{t("orderStatus.yourPart")}</Text>
+                    <OrderStatusBadge status={item.sellerStatus} />
+                  </View>
                 </View>
                 <Text style={styles.customer}>
                   {item.user?.name || t("admin.orders.customer")} -{" "}
@@ -94,19 +100,20 @@ export default function SellerOrdersScreen() {
                   {item.items.length} {t("admin.orders.itemsSuffix")} {item.address.city}
                 </Text>
                 <Text style={styles.total}>{subtotal.toFixed(2)} TND</Text>
-                {item.status !== "shipped" && item.status !== "delivered" ? (
+                {item.allowedActions?.map((status) => (
                   <Pressable
+                    key={status}
                     style={[styles.shipBtn, updatingId === item._id && styles.shipBtnDisabled]}
                     disabled={updatingId === item._id}
-                    onPress={() => markAsShipped(item._id)}
+                    onPress={() => moveOrder(item._id, status)}
                   >
                     <Text style={styles.shipBtnText}>
                       {updatingId === item._id
                         ? t("seller.orders.marking")
-                        : t("seller.orders.markShipped")}
+                        : t(`orderStatus.action.${status}`)}
                     </Text>
                   </Pressable>
-                ) : null}
+                ))}
               </View>
             );
           }}
@@ -143,10 +150,14 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 18,
     fontWeight: "900",
   },
-  status: {
-    color: colors.secondary,
-    fontWeight: "900",
-    textTransform: "uppercase",
+  statusCol: {
+    alignItems: "flex-end",
+    gap: 3,
+  },
+  statusCaption: {
+    color: colors.textMuted,
+    fontSize: 11,
+    fontWeight: "700",
   },
   customer: {
     color: colors.textDark,

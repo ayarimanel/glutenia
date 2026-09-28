@@ -37,10 +37,12 @@ const createOrderValidators = [
 
 const idValidator = [param("id").isMongoId().withMessage("Invalid order id")];
 
+// Only the target status is validated here; who may apply it, and from
+// which status, is decided by services/orderStatusService.js.
 const statusValidators = [
   body("status")
-    .isIn(["pending", "confirmed", "shipped", "delivered"])
-    .withMessage("Invalid status"),
+    .isIn(["confirmed", "shipped", "delivered"])
+    .withMessage("Status must be confirmed, shipped or delivered"),
 ];
 
 router.post(
@@ -68,7 +70,6 @@ router.get(
 router.put(
   "/:id/status",
   verifyToken,
-  requireRole("admin", "professional"),
   idValidator,
   statusValidators,
   validateRequest,

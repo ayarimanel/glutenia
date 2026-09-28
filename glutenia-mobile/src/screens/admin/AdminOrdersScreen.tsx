@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import Screen from "../../components/Screen";
 import SectionHeader from "../../components/SectionHeader";
 import EmptyState from "../../components/EmptyState";
+import OrderStatusBadge from "../../components/OrderStatusBadge";
 import { useAuth } from "../../context/AuthContext";
 import { api, isApiError } from "../../api/client";
 import { Radius, Shadow, Spacing } from "../../theme/colors";
@@ -64,7 +65,7 @@ export default function AdminOrdersScreen({ navigation }: { navigation: AppNavig
             >
               <View style={styles.top}>
                 <Text style={styles.id}>#{item._id.slice(-6).toUpperCase()}</Text>
-                <Text style={styles.status}>{item.status}</Text>
+                <OrderStatusBadge status={item.status} />
               </View>
               <Text style={styles.customer}>
                 {item.user?.name || t("admin.orders.customer")} - {item.user?.email || t("admin.orders.noEmail")}
