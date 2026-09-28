@@ -394,6 +394,7 @@ export default function AdminProductsScreen({ navigation }: { navigation: AppNav
                   {item.name}
                 </Text>
                 <Text style={styles.meta}>{item.category}</Text>
+                {!!item.barcode && <Text style={styles.barcode}>{item.barcode}</Text>}
               </View>
               <View style={styles.actions}>
                 <Pressable
