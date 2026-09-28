@@ -28,7 +28,7 @@ const stockPhotosByCategory: Record<string, string[]> = {
     unsplash("1612874742237-6526221588e3"),
   ],
   Snacks: [unsplash("1599490659213-e2b9527bd087"), unsplash("1621447504864-d8686e12698c")],
-  Flour: [unsplash("1595475207225-428b62bda831")],
+  Flour: [unsplash("1562662475-a9b52bff2eb3")],
   Sweets: [
     unsplash("1587314168485-3236d6710814"),
     unsplash("1587668178277-295251f900ce"),
@@ -37,7 +37,13 @@ const stockPhotosByCategory: Record<string, string[]> = {
   Other: [unsplash("1614961233913-a5113a4a34ed")],
 };
 
+// Corn flour (farine de maïs) is common in gluten-free baking and reads
+// better as corn than as plain white flour.
+const CORN_FLOUR_PHOTO = unsplash("1651667343153-6dc318e27e41");
+const CORN_NAME = /ma[iï]s|corn/i;
+
 const stockPhotoFor = (category?: string | null, name?: string) => {
+  if (category === "Flour" && CORN_NAME.test(name ?? "")) return CORN_FLOUR_PHOTO;
   const photos = stockPhotosByCategory[category ?? ""] || stockPhotosByCategory.Other;
   let hash = 0;
   for (const char of name ?? "") hash = (hash * 31 + char.charCodeAt(0)) >>> 0;

@@ -84,7 +84,7 @@ const DEMO_PRODUCTS = [
       "Finely milled white rice flour, ideal as a base for gluten-free baking, thickening sauces, or coating.",
     price: 6,
     category: "Flour",
-    imageUrl: img("1595475207225-428b62bda831"),
+    imageUrl: img("1562662475-a9b52bff2eb3"),
     stock: 40,
   },
   {

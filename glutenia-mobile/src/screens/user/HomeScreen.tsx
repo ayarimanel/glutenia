@@ -47,16 +47,30 @@ export default function HomeScreen({ navigation }: { navigation: AppNavigation }
 
   useEffect(() => {
     setProductsError(false);
+    // Listings come newest first. A product offered by several sellers has a
+    // listing each, so keep only its newest one: Home shows what's new, not
+    // the same product twice.
     api.listings({})
-      .then((data) => setProducts(data.slice(0, 8)))
+      .then((data) => {
+        const seen = new Set<string>();
+        const newest = data.filter((listing) => {
+          if (seen.has(listing.product)) return false;
+          seen.add(listing.product);
+          return true;
+        });
+        setProducts(newest.slice(0, 4));
+      })
       .catch(() => setProductsError(true));
   }, []);
 
   useEffect(() => {
+    // Newest first from the API; the first is featured, the next two listed.
     api.events(token)
-      .then((data) => setEvents(data.slice(0, 6)))
+      .then((data) => setEvents(data.slice(0, 3)))
       .catch(() => {});
   }, [token]);
+
+  const [featuredEvent, ...moreEvents] = events;
 
   useEffect(() => {
     api.scanHistory(token)
@@ -197,9 +211,88 @@ export default function HomeScreen({ navigation }: { navigation: AppNavigation }
           })}
         </View>
 
-        {/* ── Products Shop ── */}
+        {/* ── Latest events: newest featured, the next two as rows ── */}
+        {featuredEvent && (
+          <>
+            <View style={styles.sectionRow}>
+              <Text style={styles.sectionLabel}>{t("home.latestEvents")}</Text>
+              <Pressable
+                style={styles.seeAll}
+                onPress={() => navigation.navigate("Events")}
+              >
+                <Text style={styles.seeAllText}>{t("home.seeAll")}</Text>
+                <AppIcon name="chevron-right" size={15} color={colors.secondary} />
+              </Pressable>
+            </View>
+            <View style={styles.eventsBlock}>
+              <Pressable
+                style={styles.featuredEvent}
+                onPress={() => navigation.navigate("EventDetail", { event: featuredEvent })}
+              >
+                <View style={[styles.featuredImg, { backgroundColor: featuredEvent.color }]}>
+                  {featuredEvent.imageUrl ? (
+                    <Image source={{ uri: featuredEvent.imageUrl }} style={styles.eventPhoto} />
+                  ) : (
+                    <Text style={styles.featuredEmoji}>{featuredEvent.emoji}</Text>
+                  )}
+                  <View style={styles.eventBadge}>
+                    <Text style={styles.eventBadgeText}>{featuredEvent.category}</Text>
+                  </View>
+                </View>
+                <View style={styles.featuredBody}>
+                  <Text style={styles.featuredTitle} numberOfLines={2}>
+                    {featuredEvent.title}
+                  </Text>
+                  <View style={styles.featuredMetaRow}>
+                    <View style={styles.eventMeta}>
+                      <AppIcon name="calendar" size={13} color={colors.textMuted} />
+                      <Text style={styles.eventMetaText} numberOfLines={1}>
+                        {featuredEvent.date}
+                      </Text>
+                    </View>
+                    <View style={styles.eventMeta}>
+                      <AppIcon name="location" size={13} color={colors.textMuted} />
+                      <Text style={styles.eventMetaText} numberOfLines={1}>
+                        {featuredEvent.location}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </Pressable>
+              {moreEvents.map((event) => (
+                <Pressable
+                  key={event._id}
+                  style={styles.eventRow}
+                  onPress={() => navigation.navigate("EventDetail", { event })}
+                >
+                  <View style={[styles.eventThumb, { backgroundColor: event.color }]}>
+                    {event.imageUrl ? (
+                      <Image source={{ uri: event.imageUrl }} style={styles.eventPhoto} />
+                    ) : (
+                      <Text style={styles.eventThumbEmoji}>{event.emoji}</Text>
+                    )}
+                  </View>
+                  <View style={styles.eventRowBody}>
+                    <Text style={styles.eventRowTitle} numberOfLines={1}>
+                      {event.title}
+                    </Text>
+                    <View style={styles.eventMeta}>
+                      <AppIcon name="calendar" size={12} color={colors.textMuted} />
+                      <Text style={styles.eventMetaText} numberOfLines={1}>
+                        {event.date} · {event.location}
+                      </Text>
+                    </View>
+                  </View>
+                  <AppIcon name="chevron-right" size={18} color={colors.textMuted} />
+                </Pressable>
+              ))}
+            </View>
+          </>
+        )}
+
+        {/* ── New in the shop: the four newest products, each once ── */}
         <View style={styles.sectionRow}>
-          <Text style={styles.sectionLabel}>{t("home.productsShop")}</Text>
+          <Text style={styles.sectionLabel}>{t("home.newInShop")}</Text>
           <Pressable
             style={styles.seeAll}
             onPress={() => navigation.navigate("ShopScreen")}
@@ -211,78 +304,22 @@ export default function HomeScreen({ navigation }: { navigation: AppNavigation }
         {productsError ? (
           <Text style={styles.sectionError}>{t("home.productsError")}</Text>
         ) : (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.hList}
-        >
-          {products.map((item) => (
-            <View key={item._id} style={styles.productWrap}>
-              <ProductCard
-                product={item}
-                onPress={() =>
-                  navigation.navigate("ProductDetail", { listingId: item._id })
-                }
-                onAdd={() => addItemWithStockCheck(item, 1)}
-              />
-            </View>
-          ))}
-        </ScrollView>
-        )}
-
-        {/* ── Check Events ── */}
-        {events.length > 0 && (
-          <>
-            <View style={styles.sectionRow}>
-              <Text style={styles.sectionLabel}>{t("home.checkEvents")}</Text>
-              <Pressable
-                style={styles.seeAll}
-                onPress={() => navigation.navigate("Events")}
-              >
-                <Text style={styles.seeAllText}>{t("home.seeAll")}</Text>
-                <AppIcon name="chevron-right" size={15} color={colors.secondary} />
-              </Pressable>
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.hList}
-            >
-              {events.map((event) => (
-                <Pressable
-                  key={event._id}
-                  style={styles.eventCard}
-                  onPress={() => navigation.navigate("EventDetail", { event })}
-                >
-                  <View style={[styles.eventImg, { backgroundColor: event.color }]}>
-                    {event.imageUrl ? (
-                      <Image source={{ uri: event.imageUrl }} style={styles.eventPhoto} />
-                    ) : (
-                      <Text style={styles.eventEmoji}>{event.emoji}</Text>
-                    )}
-                    <View style={styles.eventBadge}>
-                      <Text style={styles.eventBadgeText}>{event.category}</Text>
-                    </View>
-                  </View>
-                  <View style={styles.eventBody}>
-                    <Text style={styles.eventTitle} numberOfLines={2}>
-                      {event.title}
-                    </Text>
-                    <View style={styles.eventMeta}>
-                      <AppIcon name="location" size={12} color={colors.textMuted} />
-                      <Text style={styles.eventMetaText} numberOfLines={1}>
-                        {event.location}
-                      </Text>
-                    </View>
-                    <View style={styles.eventMeta}>
-                      <AppIcon name="calendar" size={12} color={colors.textMuted} />
-                      <Text style={styles.eventMetaText}>{event.date}</Text>
-                    </View>
-                  </View>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </>
+          <View style={styles.productGrid}>
+            {products.map((item) => (
+              <View key={item._id} style={styles.productCell}>
+                <ProductCard
+                  product={item}
+                  onPress={() =>
+                    navigation.navigate("ProductDetail", { listingId: item._id })
+                  }
+                  onAdd={() => addItemWithStockCheck(item, 1)}
+                />
+                <View style={styles.newTag} pointerEvents="none">
+                  <Text style={styles.newTagText}>{t("home.newTag")}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
         )}
 
         <View style={{ height: 100 }} />
@@ -460,9 +497,31 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     gap: 12,
   },
 
-  // ── Product cards (horizontal preview) ──
-  productWrap: {
-    width: 160,
+  // ── New in the shop (2×2 grid) ──
+  productGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  productCell: {
+    width: "47.5%",
+  },
+  newTag: {
+    position: "absolute",
+    top: 18,
+    right: 18,
+    backgroundColor: colors.primary,
+    borderRadius: Radius.pill,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  newTagText: {
+    color: "#fff",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 0.6,
   },
 
   // ── Recently scanned ──
@@ -488,25 +547,72 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     lineHeight: 16,
   },
 
-  // ── Event cards ──
-  eventCard: {
-    width: 200,
+  // ── Latest events ──
+  eventsBlock: {
+    paddingHorizontal: Spacing.md,
+    marginBottom: Spacing.lg,
+    gap: 10,
+  },
+  featuredEvent: {
     backgroundColor: colors.surface,
     borderRadius: Radius.xl,
     overflow: "hidden",
     ...Shadow,
   },
-  eventImg: {
-    height: 120,
+  featuredImg: {
+    height: 170,
     alignItems: "center",
     justifyContent: "center",
+  },
+  featuredEmoji: {
+    fontSize: 64,
+  },
+  featuredBody: {
+    padding: Spacing.md,
+    gap: 8,
+  },
+  featuredTitle: {
+    fontSize: 17,
+    fontWeight: "900",
+    color: colors.textDark,
+    lineHeight: 22,
+  },
+  featuredMetaRow: {
+    flexDirection: "row",
+    gap: Spacing.md,
+  },
+  eventRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: colors.surface,
+    borderRadius: Radius.lg,
+    padding: 10,
+    ...Shadow,
+  },
+  eventThumb: {
+    width: 56,
+    height: 56,
+    borderRadius: Radius.md,
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  eventThumbEmoji: {
+    fontSize: 26,
+  },
+  eventRowBody: {
+    flex: 1,
+    gap: 4,
+  },
+  eventRowTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: colors.textDark,
   },
   eventPhoto: {
     ...StyleSheet.absoluteFillObject,
     resizeMode: "cover",
-  },
-  eventEmoji: {
-    fontSize: 48,
   },
   eventBadge: {
     position: "absolute",
@@ -522,25 +628,15 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 10,
     fontWeight: "900",
   },
-  eventBody: {
-    padding: Spacing.sm,
-    gap: 5,
-  },
-  eventTitle: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: colors.textDark,
-    lineHeight: 18,
-    marginBottom: 2,
-  },
   eventMeta: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
+    flexShrink: 1,
   },
   eventMetaText: {
-    fontSize: 11,
+    fontSize: 12,
     color: colors.textMuted,
-    flex: 1,
+    flexShrink: 1,
   },
 });
