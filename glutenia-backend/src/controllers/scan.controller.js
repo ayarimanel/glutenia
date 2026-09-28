@@ -48,7 +48,7 @@ exports.scanLabel = async (req, res, next) => {
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
     const completion = await groq.chat.completions.create({
-      model: "qwen/qwen3.6-27b",
+      model: "qwen/qwen3.8-27b",
       messages: [
         {
           role: "user",
@@ -66,7 +66,7 @@ exports.scanLabel = async (req, res, next) => {
       ],
       max_tokens: 1024,
       temperature: 0.1,
-      // qwen3.6-27b defaults to "thinking mode", which emits <think>...</think>
+      // qwen3.8-27b defaults to "thinking mode", which emits <think>...</think>
       // reasoning text inside message.content and would break the JSON.parse
       // below. This is a straightforward extraction/classification task, not
       // one needing multi-step reasoning, so thinking mode is disabled.
