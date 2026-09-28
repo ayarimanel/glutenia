@@ -110,6 +110,31 @@ export interface CommunityProduct {
   updatedAt: string;
 }
 
+// The admin list populates who submitted and who flagged each report
+// (submittedBy is null, and a flagger is left out, if that account has
+// since been deleted).
+export interface CommunityProductUser {
+  _id: string;
+  name: string;
+  email: string;
+}
+
+export interface AdminCommunityProduct extends Omit<CommunityProduct, "submittedBy" | "flaggedBy"> {
+  submittedBy: CommunityProductUser | null;
+  flaggedBy: CommunityProductUser[];
+}
+
+// A barcode users scanned that is neither in the catalog nor reported by
+// the community (admin only).
+export interface MissingBarcode {
+  _id: string;
+  barcode: string;
+  scanCount: number;
+  userCount: number;
+  lastScannedAt: string;
+  createdAt: string;
+}
+
 export interface EstablishmentOwnerSummary {
   _id: string;
   name: string;

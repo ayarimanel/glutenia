@@ -1,7 +1,9 @@
 const Product = require("../models/Product");
 const CommunityProduct = require("../models/CommunityProduct");
 const Listing = require("../models/Listing");
+const MissingBarcode = require("../models/MissingBarcode");
 const { recordScanEvent } = require("../services/scanService");
+const { isValidBarcodeChecksum } = require("../utils/barcode");
 
 const allowedProductFields = [
   "name",
@@ -99,10 +101,68 @@ exports.getProductByBarcode = async (req, res, next) => {
       });
     }
 
+    // Unknown to Glutenia: remember it for the admin. A catalog product that
+    // nobody sells isn't unknown, and a barcode failing the checksum (or all
+    // zeros) is a misread, so neither is recorded. Never let this fail the scan.
+    if (!product && isValidBarcodeChecksum(req.params.code) && !/^0+$/.test(req.params.code)) {
+      await MissingBarcode.updateOne(
+        { barcode: req.params.code },
+        {
+          $inc: { scanCount: 1 },
+          $addToSet: { scannedBy: req.user.id },
+          $set: { lastScannedAt: new Date() },
+        },
+        { upsert: true }
+      ).catch((error) => console.error(`Failed to record missing barcode: ${error.message}`));
+    }
+
     return res.status(404).json({
       success: false,
       message: "Product not found",
     });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+// Admin: barcodes users scanned that Glutenia couldn't answer, most wanted
+// first. One added to the catalog or the community reports since then is
+// left out, since it's no longer missing.
+exports.getMissingBarcodes = async (req, res, next) => {
+  try {
+    const missing = await MissingBarcode.find().sort({ scanCount: -1, lastScannedAt: -1 });
+    const barcodes = missing.map((entry) => entry.barcode);
+    const [inCatalog, inCommunity] = await Promise.all([
+      Product.find({ barcode: { $in: barcodes } }).distinct("barcode"),
+      CommunityProduct.find({ barcode: { $in: barcodes } }).distinct("barcode"),
+    ]);
+    const known = new Set([...inCatalog, ...inCommunity]);
+
+    const data = missing
+      .filter((entry) => !known.has(entry.barcode))
+      .map((entry) => ({
+        _id: entry._id,
+        barcode: entry.barcode,
+        scanCount: entry.scanCount,
+        userCount: entry.scannedBy.length,
+        lastScannedAt: entry.lastScannedAt,
+        createdAt: entry.createdAt,
+      }));
+
+    return res.json({ success: true, data });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.deleteMissingBarcode = async (req, res, next) => {
+  try {
+    const entry = await MissingBarcode.findByIdAndDelete(req.params.id);
+    if (!entry) {
+      return res.status(404).json({ success: false, message: "Missing barcode not found" });
+    }
+
+    return res.json({ success: true, data: { _id: entry._id } });
   } catch (error) {
     return next(error);
   }

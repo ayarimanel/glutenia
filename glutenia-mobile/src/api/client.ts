@@ -1,6 +1,7 @@
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 import type {
+  AdminCommunityProduct,
   AdminUserDetail,
   Badge,
   CommunityProduct,
@@ -12,6 +13,7 @@ import type {
   HomeGamificationSummary,
   Language,
   Listing,
+  MissingBarcode,
   Notification,
   Order,
   OrderWithBuyer,
@@ -357,6 +359,16 @@ export const api = {
     }),
   flagCommunityProduct: (token: string, id: string) =>
     request<CommunityProduct>(`/community-products/${id}/flag`, { method: "POST", token }),
+  // Admin review of community reports. A review always clears the flags;
+  // pass isGlutenFree only to change the status.
+  communityProducts: (token: string) => request<AdminCommunityProduct[]>("/community-products", { token }),
+  reviewCommunityProduct: (token: string, id: string, body: { isGlutenFree?: boolean } = {}) =>
+    request<AdminCommunityProduct>(`/community-products/${id}`, { method: "PATCH", token, body }),
+  deleteCommunityProduct: (token: string, id: string) =>
+    request<{ _id: string }>(`/community-products/${id}`, { method: "DELETE", token }),
+  missingBarcodes: (token: string) => request<MissingBarcode[]>("/products/missing-barcodes", { token }),
+  deleteMissingBarcode: (token: string, id: string) =>
+    request<{ _id: string }>(`/products/missing-barcodes/${id}`, { method: "DELETE", token }),
   createOrder: (token: string, body: CreateOrderBody) =>
     request<Order & { gamification: GamificationDelta | null }>("/orders", { method: "POST", token, body }),
   myOrders: (token: string) => request<Order[]>("/orders/my", { token }),

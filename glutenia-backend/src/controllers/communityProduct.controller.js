@@ -122,3 +122,55 @@ exports.flagCommunityProduct = async (req, res, next) => {
     return next(error);
   }
 };
+
+// Admin: every community-reported barcode, disputed and most-flagged first,
+// so the entries that need a decision are at the top.
+exports.getCommunityProducts = async (req, res, next) => {
+  try {
+    const entries = await CommunityProduct.find()
+      .populate("submittedBy", "name email")
+      .populate("flaggedBy", "name email")
+      .sort({ disputed: -1, flagCount: -1, createdAt: -1 });
+
+    return res.json({ success: true, data: entries });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+// Admin review of one entry: optionally correct its gluten status, and in
+// every case clear its flags, since an administrator has now checked it.
+exports.reviewCommunityProduct = async (req, res, next) => {
+  try {
+    const entry = await CommunityProduct.findById(req.params.id);
+    if (!entry) {
+      return res.status(404).json({ success: false, message: "Community product not found" });
+    }
+
+    if (typeof req.body.isGlutenFree === "boolean") {
+      entry.isGlutenFree = req.body.isGlutenFree;
+    }
+    entry.flaggedBy = [];
+    entry.flagCount = 0;
+    entry.disputed = false;
+    await entry.save();
+    await entry.populate("submittedBy", "name email");
+
+    return res.json({ success: true, data: entry });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+exports.deleteCommunityProduct = async (req, res, next) => {
+  try {
+    const entry = await CommunityProduct.findByIdAndDelete(req.params.id);
+    if (!entry) {
+      return res.status(404).json({ success: false, message: "Community product not found" });
+    }
+
+    return res.json({ success: true, data: { _id: entry._id } });
+  } catch (error) {
+    return next(error);
+  }
+};

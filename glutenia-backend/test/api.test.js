@@ -16,6 +16,7 @@ const CommunityProduct = require("../src/models/CommunityProduct");
 const Establishment = require("../src/models/Establishment");
 const Event = require("../src/models/Event");
 const Listing = require("../src/models/Listing");
+const MissingBarcode = require("../src/models/MissingBarcode");
 const Notification = require("../src/models/Notification");
 const Order = require("../src/models/Order");
 const PatientResource = require("../src/models/PatientResource");
@@ -31,6 +32,7 @@ const resetDatabase = async () => {
     Establishment.deleteMany({}),
     Event.deleteMany({}),
     Listing.deleteMany({}),
+    MissingBarcode.deleteMany({}),
     Notification.deleteMany({}),
     Order.deleteMany({}),
     PatientResource.deleteMany({}),
@@ -1158,6 +1160,127 @@ describe("Community product submission", () => {
     }).expect(400);
 
     assert.equal(await CommunityProduct.exists({ barcode: "4007817327098" }), null);
+  });
+});
+
+describe("Community product admin review", () => {
+  const asAdmin = (req) => req.set("Authorization", `Bearer ${ctx.adminToken}`);
+
+  test("only an admin can list, review, or delete community reports", async () => {
+    const entry = await CommunityProduct.findOne({ barcode: "4006381333931" });
+    for (const token of [ctx.customerToken, ctx.professionalToken]) {
+      await request(app).get("/api/community-products").set("Authorization", `Bearer ${token}`).expect(403);
+      await request(app)
+        .patch(`/api/community-products/${entry._id}`)
+        .set("Authorization", `Bearer ${token}`)
+        .send({ isGlutenFree: false })
+        .expect(403);
+      await request(app)
+        .delete(`/api/community-products/${entry._id}`)
+        .set("Authorization", `Bearer ${token}`)
+        .expect(403);
+    }
+  });
+
+  test("lists every reported barcode, flagged ones first, with the submitter", async () => {
+    const flaggedEntry = await CommunityProduct.findOne({ barcode: "5901234123457" });
+    await request(app)
+      .post(`/api/community-products/${flaggedEntry._id}/flag`)
+      .set("Authorization", `Bearer ${ctx.professionalToken}`)
+      .expect(200);
+
+    const list = await asAdmin(request(app).get("/api/community-products")).expect(200);
+    const barcodes = list.body.data.map((e) => e.barcode);
+    assert.ok(barcodes.includes("4006381333931"));
+    assert.equal(barcodes[0], "5901234123457");
+    assert.equal(list.body.data[0].flagCount, 1);
+    assert.equal(list.body.data[0].submittedBy.email, "customer@glutenia.test");
+    assert.deepEqual(
+      list.body.data[0].flaggedBy.map((u) => u.email),
+      ["professional@glutenia.test"]
+    );
+  });
+
+  test("a review corrects the gluten status and clears the flags", async () => {
+    const entry = await CommunityProduct.findOne({ barcode: "5901234123457" });
+    entry.flaggedBy = [ctx.professionalId, ctx.adminId, ctx.customerId];
+    entry.flagCount = 3;
+    entry.disputed = true;
+    await entry.save();
+
+    const reviewed = await asAdmin(request(app).patch(`/api/community-products/${entry._id}`))
+      .send({ isGlutenFree: true })
+      .expect(200);
+    assert.equal(reviewed.body.data.isGlutenFree, true);
+    assert.equal(reviewed.body.data.flagCount, 0);
+    assert.equal(reviewed.body.data.disputed, false);
+
+    // Confirming without a status keeps it and still clears the flags.
+    const confirmed = await asAdmin(request(app).patch(`/api/community-products/${entry._id}`))
+      .send({})
+      .expect(200);
+    assert.equal(confirmed.body.data.isGlutenFree, true);
+
+    await asAdmin(request(app).patch(`/api/community-products/${entry._id}`))
+      .send({ isGlutenFree: "yes" })
+      .expect(400);
+  });
+
+  test("a deleted report no longer answers a barcode scan", async () => {
+    const entry = await CommunityProduct.findOne({ barcode: "4006381333931" });
+    await asAdmin(request(app).delete(`/api/community-products/${entry._id}`)).expect(200);
+    await asAdmin(request(app).delete(`/api/community-products/${entry._id}`)).expect(404);
+    assert.equal(await CommunityProduct.exists({ barcode: "4006381333931" }), null);
+  });
+});
+
+describe("Missing barcodes", () => {
+  const scan = (token, code) =>
+    request(app)
+      .get(`/api/products/barcode/${code}`)
+      .set("Authorization", `Bearer ${token}`)
+      .expect(404);
+  const listMissing = (token = ctx.adminToken) =>
+    request(app).get("/api/products/missing-barcodes").set("Authorization", `Bearer ${token}`);
+
+  test("records unknown scans, counting scans and distinct users, most wanted first", async () => {
+    await MissingBarcode.deleteMany({});
+    await scan(ctx.customerToken, "0000000000000");
+    await scan(ctx.customerToken, "8712345678906");
+    await scan(ctx.customerToken, "8712345678906");
+    await scan(ctx.professionalToken, "8712345678906");
+    await scan(ctx.customerToken, "96385074");
+    // A misread (bad check digit) isn't recorded.
+    await scan(ctx.customerToken, "1234567890123");
+
+    const list = await listMissing().expect(200);
+    assert.deepEqual(
+      list.body.data.map((e) => [e.barcode, e.scanCount, e.userCount]),
+      [
+        ["8712345678906", 3, 2],
+        ["96385074", 1, 1],
+      ]
+    );
+
+    await listMissing(ctx.customerToken).expect(403);
+    await listMissing(ctx.professionalToken).expect(403);
+  });
+
+  test("a barcode added to the catalog drops off the list, and the admin can dismiss one", async () => {
+    await Product.create({ name: "Found At Last", category: "Snacks", barcode: "8712345678906" });
+    const list = await listMissing().expect(200);
+    assert.deepEqual(list.body.data.map((e) => e.barcode), ["96385074"]);
+
+    const id = list.body.data[0]._id;
+    await request(app)
+      .delete(`/api/products/missing-barcodes/${id}`)
+      .set("Authorization", `Bearer ${ctx.customerToken}`)
+      .expect(403);
+    await request(app)
+      .delete(`/api/products/missing-barcodes/${id}`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .expect(200);
+    assert.deepEqual((await listMissing().expect(200)).body.data, []);
   });
 });
 

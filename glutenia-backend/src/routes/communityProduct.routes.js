@@ -1,6 +1,7 @@
 const express = require("express");
 const { body, param } = require("express-validator");
 const communityProductController = require("../controllers/communityProduct.controller");
+const requireRole = require("../middleware/requireRole");
 const validateRequest = require("../middleware/validateRequest");
 const verifyToken = require("../middleware/verifyToken");
 const { isValidBarcodeChecksum } = require("../utils/barcode");
@@ -39,7 +40,29 @@ const submitValidators = [
 
 const idValidator = [param("id").isMongoId().withMessage("Invalid community product id")];
 
+const reviewValidators = [
+  body("isGlutenFree").optional().isBoolean({ strict: true }).withMessage("isGlutenFree must be true or false"),
+];
+
+router.get("/", verifyToken, requireRole("admin"), communityProductController.getCommunityProducts);
 router.post("/", verifyToken, submitValidators, validateRequest, communityProductController.submitCommunityProduct);
+router.patch(
+  "/:id",
+  verifyToken,
+  requireRole("admin"),
+  idValidator,
+  reviewValidators,
+  validateRequest,
+  communityProductController.reviewCommunityProduct
+);
+router.delete(
+  "/:id",
+  verifyToken,
+  requireRole("admin"),
+  idValidator,
+  validateRequest,
+  communityProductController.deleteCommunityProduct
+);
 router.post(
   "/:id/flag",
   verifyToken,

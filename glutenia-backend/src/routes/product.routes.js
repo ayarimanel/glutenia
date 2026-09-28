@@ -61,6 +61,16 @@ const idValidator = [
 // listing.routes.js.
 router.get("/", productController.getProducts);
 router.get("/barcode/:code", verifyToken, productController.getProductByBarcode);
+// Declared before "/:id" so "missing-barcodes" isn't read as a product id.
+router.get("/missing-barcodes", verifyToken, requireRole("admin"), productController.getMissingBarcodes);
+router.delete(
+  "/missing-barcodes/:id",
+  verifyToken,
+  requireRole("admin"),
+  idValidator,
+  validateRequest,
+  productController.deleteMissingBarcode
+);
 router.get("/:id", idValidator, validateRequest, productController.getProductById);
 router.post(
   "/",

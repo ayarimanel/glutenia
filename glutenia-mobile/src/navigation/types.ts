@@ -121,7 +121,9 @@ export type RootParamList = {
   AdminTabs: NavigatorScreenParams<AdminTabParamList> | undefined;
   Dashboard: undefined;
   Products: undefined;
-  AdminProductForm: { productId?: string } | undefined;
+  // barcode pre-fills a new product (from a barcode users scanned but
+  // Glutenia didn't know).
+  AdminProductForm: { productId?: string; barcode?: string } | undefined;
   AdminEvents: undefined;
   AdminEstablishments: undefined;
   AdminEstablishmentDetail: { establishment: Establishment };

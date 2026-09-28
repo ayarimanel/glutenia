@@ -64,7 +64,7 @@ export default function AdminProductFormScreen({ navigation, route }: AdminProdu
   const [imageUrl, setImageUrl] = useState("");
   const [imageStatus, setImageStatus] = useState("");
   const [removeImage, setRemoveImage] = useState(false);
-  const [barcode, setBarcode] = useState("");
+  const [barcode, setBarcode] = useState(route.params?.barcode ?? "");
   const [isGlutenFree, setIsGlutenFree] = useState(true);
   const [errors, setErrors] = useState<ProductFormErrors>({});
   const [loading, setLoading] = useState(false);
