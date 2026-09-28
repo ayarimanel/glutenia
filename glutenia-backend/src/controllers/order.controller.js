@@ -35,7 +35,7 @@ exports.getSellerOrders = async (req, res, next) => {
 
     const sellerOrders = orders.map((order) => {
       const plain = withActions(order, req.user);
-      plain.items = plain.items.filter((item) => ownedIds.has(item.listing.toString()));
+      plain.items = plain.items.filter((item) => item.listing && ownedIds.has(item.listing.toString()));
       // The professional's own part, which is what their screen shows.
       plain.sellerStatus = orderStatus.sellerPartOf(order, req.user.id)?.status ?? order.status;
       return plain;
@@ -302,9 +302,12 @@ exports.deleteOrder = async (req, res, next) => {
     // inventory. Shipped/delivered goods are already gone.
     await orderStatus.normalizeOrders([order]);
     await Promise.all(
-      orderStatus.itemsStillInStock(order).map((item) =>
-        Listing.updateOne({ _id: item.listing }, { $inc: { stock: item.qty } })
-      )
+      // An item without a listing (very old orders) has no stock to give
+      // back; an undefined _id would otherwise match an arbitrary listing.
+      orderStatus
+        .itemsStillInStock(order)
+        .filter((item) => item.listing)
+        .map((item) => Listing.updateOne({ _id: item.listing }, { $inc: { stock: item.qty } }))
     );
 
     await order.deleteOne();

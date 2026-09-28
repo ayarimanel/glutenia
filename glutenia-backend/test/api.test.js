@@ -1467,4 +1467,35 @@ describe("Order status transitions", () => {
     assert.equal(saved.sellerStatuses.length, 1);
     assert.equal(saved.items[0].professional.toString(), sellerA.id);
   });
+
+  test("orders whose items have no listing still list, and deleting one leaves stock alone", async () => {
+    const { listingA } = await setup();
+    const totalStock = async () => (await Listing.find()).reduce((sum, l) => sum + l.stock, 0);
+    const stockBefore = await totalStock();
+    // From before products and listings were split: items carry a product only.
+    const ancient = await Order.collection.insertOne({
+      user: new mongoose.Types.ObjectId(ctx.customerId),
+      items: [{ product: listingA.product, name: "Ancient bread", qty: 2, price: 5 }],
+      total: 17,
+      deliveryFee: 7,
+      address,
+      status: "pending",
+      createdAt: new Date(),
+    });
+    const orderId = ancient.insertedId.toString();
+
+    for (const [path, token] of [
+      ["/api/orders", ctx.adminToken],
+      ["/api/orders/my", ctx.customerToken],
+    ]) {
+      const list = await request(app).get(path).set("Authorization", `Bearer ${token}`).expect(200);
+      assert.ok(list.body.data.some((o) => o._id === orderId));
+    }
+
+    await request(app)
+      .delete(`/api/orders/${orderId}`)
+      .set("Authorization", `Bearer ${ctx.adminToken}`)
+      .expect(200);
+    assert.equal(await totalStock(), stockBefore);
+  });
 });

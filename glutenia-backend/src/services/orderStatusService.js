@@ -34,11 +34,13 @@ const computeOverallStatus = (order) => {
 // listings, giving every seller part the order's current status. Nothing is
 // written here; the data is saved the first time the order's status changes.
 // Takes several orders so a whole list needs a single Listing query.
+// Items from even older orders may have no listing at all; their seller
+// stays unknown (null) instead of failing the whole list.
 const normalizeOrders = async (orders) => {
   const missing = new Set();
   for (const order of orders) {
     for (const item of order.items) {
-      if (!item.professional) missing.add(idOf(item.listing).toString());
+      if (!item.professional && item.listing) missing.add(idOf(item.listing).toString());
     }
   }
 
@@ -47,7 +49,7 @@ const normalizeOrders = async (orders) => {
     const sellerByListing = new Map(listings.map((l) => [l._id.toString(), l.professional]));
     for (const order of orders) {
       for (const item of order.items) {
-        if (!item.professional) {
+        if (!item.professional && item.listing) {
           item.professional = sellerByListing.get(idOf(item.listing).toString()) || null;
         }
       }
