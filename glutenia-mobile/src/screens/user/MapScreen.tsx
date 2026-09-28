@@ -233,6 +233,23 @@ const getSpots = (colors: ThemeColors): PositionedSpot[] => [
     color: colors.primary,
     accentEmoji: "🏷️",
   },
+  {
+    id: "11",
+    name: "Pharmacie Ennasr",
+    type: "Pharmacy",
+    address: "Av. Hédi Nouira, Ennasr, Ariana",
+    emoji: "💊",
+    rating: 4.7,
+    reviews: "640",
+    distance: "5.6 km",
+    avgPrice: "18 TND",
+    coordinate: { latitude: 36.8615, longitude: 10.165 },
+    description:
+      "Pharmacy with a gluten-free corner: certified GF flours, baby foods and dietary products. The pharmacist can check whether a medicine contains gluten.",
+    tags: ["GF Products", "Medicine Check", "Baby Food"],
+    color: colors.primary,
+    accentEmoji: "🩺",
+  },
 ];
 
 const FILTERS = ["All", "Supermarket", "Restaurant", "Health Store", "Bakery", "Pharmacy"];
@@ -270,6 +287,7 @@ const SPOT_IMAGES: Record<string, string> = {
   "8": "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=500", // Bakery/Patisserie
   "9": "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=500", // Bistro Restaurant
   "10": "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=500", // Supermarket Centre Ville
+  "11": "https://images.unsplash.com/photo-1580281657527-47f249e8f4df?w=500", // Pharmacy
 };
 
 const FILTER_ICONS: Record<string, IconName> = {

@@ -248,6 +248,7 @@ export default {
       s8: { description: "Artisan bakery offering exclusively gluten-free pastries, tarts, and celebration cakes. Pre-order available for custom creations.", tag1: "GF Cakes", tag2: "Tarts", tag3: "Custom Orders" },
       s9: { description: "Dedicated gluten-free bistro serving traditional Tunisian dishes reinvented with rice and corn-based recipes. Cosy terrace dining.", tag1: "Tunisian Cuisine", tag2: "GF Menu", tag3: "Terrace" },
       s10: { description: "Central supermarket with a dedicated bio & sans-gluten aisle. Good selection of imported French GF brands and local alternatives.", tag1: "GF Aisle", tag2: "Bio", tag3: "French Brands" },
+      s11: { description: "Pharmacy with a gluten-free corner: certified GF flours, baby foods and dietary products. The pharmacist can check whether a medicine contains gluten.", tag1: "GF Products", tag2: "Medicine Check", tag3: "Baby Food" },
     },
   },
   settings: {

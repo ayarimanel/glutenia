@@ -250,6 +250,7 @@ export default {
       s8: { description: "Artisan bakery offering exclusively gluten-free pastries, tarts, and celebration cakes.", tag1: "كيك بدون غلوتين", tag2: "تارت", tag3: "طلبات مخصصة" },
       s9: { description: "Dedicated gluten-free bistro serving traditional Tunisian dishes reinvented with rice and corn-based recipes.", tag1: "مطبخ تونسي", tag2: "قائمة بدون غلوتين", tag3: "تراس" },
       s10: { description: "Central supermarket with a dedicated bio & sans-gluten aisle.", tag1: "رف بدون غلوتين", tag2: "عضوي", tag3: "ماركات أوروبية" },
+      s11: { description: "صيدلية بها ركن خالٍ من الغلوتين: دقيق معتمد خالٍ من الغلوتين، أغذية للرضع ومنتجات حمية. يمكن للصيدلي التحقق مما إذا كان الدواء يحتوي على الغلوتين.", tag1: "منتجات بدون غلوتين", tag2: "فحص الأدوية", tag3: "أغذية الرضع" },
     },
   },
   settings: {

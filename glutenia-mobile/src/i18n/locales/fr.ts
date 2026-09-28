@@ -248,6 +248,7 @@ export default {
       s8: { description: "Artisan bakery offering exclusively gluten-free pastries, tarts, and celebration cakes. Pre-order available.", tag1: "Gâteaux SG", tag2: "Tartes", tag3: "Commandes" },
       s9: { description: "Dedicated gluten-free bistro serving traditional Tunisian dishes reinvented with rice and corn-based recipes.", tag1: "Cuisine tunisienne", tag2: "Menu SG", tag3: "Terrasse" },
       s10: { description: "Central supermarket with a dedicated bio & sans-gluten aisle. Good selection of imported French GF brands.", tag1: "Rayon SG", tag2: "Bio", tag3: "Marques françaises" },
+      s11: { description: "Pharmacie avec un coin sans gluten : farines certifiées SG, aliments pour bébés et produits diététiques. Le pharmacien peut vérifier si un médicament contient du gluten.", tag1: "Produits SG", tag2: "Vérif. médicaments", tag3: "Alimentation bébé" },
     },
   },
   settings: {
