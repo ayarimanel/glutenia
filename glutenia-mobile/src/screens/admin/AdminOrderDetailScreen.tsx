@@ -23,7 +23,6 @@ export default function AdminOrderDetailScreen({ navigation, route }: AdminOrder
   const { colors } = useTheme();
   const { token } = useAuthenticated();
   const styles = getStyles(colors);
-  // Kept in state so a status change shows immediately on this screen.
   const [order, setOrder] = useState<OrderWithBuyer | undefined>(route.params?.order);
   const [deleting, setDeleting] = useState(false);
   const [updating, setUpdating] = useState(false);
@@ -49,8 +48,6 @@ export default function AdminOrderDetailScreen({ navigation, route }: AdminOrder
   const deliveryFee = order.deliveryFee ?? order.total - subtotal;
   const orderRef = `#${order._id.slice(-6).toUpperCase()}`;
 
-  // Admin moves the whole order one step forward; the next step comes from
-  // the backend's allowedActions for this order.
   const moveOrder = (status: OrderStatus) => {
     Alert.alert(
       t("orderStatus.confirmTitle"),
@@ -63,7 +60,6 @@ export default function AdminOrderDetailScreen({ navigation, route }: AdminOrder
             try {
               setUpdating(true);
               const updated = await api.updateOrderStatus(token, order._id, status);
-              // The update response has the raw user id; keep the buyer summary.
               setOrder({ ...updated, user: order.user });
             } catch (err) {
               Alert.alert(t("orderStatus.updateFailed"), (err as ApiError).message);

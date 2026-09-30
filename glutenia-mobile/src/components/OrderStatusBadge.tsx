@@ -3,8 +3,6 @@ import { useTranslation } from "react-i18next";
 import { useTheme, type ThemeColors } from "../context/ThemeContext";
 import type { OrderStatus } from "../types/models";
 
-// One colour per order status, shared by the customer, professional and
-// admin screens so a status always looks the same wherever it appears.
 const statusColors = (colors: ThemeColors, isDark: boolean): Record<OrderStatus, { bg: string; text: string }> => ({
   pending: { bg: colors.warning + "22", text: isDark ? colors.warning : "#A86A00" },
   confirmed: { bg: colors.secondaryPale, text: colors.secondary },

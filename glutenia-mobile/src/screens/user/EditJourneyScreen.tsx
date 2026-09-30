@@ -124,10 +124,6 @@ export default function EditJourneyScreen({ navigation }: { navigation: AppNavig
   const handleSave = async () => {
     try {
       setSaving(true);
-      // Preserve the user's real start date — only fall back to an
-      // approximation from the experience bracket if no real date exists
-      // yet. Re-deriving it from the bracket on every edit would silently
-      // reset the "gluten-free for X" stat shown on the profile.
       const experienceMeta = EXPERIENCE_META.find((o) => o.value === experienceLevel);
       const glutenFreeSince =
         user?.gluten_free_since || (experienceMeta ? daysAgo(experienceMeta.days) : null);

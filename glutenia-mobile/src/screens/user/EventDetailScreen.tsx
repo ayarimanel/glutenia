@@ -55,7 +55,6 @@ export default function EventDetailScreen({ route, navigation }: Props) {
   return (
     <Screen>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Hero */}
         <View style={[styles.hero, { backgroundColor: event.color }]}>
           {event.imageUrl ? (
             <Image source={{ uri: event.imageUrl }} style={styles.heroPhoto} />
@@ -73,7 +72,6 @@ export default function EventDetailScreen({ route, navigation }: Props) {
         <View style={styles.body}>
           <Text style={styles.title}>{event.title}</Text>
 
-          {/* Meta info */}
           <View style={styles.metaCard}>
             <View style={styles.metaRow}>
               <View style={styles.metaIcon}>
@@ -99,11 +97,9 @@ export default function EventDetailScreen({ route, navigation }: Props) {
             </View>
           </View>
 
-          {/* Description */}
           <Text style={styles.sectionTitle}>{t("eventDetail.about")}</Text>
           <Text style={styles.description}>{event.description}</Text>
 
-          {/* Price + RSVP row */}
           <View style={styles.rsvpRow}>
             <View style={styles.priceBox}>
               <AppIcon name="cash" size={16} color={colors.primary} />

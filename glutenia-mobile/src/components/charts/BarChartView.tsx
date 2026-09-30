@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { Animated, StyleSheet, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 
-const CHART_HEIGHT = 100; // slightly shorter for better proportions inside cards
+const CHART_HEIGHT = 100;
 
 export interface BarDatum {
   label: string;

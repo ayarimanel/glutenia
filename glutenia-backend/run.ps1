@@ -195,7 +195,6 @@ function Invoke-SmokeTest {
       return
     }
   } catch {
-    # No server is listening yet; the smoke test will start one below.
   }
 
   $logsDir = Join-Path $Root "logs"

@@ -6,10 +6,6 @@ const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const canManageListing = (req, listing) =>
   req.user.role === "admin" || listing.professional.toString() === req.user.id;
 
-// Joins the catalog product's fields onto the listing so the frontend gets
-// one flat object (name/category/imageUrl/isGlutenFree/barcode from the
-// catalog, price/stock/isAvailable from the listing) instead of having to
-// resolve a populated sub-document itself.
 const flattenListing = (listing) => {
   const plain = listing.toObject();
   const product = plain.product;
@@ -47,9 +43,6 @@ exports.getListings = async (req, res, next) => {
 
     let listingFilter = { isAvailable: true };
 
-    // Exact catalog-product filter (e.g. resolving a scan-history entry,
-    // which only ever stored the catalog product id, back to a sellable
-    // listing) takes precedence over the category/search text filter.
     if (product) {
       listingFilter.product = product;
     } else if (Object.keys(productFilter).length) {

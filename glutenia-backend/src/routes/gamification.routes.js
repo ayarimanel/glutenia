@@ -6,13 +6,10 @@ const verifyToken = require("../middleware/verifyToken");
 
 const router = express.Router();
 
-// Profile summary
 router.get("/profile", verifyToken, gamificationController.getProfileGamification);
 
-// Lightweight payload for surfaces that load on every app open (Home strip)
 router.get("/home", verifyToken, gamificationController.getHomeGamification);
 
-// Badge pin with explicit boolean + 3-pin cap
 router.put(
   "/badges/:badgeId/pin",
   verifyToken,

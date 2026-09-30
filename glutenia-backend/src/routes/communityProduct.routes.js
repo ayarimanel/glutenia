@@ -18,16 +18,11 @@ const submitValidators = [
     .custom((value) => isValidBarcodeChecksum(value))
     .withMessage("Barcode is not a valid product barcode"),
   body("name").trim().notEmpty().withMessage("Product name is required"),
-  // Photo is mandatory, not optional — a typed name alone is trivial to
-  // fake; a photo of the actual product/barcode raises the bar meaningfully
-  // (same approach Open Food Facts uses for crowdsourced submissions).
   body("imageUrl")
     .trim()
     .notEmpty()
     .withMessage("A photo of the product is required")
     .isString(),
-  // No isGlutenFree here on purpose: the gluten status is taken from this
-  // label scan's verdict server-side, never from the client.
   body("labelScanId")
     .isMongoId()
     .withMessage("A label analysis is required to add a product"),

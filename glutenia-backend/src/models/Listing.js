@@ -31,7 +31,6 @@ const listingSchema = new mongoose.Schema({
   },
 });
 
-// One listing per professional per catalog product.
 listingSchema.index({ product: 1, professional: 1 }, { unique: true });
 
 module.exports = mongoose.model("Listing", listingSchema);

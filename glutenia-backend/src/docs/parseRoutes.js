@@ -4,14 +4,10 @@ const acorn = require("acorn");
 const HTTP_METHODS = ["get", "post", "put", "delete", "patch"];
 const VALIDATOR_ROOTS = ["body", "param", "query", "check"];
 
-// Collects `const NAME = [...]`, `const NAME = (arg) => body(arg)....`, and
-// `const NAME = multer({...})` top-level declarations so route handlers that
-// reference them by identifier (e.g. `idValidator`, `phoneValidator("phone")`,
-// `upload.single("image")`) can be resolved back to their real definition.
 function buildTopLevelScope(programBody) {
-  const arrays = new Map(); // name -> ArrayExpression node
-  const factories = new Map(); // name -> { chainNode } (arrow fn wrapping a body/param/query chain)
-  const multerVars = new Set(); // names assigned from multer({...})
+  const arrays = new Map();
+  const factories = new Map();
+  const multerVars = new Set();
 
   for (const stmt of programBody) {
     if (stmt.type !== "VariableDeclaration") continue;
@@ -103,8 +99,6 @@ function appendDescription(schema, text) {
   schema.description = schema.description ? `${schema.description}; ${text}` : text;
 }
 
-// Walks a chain like body("email").isEmail().withMessage(...).normalizeEmail(...)
-// back down to its root call, collecting the `.method(args)` calls in source order.
 function parseValidatorChain(chainNode, scope, warnings, overrideField) {
   const calls = [];
   let cur = chainNode;
@@ -177,7 +171,7 @@ function parseValidatorChain(chainNode, scope, warnings, overrideField) {
         appendDescription(schema, "must match a required pattern");
         break;
       default:
-        break; // trim, toInt, toFloat, toBoolean, toDate, normalizeEmail, withMessage, notEmpty, exists — no schema effect
+        break;
     }
   }
 
@@ -185,8 +179,6 @@ function parseValidatorChain(chainNode, scope, warnings, overrideField) {
   return { location, field, required, schema };
 }
 
-// Expands dotted/wildcard field paths like "items.*.qty" or "address.city"
-// into a nested JSON schema instead of leaving them as flat opaque strings.
 function setNestedProperty(rootSchema, path, entry) {
   const segments = path.split(".");
   let node = rootSchema;
@@ -243,9 +235,6 @@ function humanizeName(name) {
     .replace(/^./, (c) => c.toUpperCase());
 }
 
-// Parses one Express route file's source and returns a normalized list of
-// route descriptors: { method, path, params, query, bodySchema, upload,
-// auth, handlerName, warnings }.
 function parseRouteFile(filePath) {
   const source = fs.readFileSync(filePath, "utf8");
   const ast = acorn.parse(source, { ecmaVersion: 2022, sourceType: "script" });
@@ -267,7 +256,7 @@ function parseRouteFile(filePath) {
       HTTP_METHODS.includes(node.callee.property.name)
     ) {
       routes.push(parseRouteCall(node, scope));
-      return; // don't descend into the route call's own children again
+      return;
     }
     for (const key of Object.keys(node)) {
       if (key === "type" || key === "start" || key === "end" || key === "loc") continue;

@@ -12,12 +12,9 @@ const idValidator = [param("id").isMongoId().withMessage("Invalid user id")];
 router.get("/", verifyToken, isAdmin, userController.getUsers);
 router.get("/analytics", verifyToken, isAdmin, userController.getUserAnalytics);
 
-// Current user's favorite map spots
 router.get("/me/favorites", verifyToken, userController.getFavorites);
 router.put("/me/favorites", verifyToken, userController.updateFavorites);
 
-// Same email normalization as auth.routes.js so an admin edit can't create
-// an address the login route would never match.
 const NORMALIZE_EMAIL_OPTIONS = {
   gmail_remove_dots: false,
   gmail_remove_subaddress: false,

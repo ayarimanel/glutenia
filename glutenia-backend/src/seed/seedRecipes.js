@@ -170,8 +170,6 @@ const DEFAULT_RECIPES = [
   },
 ];
 
-// Runs on every boot but only inserts if the collection is empty, so it
-// never overwrites recipes an admin has since edited, added, or deleted.
 const seedRecipesIfEmpty = async () => {
   const count = await Recipe.countDocuments();
   if (count > 0) {

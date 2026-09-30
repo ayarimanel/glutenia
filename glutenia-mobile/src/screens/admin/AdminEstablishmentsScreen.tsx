@@ -21,11 +21,6 @@ import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import type { Establishment, EstablishmentOwnerSummary } from "../../types/models";
 import type { AppNavigation } from "../../navigation/types";
 
-// Admin oversight of Professional-submitted establishments. There is no
-// separate "request verification" step - upsertMyEstablishment never sets
-// `verified`, so any establishment sits here (verified: false) from the
-// moment it's created/updated until an admin acts on it, same as how a
-// professional signup is itself the approval request.
 export default function AdminEstablishmentsScreen({ navigation }: { navigation: AppNavigation }) {
   const { token, logout } = useAuthenticated();
   const { t } = useTranslation();

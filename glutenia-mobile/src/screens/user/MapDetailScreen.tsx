@@ -15,9 +15,6 @@ import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import AppIcon from "../../components/AppIcon";
 import type { AppNavigation, RootParamList } from "../../navigation/types";
 
-// Intentionally unused - StarRating below builds the star string with
-// .repeat() instead. Leftover from an earlier implementation; not a bug,
-// no need to re-investigate.
 const STARS_FULL = "★★★★★";
 const STARS_EMPTY = "☆☆☆☆☆";
 
@@ -59,9 +56,7 @@ export default function MapDetailScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.root}>
-      {/* Hero header */}
       <View style={[styles.hero, { backgroundColor: spot.color + "33" }]}>
-        {/* Back button */}
         <TouchableOpacity
           style={[styles.backBtn, { top: insets.top + 10 }]}
           onPress={() => navigation.goBack()}
@@ -70,13 +65,11 @@ export default function MapDetailScreen({ route, navigation }: Props) {
           <AppIcon name="arrow-back" size={20} color={colors.textDark} />
         </TouchableOpacity>
 
-        {/* Hero emoji */}
         <View style={[styles.heroEmojiWrap, { backgroundColor: spot.color + "44" }]}>
           <Text style={styles.heroEmoji}>{spot.emoji}</Text>
           <Text style={styles.heroAccent}>{spot.accentEmoji}</Text>
         </View>
 
-        {/* GF badge over hero */}
         <View style={styles.heroBadge}>
           <AppIcon name="leaf" size={12} color="#fff" />
           <Text style={styles.heroBadgeText}>{t("mapDetail.certifiedGF")}</Text>
@@ -88,7 +81,6 @@ export default function MapDetailScreen({ route, navigation }: Props) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Name + type */}
         <View style={styles.nameRow}>
           <View style={styles.nameBlock}>
             <Text style={styles.name}>{spot.name}</Text>
@@ -105,14 +97,12 @@ export default function MapDetailScreen({ route, navigation }: Props) {
           </View>
         </View>
 
-        {/* Rating row */}
         <View style={styles.ratingRow}>
           <StarRating rating={spot.rating} styles={styles} />
           <Text style={styles.ratingNum}>{spot.rating}</Text>
           <Text style={styles.ratingReviews}>({spot.reviews} {t("mapDetail.reviews")})</Text>
         </View>
 
-        {/* Distance + price row */}
         <View style={styles.metaRow}>
           <View style={styles.metaChip}>
             <AppIcon name="location" size={14} color={colors.primary} />
@@ -124,20 +114,16 @@ export default function MapDetailScreen({ route, navigation }: Props) {
           </View>
         </View>
 
-        {/* Divider */}
         <View style={styles.divider} />
 
-        {/* Address */}
         <View style={styles.addressRow}>
           <AppIcon name="map-pin" size={15} color={colors.textMuted} />
           <Text style={styles.addressText}>{spot.address}</Text>
         </View>
 
-        {/* Description */}
         <Text style={styles.sectionLabel}>{t("mapDetail.about")}</Text>
         <Text style={styles.description}>{spot.description}</Text>
 
-        {/* Tags */}
         <Text style={styles.sectionLabel}>{t("mapDetail.highlights")}</Text>
         <View style={styles.tagRow}>
           {spot.tags.map((tag) => (
@@ -148,7 +134,6 @@ export default function MapDetailScreen({ route, navigation }: Props) {
           ))}
         </View>
 
-        {/* Opening hours (fake) */}
         <Text style={styles.sectionLabel}>{t("mapDetail.hours")}</Text>
         <View style={styles.hoursBlock}>
           {[
@@ -164,7 +149,6 @@ export default function MapDetailScreen({ route, navigation }: Props) {
         </View>
       </ScrollView>
 
-      {/* Contact CTA */}
       <View style={[styles.ctaBar, { paddingBottom: insets.bottom + Spacing.md }]}>
         <TouchableOpacity
           style={styles.ctaBtn}
@@ -185,7 +169,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     backgroundColor: colors.background,
   },
 
-  // ── Hero ──────────────────────────────────────────────────────────────────
   hero: {
     height: 220,
     alignItems: "center",
@@ -237,7 +220,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     color: "#fff",
   },
 
-  // ── Content ───────────────────────────────────────────────────────────────
   scroll: {
     flex: 1,
   },
@@ -380,7 +362,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.textDark,
   },
 
-  // ── CTA ──────────────────────────────────────────────────────────────────
   ctaBar: {
     position: "absolute",
     bottom: 0,

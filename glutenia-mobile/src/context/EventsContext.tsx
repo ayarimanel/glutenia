@@ -77,10 +77,6 @@ export const EventsProvider = ({ children }: { children: ReactNode }) => {
   return <EventsContext.Provider value={value}>{children}</EventsContext.Provider>;
 };
 
-// Note: as of this migration, no screen actually calls useEvents() - this
-// provider mounts and runs its restore/persist effects, but nothing reads
-// from it. Flagging as dead code, not removing it - out of scope for a
-// JS->TS conversion.
 export const useEvents = (): EventsContextValue => {
   const context = useContext(EventsContext);
   if (!context) {

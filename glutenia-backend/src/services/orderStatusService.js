@@ -1,14 +1,6 @@
 const Listing = require("../models/Listing");
 const { ORDER_STATUSES } = require("../models/Order");
 
-// Every allowed order-status transition, in one place. A transition is named
-// by the status it moves to, and says which status it starts from and who
-// may perform it:
-//   - "seller":   a professional, on their own part of the order only
-//   - "customer": the customer who placed the order, on the whole order
-//   - "admin":    an administrator, on the whole order
-// Moving backwards, skipping a step, or repeating the current status is
-// never allowed. Removing an order is a separate admin action (deleteOrder).
 const TRANSITIONS = {
   confirmed: { from: "pending", roles: ["seller", "admin"] },
   shipped: { from: "confirmed", roles: ["seller", "admin"] },
@@ -20,7 +12,6 @@ const rank = (status) => ORDER_STATUSES.indexOf(status);
 const idOf = (value) => (value && value._id ? value._id : value);
 const sameId = (a, b) => a != null && b != null && idOf(a).toString() === idOf(b).toString();
 
-// The order's overall status is its least advanced seller part.
 const computeOverallStatus = (order) => {
   if (!order.sellerStatuses || order.sellerStatuses.length === 0) return order.status;
   return order.sellerStatuses.reduce(
@@ -29,13 +20,6 @@ const computeOverallStatus = (order) => {
   );
 };
 
-// Orders placed before per-seller statuses existed have no seller on their
-// items and no sellerStatuses. Fill both in (in memory) from the items'
-// listings, giving every seller part the order's current status. Nothing is
-// written here; the data is saved the first time the order's status changes.
-// Takes several orders so a whole list needs a single Listing query.
-// Items from even older orders may have no listing at all; their seller
-// stays unknown (null) instead of failing the whole list.
 const normalizeOrders = async (orders) => {
   const missing = new Set();
   for (const order of orders) {
@@ -74,17 +58,12 @@ const normalizeOrders = async (orders) => {
 const sellerPartOf = (order, userId) =>
   (order.sellerStatuses || []).find((part) => sameId(part.professional, userId));
 
-// What `user` is to this order: an administrator, the person who placed it
-// (any role can shop), and/or a seller with a part in it.
 const relationTo = (order, user) => ({
   admin: user.role === "admin",
   customer: sameId(order.user, user.id),
   seller: user.role === "professional" && Boolean(sellerPartOf(order, user.id)),
 });
 
-// Picks how `user` would perform the transition to `target`, or null.
-// Whole-order paths (admin, customer) are checked against the overall
-// status; the seller path against the professional's own part.
 const pathFor = (order, user, target) => {
   const rule = TRANSITIONS[target];
   const relation = relationTo(order, user);
@@ -97,8 +76,6 @@ const pathFor = (order, user, target) => {
 const currentStatusFor = (order, user, path) =>
   path === "seller" ? sellerPartOf(order, user.id).status : computeOverallStatus(order);
 
-// Which transitions `user` may apply to `order` right now, as the target
-// statuses. The app shows exactly these as buttons.
 const allowedActions = (order, user) =>
   Object.keys(TRANSITIONS).filter((target) => {
     const path = pathFor(order, user, target);
@@ -112,10 +89,6 @@ class TransitionError extends Error {
   }
 }
 
-// Applies the transition to `targetStatus` for `user`, mutating the (already
-// normalized) order and appending to its history. Throws a TransitionError
-// with 403 when the user may never do this to this order, or 400 when the
-// order isn't in the right status for it. Returns the previous overall status.
 const applyTransition = (order, user, targetStatus) => {
   const rule = TRANSITIONS[targetStatus];
   if (!rule) {
@@ -162,7 +135,6 @@ const applyTransition = (order, user, targetStatus) => {
   return previousOverall;
 };
 
-// Items whose seller part hasn't shipped yet still hold reserved stock.
 const itemsStillInStock = (order) =>
   order.items.filter((item) => {
     const part = (order.sellerStatuses || []).find((p) =>

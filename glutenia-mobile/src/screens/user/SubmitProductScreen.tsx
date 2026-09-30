@@ -41,8 +41,6 @@ export default function SubmitProductScreen({ navigation, route }: SubmitProduct
   const styles = getStyles(colors);
   const { token } = useAuthenticated();
   const barcode = route.params?.barcode ?? "";
-  // Decided by the label analysis (LabelScanScreen), not by the user. Shown
-  // for information only: the backend re-derives it from labelScanId.
   const isGlutenFree = route.params?.isGlutenFree ?? false;
   const labelScanId = route.params?.labelScanId ?? "";
 
@@ -112,8 +110,6 @@ export default function SubmitProductScreen({ navigation, route }: SubmitProduct
       setNameError("");
     }
 
-    // A photo of the actual product/barcode is required, same as the
-    // backend enforces — a typed name alone is too easy to fake.
     if (!image) {
       setImageError(t("submitProduct.photoRequired"));
       hasError = true;

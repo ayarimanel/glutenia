@@ -9,8 +9,6 @@ const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST || "0.0.0.0";
 
 const startServer = async () => {
-  // Fail fast on a missing JWT_SECRET rather than letting the server boot
-  // and start signing/verifying tokens once the first request arrives.
   getJwtSecret();
 
   await connectDB();
@@ -19,7 +17,6 @@ const startServer = async () => {
     console.log(`Glutenia API running at http://${HOST}:${PORT}`);
   });
 
-  // Fire-and-forget: never block port binding on this.
   seedRecipesIfEmpty().catch((error) =>
     console.error(`Failed to seed recipes: ${error.message}`)
   );

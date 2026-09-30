@@ -37,14 +37,12 @@ const updateValidators = [
   body("imageUrl").optional({ checkFalsy: true }).isString(),
 ];
 
-// Attaches req.user if a valid Bearer token is present, but never blocks the request
 const optionalAuth = (req, res, next) => {
   const authHeader = req.headers.authorization || "";
   if (authHeader.startsWith("Bearer ")) {
     try {
       req.user = jwt.verify(authHeader.split(" ")[1], getJwtSecret());
     } catch {
-      // ignore invalid token — request proceeds without user
     }
   }
   next();

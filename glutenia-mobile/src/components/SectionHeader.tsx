@@ -8,8 +8,6 @@ interface SectionHeaderProps {
   eyebrow?: string;
   title: string;
   right?: ReactNode;
-  // Shows a back arrow for screens pushed on top of the tabs. Android has a
-  // hardware back button, but on web this arrow is the only way back.
   back?: boolean;
 }
 

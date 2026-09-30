@@ -14,10 +14,6 @@ interface AppErrorBoundaryClassState {
   error: Error | null;
 }
 
-// AppErrorBoundary must be a class component (getDerivedStateFromError has
-// no hook equivalent), so it can't call useTheme() directly. Instead, a thin
-// functional wrapper reads the theme via the hook and passes colors down as
-// a prop to the class component that does the actual rendering.
 class AppErrorBoundaryClass extends React.Component<AppErrorBoundaryClassProps, AppErrorBoundaryClassState> {
   state: AppErrorBoundaryClassState = {
     error: null,

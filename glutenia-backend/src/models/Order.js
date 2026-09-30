@@ -1,7 +1,5 @@
 const mongoose = require("mongoose");
 
-// The four order statuses, in lifecycle order. The allowed transitions
-// between them live in services/orderStatusService.js.
 const ORDER_STATUSES = ["pending", "confirmed", "shipped", "delivered"];
 
 const orderItemSchema = new mongoose.Schema(
@@ -16,8 +14,6 @@ const orderItemSchema = new mongoose.Schema(
       ref: "Listing",
       required: true,
     },
-    // Snapshot of the listing's seller at checkout. Missing on orders placed
-    // before per-seller statuses existed; orderStatusService fills it in.
     professional: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -68,9 +64,6 @@ const addressSchema = new mongoose.Schema(
   { _id: false }
 );
 
-// One entry per professional whose items are in the order: each seller moves
-// only their own part forward, and the order's overall status is the least
-// advanced of these.
 const sellerStatusSchema = new mongoose.Schema(
   {
     professional: {
@@ -104,7 +97,6 @@ const statusHistorySchema = new mongoose.Schema(
       enum: ["customer", "professional", "admin"],
       required: true,
     },
-    // Set when a professional moved only their own part of the order.
     seller: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -168,13 +160,8 @@ const orderSchema = new mongoose.Schema({
   },
 });
 
-// getMyOrders and getUserOrders (order.controller.js) both filter on this
-// field directly; it had no index before.
 orderSchema.index({ user: 1 });
 
-// Two sellers updating their parts of the same order at once must not
-// silently overwrite each other's sellerStatuses: the second save fails with
-// a VersionError instead (reported as a 409 by updateOrderStatus).
 orderSchema.set("optimisticConcurrency", true);
 
 module.exports = mongoose.model("Order", orderSchema);

@@ -32,8 +32,6 @@ export default function LanguageSelector({ visible: externalVisible, onClose, on
 
   const controlled = externalVisible !== undefined;
   const visible = controlled ? externalVisible : internalVisible;
-  // Every real call site pairs `visible` with `onClose` (or passes neither) -
-  // verified against all three usages in the codebase - so this is safe.
   const close = controlled ? (onClose as () => void) : () => setInternalVisible(false);
 
   return (
@@ -56,7 +54,6 @@ export default function LanguageSelector({ visible: externalVisible, onClose, on
         statusBarTranslucent
       >
         <Pressable style={styles.backdrop} onPress={close}>
-          {/* Inner Pressable stops tap-through so tapping the sheet doesn't close it */}
           <Pressable style={styles.sheet}>
             <Text style={styles.title}>{t("language.select")}</Text>
 

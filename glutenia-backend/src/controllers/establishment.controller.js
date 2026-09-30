@@ -22,10 +22,6 @@ const pickFields = (body) =>
 exports.getEstablishments = async (req, res, next) => {
   try {
     const { category } = req.query;
-    // Public browse (Map/Shop) only ever shows establishments an admin has
-    // verified - an unverified one is still visible to its owning
-    // Professional via getMyEstablishment, and to Admin via
-    // getPendingEstablishments, regardless of this filter.
     const filter = { verified: true };
 
     if (category) {
@@ -130,11 +126,6 @@ exports.deleteMyEstablishment = async (req, res, next) => {
   }
 };
 
-// Admin oversight: an establishment sits unverified from the moment a
-// Professional creates/updates it (upsertMyEstablishment never touches
-// `verified`) until an admin explicitly verifies it here - there is no
-// separate "request verification" step, same as how a professional signup
-// is itself the approval request in professional.controller.js.
 exports.getPendingEstablishments = async (req, res, next) => {
   try {
     const establishments = await Establishment.find({ verified: false })

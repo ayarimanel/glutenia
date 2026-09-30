@@ -32,9 +32,6 @@ export interface CartContextValue {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-// A listing with no numeric stock (shouldn't happen given the backend
-// schema defaults to 0, but defensive) is treated as unlimited rather than
-// silently blocking every add.
 const availableStock = (listing: { stock?: number }): number =>
   typeof listing?.stock === "number" ? listing.stock : Infinity;
 
@@ -58,10 +55,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     AsyncStorage.setItem(storageKey(user._id), JSON.stringify(items));
   }, [items, user?._id]);
 
-  // Adds a listing to the cart, always capped at its available stock — the
-  // one place every screen (Home/Shop/ProductDetail) should call through so
-  // the "can't add more than what's in stock" rule and its user feedback
-  // only exist once instead of being copy-pasted at every call site.
   const addItemWithStockCheck = (listing: CartProductInput, qty = 1): boolean => {
     const stock = availableStock(listing);
 
@@ -108,9 +101,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     return true;
   };
 
-  // Lower-level setter kept for callers that already know exactly what they
-  // want the cart to contain (e.g. syncing from persisted storage) — still
-  // clamps to stock as a last line of defense, but doesn't show any alert.
   const addItem = (listing: CartProductInput, qty = 1): void => {
     const stock = availableStock(listing);
     setItems((current) => {
@@ -166,10 +156,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const value = useMemo(
     () => ({ items, addItem, addItemWithStockCheck, updateQty, removeItem, clearCart, total, count }),
-    // `t` is included so a language switch alone refreshes
-    // addItemWithStockCheck's out-of-stock Alert text - without it, that
-    // closure keeps referencing the pre-switch `t` until the cart's items/
-    // total/count next change for an unrelated reason.
     [items, total, count, t]
   );
 

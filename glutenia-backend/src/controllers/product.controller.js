@@ -25,13 +25,6 @@ const pickProductFields = (body) => {
     return acc;
   }, {});
 
-  // barcode has a sparse unique index (Product.js) so multiple products can
-  // have "no barcode" — but that only works if the field is genuinely absent
-  // from the stored document. A sparse index still indexes a field that is
-  // present with a null/empty value, so two such products would collide on
-  // the unique index. Dropping the key here means create() never writes the
-  // path at all; updateProduct explicitly unsets it for the clearing case,
-  // since Object.assign alone can't remove an already-set path.
   if (Object.prototype.hasOwnProperty.call(fields, "barcode") && !fields.barcode) {
     delete fields.barcode;
   }
@@ -39,9 +32,6 @@ const pickProductFields = (body) => {
   return fields;
 };
 
-// Finds the cheapest in-stock listing for a catalog product, so a barcode
-// scan resolves straight to something addable to cart instead of a bare
-// catalog record with no price/stock of its own.
 const cheapestAvailableListing = (productId) =>
   Listing.findOne({ product: productId, isAvailable: true, stock: { $gt: 0 } })
     .sort({ price: 1 })
@@ -77,14 +67,8 @@ exports.getProductByBarcode = async (req, res, next) => {
           },
         });
       }
-      // Catalog entry exists but nobody currently sells it — fall through
-      // to the community-report check exactly like a product that was
-      // never in the catalog at all.
     }
 
-    // Not sellable in the real shop catalog — check community-reported
-    // barcodes before giving up. These aren't sellable listings, just a
-    // shared "someone already confirmed this is/isn't gluten-free" flag.
     const communityEntry = await CommunityProduct.findOne({ barcode: req.params.code });
     if (communityEntry) {
       const { gamification } = await recordScanEvent(req.user.id, "barcode", {
@@ -101,9 +85,6 @@ exports.getProductByBarcode = async (req, res, next) => {
       });
     }
 
-    // Unknown to Glutenia: remember it for the admin. A catalog product that
-    // nobody sells isn't unknown, and a barcode failing the checksum (or all
-    // zeros) is a misread, so neither is recorded. Never let this fail the scan.
     if (!product && isValidBarcodeChecksum(req.params.code) && !/^0+$/.test(req.params.code)) {
       await MissingBarcode.updateOne(
         { barcode: req.params.code },
@@ -125,9 +106,6 @@ exports.getProductByBarcode = async (req, res, next) => {
   }
 };
 
-// Admin: barcodes users scanned that Glutenia couldn't answer, most wanted
-// first. One added to the catalog or the community reports since then is
-// left out, since it's no longer missing.
 exports.getMissingBarcodes = async (req, res, next) => {
   try {
     const missing = await MissingBarcode.find().sort({ scanCount: -1, lastScannedAt: -1 });
@@ -241,8 +219,6 @@ exports.updateProduct = async (req, res, next) => {
     }
 
     Object.assign(product, pickProductFields(req.body));
-    // pickProductFields drops "barcode" entirely when it's being cleared, so
-    // Object.assign alone leaves the old value in place — unset it explicitly.
     if (Object.prototype.hasOwnProperty.call(req.body, "barcode") && !req.body.barcode) {
       product.barcode = undefined;
     }

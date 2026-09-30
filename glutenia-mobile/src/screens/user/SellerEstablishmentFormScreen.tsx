@@ -26,8 +26,6 @@ const DEFAULT_CLOSE_TIME = { hour: "19", minute: "00" };
 
 type TimeValue = { hour: string; minute: string };
 
-// Matches "36.8065, 10.1815" pasted directly, and also finds the same pattern
-// inside a full Google Maps URL (e.g. ".../@36.8065,10.1815,17z" or "?q=36.8065,10.1815").
 const COORDS_PATTERN = /(-?\d{1,3}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)/;
 
 function parseCoordinatesInput(value: string): { latitude: number; longitude: number } | null {
@@ -187,8 +185,6 @@ export default function SellerEstablishmentFormScreen({ navigation }: { navigati
   const [hasEstablishment, setHasEstablishment] = useState(false);
   const [imageProcessing, setImageProcessing] = useState(false);
   const mapWebViewRef = useRef<WebView>(null);
-  // react-native-webview has no web implementation; the web build renders
-  // the picker page in an iframe instead.
   const mapIframeRef = useRef<HTMLIFrameElement | null>(null);
 
   const categoryLabels: Record<string, string> = {
@@ -235,7 +231,6 @@ export default function SellerEstablishmentFormScreen({ navigation }: { navigati
 
   const handleMapMessage = (event: WebViewMessageEvent) => handlePickerMessage(event.nativeEvent.data);
 
-  // Latest handler in a ref so the window listener below never goes stale.
   const pickerMessageRef = useRef<(raw: string) => void>(() => {});
   useEffect(() => {
     if (Platform.OS !== "web") return;

@@ -1,10 +1,3 @@
-// One-off, safe-to-run-in-production script: adds the new
-// "Community Contributor" badge without touching any existing Badge or
-// UserBadge document (unlike src/seed/seed.js, which wipes and recreates
-// the whole Badge collection — destructive to every user's earned-badge
-// history, never run that against production).
-//
-// Usage: node src/scripts/addCommunityContributorBadge.js
 require("dotenv").config();
 const mongoose = require("mongoose");
 const connectDB = require("../config/db");

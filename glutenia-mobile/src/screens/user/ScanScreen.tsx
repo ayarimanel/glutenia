@@ -32,10 +32,6 @@ const LOADING = "loading";
 const FOUND = "found";
 const NOT_FOUND = "not_found";
 
-// Plain Omit collapses a union to its common keys (keyof a union is an
-// intersection), which would erase ProductScanResult's Product-vs-
-// CommunityProduct discriminated union down to only their shared fields.
-// This distributes Omit over each member instead, preserving the union.
 type DistributiveOmit<T, K extends keyof T> = T extends unknown ? Omit<T, K> : never;
 type ScannedProduct = DistributiveOmit<ProductScanResult, "gamification">;
 
@@ -55,8 +51,6 @@ export default function ScanScreen({ navigation }: { navigation: AppNavigation }
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
 
-  // Fix 3: reset scan lock whenever the screen loses focus so the
-  // camera is ready for a fresh scan when the user returns to this tab.
   useFocusEffect(
     useCallback(() => {
       return () => {
@@ -65,11 +59,8 @@ export default function ScanScreen({ navigation }: { navigation: AppNavigation }
     }, [])
   );
 
-  // The admin stack registers every customer screen too, so CartPage is
-  // reachable for every role.
   const handleCartPress = () => navigation.navigate("CartPage");
 
-  // Fix 5: compute bottom padding once so every state uses the same value.
   const bottomPad = insets.bottom + TAB_BAR_HEIGHT + Spacing.lg;
 
   const resetToScanning = () => {
@@ -96,8 +87,6 @@ export default function ScanScreen({ navigation }: { navigation: AppNavigation }
     if (scanLock.current) return;
     scanLock.current = true;
 
-    // Fix 4: transition to LOADING immediately so the user sees a
-    // spinner instead of a frozen camera with no feedback.
     setScreenState(LOADING);
     setScannedBarcode(data);
     setFlagged(false);
@@ -111,7 +100,6 @@ export default function ScanScreen({ navigation }: { navigation: AppNavigation }
       if (isApiError(error) && error.status === 404) {
         setScreenState(NOT_FOUND);
       } else {
-        // Non-404 error: show alert, then return to scanning on dismiss.
         Alert.alert(t("scan.scanError"), error instanceof Error ? error.message : String(error), [
           {
             text: t("scan.ok"),
@@ -125,12 +113,10 @@ export default function ScanScreen({ navigation }: { navigation: AppNavigation }
     }
   };
 
-  // Permission status not yet resolved
   if (!permission) {
     return <View style={styles.root} />;
   }
 
-  // Permission not granted
   if (!permission.granted) {
     return (
       <View style={styles.root}>
@@ -170,7 +156,6 @@ export default function ScanScreen({ navigation }: { navigation: AppNavigation }
     );
   }
 
-  // State LOADING: API call in flight
   if (screenState === LOADING) {
     return (
       <View style={styles.root}>
@@ -188,9 +173,6 @@ export default function ScanScreen({ navigation }: { navigation: AppNavigation }
     );
   }
 
-  // State FOUND, community-reported barcode: no price/stock, this isn't a
-  // sellable shop listing, just a shared "someone already confirmed this
-  // is/isn't gluten-free" flag — needs its own layout, not the shop card.
   if (screenState === FOUND && product?.isCommunityReport) {
     return (
       <View style={styles.root}>
@@ -249,7 +231,6 @@ export default function ScanScreen({ navigation }: { navigation: AppNavigation }
     );
   }
 
-  // State FOUND: real shop product returned from API
   if (screenState === FOUND && product && !product.isCommunityReport) {
     return (
       <View style={styles.root}>
@@ -301,7 +282,6 @@ export default function ScanScreen({ navigation }: { navigation: AppNavigation }
     );
   }
 
-  // State NOT_FOUND
   if (screenState === NOT_FOUND) {
     return (
       <View style={styles.root}>
@@ -335,10 +315,8 @@ export default function ScanScreen({ navigation }: { navigation: AppNavigation }
     );
   }
 
-  // State SCANNING — full-screen camera with overlay frame
   return (
     <View style={styles.root}>
-      {/* Fix 1: only mount CameraView while this tab is actually visible. */}
       {isFocused && (
         <CameraView
           style={StyleSheet.absoluteFill}
@@ -350,21 +328,18 @@ export default function ScanScreen({ navigation }: { navigation: AppNavigation }
         />
       )}
 
-      {/* Top mask */}
       <View
         style={[styles.maskTop, { paddingTop: insets.top + Spacing.md }]}
       >
         <Text style={styles.scanTitle}>{t("scan.title")}</Text>
       </View>
 
-      {/* Middle row: dark sides + transparent guide frame */}
       <View style={styles.maskRow}>
         <View style={styles.maskSide} />
         <View style={styles.frame} />
         <View style={styles.maskSide} />
       </View>
 
-      {/* Fix 2: bottom mask clears the floating tab bar so the hint is visible. */}
       <View
         style={[
           styles.maskBottom,

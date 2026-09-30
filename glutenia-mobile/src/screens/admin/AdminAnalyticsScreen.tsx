@@ -85,10 +85,6 @@ export default function AdminAnalyticsScreen({ navigation }: { navigation: AppNa
     unset: t("admin.analytics.unset"),
   };
 
-  // Order is derived from each labels object's own key order (not a second,
-  // hand-maintained array) so the two can never drift out of sync - the same
-  // technique as AppIcon's IconName being `keyof typeof icons` instead of a
-  // separately hand-typed union.
   const toChartData = <L extends Record<string, string>>(
     counts: Record<string, number> | undefined,
     labels: L

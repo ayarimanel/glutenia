@@ -34,7 +34,6 @@ import {
   Users,
   Wheat,
   X,
-  // New icons for the redesign
   Bell,
   Compass,
   Heart,
@@ -51,8 +50,6 @@ import {
 } from "lucide-react-native";
 import type { StyleProp, ViewStyle } from "react-native";
 
-// Exported for tests only (icon-map coverage) - not meant to be imported by
-// app code, which should go through the `name` prop instead.
 export const icons = {
   add: CirclePlus,
   "add-circle": CirclePlus,
@@ -99,7 +96,6 @@ export const icons = {
   sack: Package,
   cupcake: Circle,
   
-  // New icon mappings
   bell: Bell,
   compass: Compass,
   heart: Heart,

@@ -226,7 +226,6 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: Spacing.md }}
       >
-        {/* ACCOUNT */}
         <SectionLabel text={t("settings.account")} colors={colors} />
         <View style={{ backgroundColor: colors.surface, borderRadius: Radius.lg, overflow: "hidden" }}>
           <SettingRow
@@ -261,7 +260,6 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
           )}
         </View>
 
-        {/* NOTIFICATIONS */}
         <SectionLabel text={t("settings.notifications")} colors={colors} />
         <View style={{ backgroundColor: colors.surface, borderRadius: Radius.lg, overflow: "hidden" }}>
           <SettingRow
@@ -312,7 +310,6 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
           />
         </View>
 
-        {/* APPEARANCE */}
         <SectionLabel text={t("settings.appearance")} colors={colors} />
         <View style={{ backgroundColor: colors.surface, borderRadius: Radius.lg, overflow: "hidden" }}>
           <SettingRow
@@ -332,7 +329,6 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
           />
         </View>
 
-        {/* SUPPORT */}
         <SectionLabel text={t("settings.support")} colors={colors} />
         <View style={{ backgroundColor: colors.surface, borderRadius: Radius.lg, overflow: "hidden" }}>
           <SettingRow
@@ -354,7 +350,6 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
           />
         </View>
 
-        {/* ABOUT */}
         <SectionLabel text={t("settings.about")} colors={colors} />
         <View style={{ backgroundColor: colors.surface, borderRadius: Radius.lg, overflow: "hidden" }}>
           <SettingRow
@@ -387,7 +382,6 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
           />
         </View>
 
-        {/* DELETE ACCOUNT */}
         <TouchableOpacity
           style={{
             alignItems: "center",
@@ -402,7 +396,6 @@ export default function SettingsScreen({ navigation }: { navigation: AppNavigati
           </Text>
         </TouchableOpacity>
 
-        {/* LOG OUT */}
         <TouchableOpacity
           style={{
             flexDirection: "row",

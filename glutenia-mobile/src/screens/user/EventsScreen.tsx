@@ -41,7 +41,6 @@ export default function EventsScreen({ navigation }: { navigation: AppNavigation
           const data = await api.events(token);
           setEvents(data);
         } catch {
-          // leave previous data visible on error
         } finally {
           setLoading(false);
         }
@@ -63,12 +62,10 @@ export default function EventsScreen({ navigation }: { navigation: AppNavigation
         onCartPress={() => navigation.navigate("CartPage")}
       />
       <View style={styles.container}>
-        {/* Screen header */}
         <View style={styles.header}>
           <Text style={styles.title}>{t("events.title")}</Text>
         </View>
 
-        {/* Category filter */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -96,7 +93,6 @@ export default function EventsScreen({ navigation }: { navigation: AppNavigation
           ))}
         </ScrollView>
 
-        {/* Loading */}
         {loading && events.length === 0 ? (
           <View style={styles.loadingWrap}>
             <ActivityIndicator color={colors.primary} />

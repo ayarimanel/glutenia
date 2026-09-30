@@ -22,8 +22,6 @@ const notificationSchema = new mongoose.Schema({
     trim: true,
     default: "",
   },
-  // Id of the order/event this notification is about, so tapping it can
-  // deep-link back to the relevant screen. Meaning depends on `type`.
   referenceId: {
     type: String,
     default: null,

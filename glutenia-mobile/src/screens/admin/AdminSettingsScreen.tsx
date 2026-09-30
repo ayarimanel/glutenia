@@ -102,7 +102,6 @@ export default function AdminSettingsScreen({ navigation }: { navigation: AppNav
     <Screen>
       <LanguageSelector visible={langVisible} onClose={() => setLangVisible(false)} />
 
-      {/* Header */}
       <View
         style={{
           flexDirection: "row",
@@ -137,7 +136,6 @@ export default function AdminSettingsScreen({ navigation }: { navigation: AppNav
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: Spacing.md }}
       >
-        {/* ACCOUNT */}
         <SectionLabel text={t("settings.account")} colors={colors} />
         <View style={{ backgroundColor: colors.surface, borderRadius: Radius.lg, overflow: "hidden" }}>
           <SettingRow
@@ -159,7 +157,6 @@ export default function AdminSettingsScreen({ navigation }: { navigation: AppNav
           />
         </View>
 
-        {/* APPEARANCE */}
         <SectionLabel text={t("settings.appearance")} colors={colors} />
         <View style={{ backgroundColor: colors.surface, borderRadius: Radius.lg, overflow: "hidden" }}>
           <SettingRow
@@ -179,7 +176,6 @@ export default function AdminSettingsScreen({ navigation }: { navigation: AppNav
           />
         </View>
 
-        {/* SUPPORT */}
         <SectionLabel text={t("settings.support")} colors={colors} />
         <View style={{ backgroundColor: colors.surface, borderRadius: Radius.lg, overflow: "hidden" }}>
           <SettingRow
@@ -205,7 +201,6 @@ export default function AdminSettingsScreen({ navigation }: { navigation: AppNav
           />
         </View>
 
-        {/* LOG OUT */}
         <TouchableOpacity
           style={{
             flexDirection: "row",

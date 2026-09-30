@@ -1,7 +1,3 @@
-// Read-only export of records left orphaned by the 2026-07-22 accidental
-// User/Product wipe. Writes full documents to local JSON files so nothing
-// is lost if a cleanup ever deletes them from the live database. Does not
-// modify the database in any way.
 require("dotenv").config();
 const fs = require("fs");
 const path = require("path");

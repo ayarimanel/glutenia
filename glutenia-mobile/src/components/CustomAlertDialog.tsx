@@ -40,21 +40,18 @@ export default function CustomAlertDialog({
   const { colors, isDark } = useTheme();
   const [active, setActive] = useState(false);
 
-  // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
-  // Track visibility state to run exit animations
   useEffect(() => {
     if (visible) {
       setActive(true);
-      // Play entrance animation
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
           duration: 250,
           useNativeDriver: true,
-          easing: Easing.bezier(0.16, 1, 0.3, 1), // Apple-like easeOut
+          easing: Easing.bezier(0.16, 1, 0.3, 1),
         }),
         Animated.timing(scaleAnim, {
           toValue: 1,
@@ -66,7 +63,6 @@ export default function CustomAlertDialog({
     }
   }, [visible]);
 
-  // Handle hardware back button on Android
   useEffect(() => {
     if (!active) return;
 
@@ -76,7 +72,6 @@ export default function CustomAlertDialog({
         dismiss();
         return true;
       }
-      // Return true to prevent default back action (disable back press)
       return true;
     };
 
@@ -87,7 +82,6 @@ export default function CustomAlertDialog({
   }, [active, options]);
 
   const dismiss = (callback?: () => void) => {
-    // Play exit animation
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 0,
@@ -110,7 +104,6 @@ export default function CustomAlertDialog({
 
   if (!active) return null;
 
-  // 1. Classify the Alert
   const classifyAlert = (tTitle?: string, tMsg?: string, tButtons?: AlertButton[]) => {
     const t = (tTitle || "").toLowerCase();
     const m = (tMsg || "").toLowerCase();
@@ -157,7 +150,6 @@ export default function CustomAlertDialog({
 
   const type = classifyAlert(title, message, buttons);
 
-  // 2. Determine Styling by Type
   let IconComponent = Info;
   let iconColor = colors.primary;
   let bgIconColor = isDark ? "rgba(139, 195, 74, 0.15)" : "rgba(139, 195, 74, 0.1)";
@@ -165,33 +157,32 @@ export default function CustomAlertDialog({
   switch (type) {
     case "success":
       IconComponent = CircleCheck;
-      iconColor = colors.primary; // Green
+      iconColor = colors.primary;
       bgIconColor = isDark ? "rgba(139, 195, 74, 0.18)" : "rgba(139, 195, 74, 0.12)";
       break;
     case "error":
       IconComponent = CircleX;
-      iconColor = colors.danger; // Red
+      iconColor = colors.danger;
       bgIconColor = isDark ? "rgba(255, 69, 58, 0.18)" : "rgba(200, 16, 46, 0.12)";
       break;
     case "warning":
       IconComponent = AlertTriangle;
-      iconColor = colors.warning; // Amber
+      iconColor = colors.warning;
       bgIconColor = isDark ? "rgba(255, 214, 10, 0.18)" : "rgba(245, 158, 11, 0.12)";
       break;
     case "confirmation":
       IconComponent = HelpCircle;
-      iconColor = colors.secondary; // Brown / Secondary Accent
+      iconColor = colors.secondary;
       bgIconColor = isDark ? "rgba(196, 137, 90, 0.18)" : "rgba(123, 70, 38, 0.12)";
       break;
     case "information":
     default:
       IconComponent = Info;
-      iconColor = "#007AFF"; // Apple Blue
+      iconColor = "#007AFF";
       bgIconColor = isDark ? "rgba(10, 132, 255, 0.18)" : "rgba(0, 122, 255, 0.12)";
       break;
   }
 
-  // 3. Setup Buttons
   const alertButtons = buttons && buttons.length > 0 ? buttons : [{ text: "OK" }];
 
   const handleButtonPress = (onPress?: (value?: string) => void) => {
@@ -207,7 +198,6 @@ export default function CustomAlertDialog({
     }
   };
 
-  // Get dynamic styles matching theme colors
   const styles = getStyles(colors, isDark);
 
   return (
@@ -230,18 +220,14 @@ export default function CustomAlertDialog({
             },
           ]}
         >
-          {/* Top Large Colorful Icon */}
           <View style={[styles.iconContainer, { backgroundColor: bgIconColor }]}>
             <IconComponent size={28} color={iconColor} strokeWidth={2.4} />
           </View>
 
-          {/* Title */}
           {title ? <Text style={styles.title}>{title}</Text> : null}
 
-          {/* Description Message */}
           {message ? <Text style={styles.message}>{message}</Text> : null}
 
-          {/* Buttons Layout */}
           <View
             style={[
               styles.buttonsContainer,
@@ -252,7 +238,6 @@ export default function CustomAlertDialog({
               const isCancel = btn.style === "cancel";
               const isDestructive = btn.style === "destructive";
 
-              // Determine custom styling per button
               let btnBgColor = colors.primary;
               let btnBorderColor = "transparent";
               let btnTextColor = "#FFFFFF";
@@ -281,9 +266,6 @@ export default function CustomAlertDialog({
                       borderColor: btnBorderColor,
                       borderWidth: isCancel ? 1.5 : 0,
                     },
-                    // Only side-by-side buttons share the row. Stacked ones
-                    // must not get `flex: 0`: on web that becomes a 0 flex
-                    // basis, which collapses the button to zero height.
                     alertButtons.length === 2 && { flex: 1 },
                     pressed && styles.pressed,
                   ]}
@@ -369,10 +351,10 @@ const getStyles = (colors: ThemeColors, isDark: boolean) =>
     },
     button: {
       height: 48,
-      borderRadius: 24, // Pill shape
+      borderRadius: 24,
       alignItems: "center",
       justifyContent: "center",
-      overflow: "hidden", // So ripple doesn't bleed out of rounded corners
+      overflow: "hidden",
     },
     buttonText: {
       fontSize: 14,

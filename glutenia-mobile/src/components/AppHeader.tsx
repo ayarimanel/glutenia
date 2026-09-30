@@ -14,8 +14,6 @@ interface AppHeaderProps {
   avatarUri?: string;
   onCartPress?: () => void;
   safeTop?: boolean;
-  // Back arrow for screens pushed on top of the tabs (Shop, label
-  // scan) - on web there's no hardware back button to fall back on.
   back?: boolean;
 }
 
@@ -29,7 +27,6 @@ export default function AppHeader({ userName, avatarUri, onCartPress, safeTop = 
 
   return (
     <View style={[styles.container, safeTop && { paddingTop: insets.top + 12 }]}>
-      {/* Left: avatar + shield badge + user name */}
       <View style={styles.left}>
         {back && navigation.canGoBack() ? (
           <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
@@ -51,7 +48,6 @@ export default function AppHeader({ userName, avatarUri, onCartPress, safeTop = 
         <Text style={styles.name} numberOfLines={1}>{userName}</Text>
       </View>
 
-      {/* Right: notification bell + cart icon, each with a badge */}
       <View style={styles.rightRow}>
         <Pressable
           style={styles.iconBtn}

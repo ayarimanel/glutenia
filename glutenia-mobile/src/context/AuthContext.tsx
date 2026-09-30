@@ -7,8 +7,6 @@ import type { User } from "../types/models";
 const STORAGE_KEY = "glutenia.session";
 const ONBOARDING_PROFILE_KEY = "onboarding_complete";
 const ONBOARDING_SEEN_KEY = "glutenia.hasSeenOnboarding";
-// Must match LANG_KEY in src/i18n/index.ts — that file owns the device-local
-// language cache; this one only reads it once, at login, to seed the account.
 const LANGUAGE_STORAGE_KEY = "glutenia.language";
 
 export interface AuthContextValue {
@@ -111,10 +109,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(session.user);
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(session));
 
-    // A language picked before login (the intro carousel) only ever lands in
-    // the device-local i18n cache. If this account has no language of its
-    // own yet, carry that local choice up to the account now so it survives
-    // a reinstall/new device instead of silently reverting to the default.
     if (!session.user?.language) {
       try {
         const localLanguage = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
@@ -127,7 +121,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           );
         }
       } catch (_) {
-        // Non-critical — the device-local language still works either way.
       }
     }
   };
@@ -192,13 +185,6 @@ export interface AuthenticatedContextValue extends Omit<AuthContextValue, "user"
   token: string;
 }
 
-// For screens that only ever mount inside RootNavigator's UserStack/
-// AdminStack/ProfileOnboardingStack - all three only render once `user` is
-// non-null, and AuthProvider always clears `user`/`token` together in one
-// batched update, so by the time either goes null the screen has already
-// been unmounted (RootNavigator swaps to a different component at that
-// JSX position, which React tears down rather than re-renders). This gives
-// those screens a real `token: string` instead of asserting it 40 times.
 export const useAuthenticated = (): AuthenticatedContextValue => {
   const context = useAuth();
   if (!context.user || !context.token) {

@@ -30,11 +30,6 @@ import type { AppNavigation, MapSpot } from "../../navigation/types";
 import type { Establishment, EstablishmentCategory } from "../../types/models";
 import type { LayoutChangeEvent } from "react-native";
 
-// A demo/normalized spot that always has coordinates - unlike MapSpot's
-// coordinate, which is nullable to reflect establishments that never set
-// theirs. Both getSpots()'s static catalog and normalizeEstablishment()'s
-// output (only ever called on establishments pre-filtered for coordinates
-// in the useFocusEffect below) satisfy this narrower shape in practice.
 type PositionedSpot = MapSpot & { coordinate: NonNullable<MapSpot["coordinate"]> };
 
 const hasCoordinate = (s: MapSpot): s is PositionedSpot => s.coordinate != null;
@@ -48,7 +43,6 @@ type MapMessage =
     }
   | { type: "flyTo"; spotId: string; lat: number; lng: number };
 
-// ─── Color helper ─────────────────────────────────────────────────────────────
 
 function hexToRgba(hex: string, alpha: number): string {
   const h = hex.replace("#", "");
@@ -60,7 +54,6 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-// ─── Data ────────────────────────────────────────────────────────────────────
 
 const getSpots = (colors: ThemeColors): PositionedSpot[] => [
   {
@@ -255,11 +248,7 @@ const getSpots = (colors: ThemeColors): PositionedSpot[] => [
 const FILTERS = ["All", "Supermarket", "Restaurant", "Health Store", "Bakery", "Pharmacy"];
 
 
-// ─── Star rating helper ───────────────────────────────────────────────────────
 
-// Intentionally unused - ratings render as plain text elsewhere in this
-// screen now. Kept rather than deleted in case the star display comes back;
-// not a bug, no need to re-investigate.
 function StarRating({ rating }: { rating: number }) {
   const full = Math.floor(rating);
   const half = rating - full >= 0.5;
@@ -272,22 +261,20 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-// ─── Leaflet HTML builder ─────────────────────────────────────────────────────
 
-// ─── Visual Mapping Helpers ──────────────────────────────────────────────────
 
 const SPOT_IMAGES: Record<string, string> = {
-  "1": "https://images.unsplash.com/photo-1542838132-92c53300491e?w=500", // Supermarket
-  "2": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500", // Restaurant
-  "3": "https://images.unsplash.com/photo-1506084868230-bb9d95c24759?w=500", // Health Store
-  "4": "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500", // Bakery
-  "5": "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=500", // Bio Supermarket
-  "6": "https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=500", // Restaurant Gammarth
-  "7": "https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=500", // Health Store
-  "8": "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=500", // Bakery/Patisserie
-  "9": "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=500", // Bistro Restaurant
-  "10": "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=500", // Supermarket Centre Ville
-  "11": "https://images.unsplash.com/photo-1580281657527-47f249e8f4df?w=500", // Pharmacy
+  "1": "https://images.unsplash.com/photo-1542838132-92c53300491e?w=500",
+  "2": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=500",
+  "3": "https://images.unsplash.com/photo-1506084868230-bb9d95c24759?w=500",
+  "4": "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=500",
+  "5": "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=500",
+  "6": "https://images.unsplash.com/photo-1498654896293-37aacf113fd9?w=500",
+  "7": "https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=500",
+  "8": "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=500",
+  "9": "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=500",
+  "10": "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=500",
+  "11": "https://images.unsplash.com/photo-1580281657527-47f249e8f4df?w=500",
 };
 
 const FILTER_ICONS: Record<string, IconName> = {
@@ -299,7 +286,6 @@ const FILTER_ICONS: Record<string, IconName> = {
   Pharmacy: "activity"
 };
 
-// ─── Real (professional-submitted) establishments → map spot shape ──────────
 
 export const getCategoryVisual = (colors: ThemeColors): Record<EstablishmentCategory, CategoryVisual> => ({
   Supermarket: { emoji: "🛒", color: colors.primary, accentEmoji: "🛒" },
@@ -322,12 +308,6 @@ function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// Note: the useFocusEffect below only calls this on establishments already
-// filtered for non-null coordinates.latitude/longitude, so `coordinate` is
-// always set in practice - but the signature stays honest to what this
-// function alone can guarantee (see hasCoordinate/PositionedSpot below for
-// where that stronger guarantee actually gets used).
-// Also used by FavoritePlacesScreen to refresh saved favorites.
 export function normalizeEstablishment(
   est: Establishment,
   categoryVisual: Record<EstablishmentCategory, CategoryVisual>
@@ -363,7 +343,6 @@ export function normalizeEstablishment(
   };
 }
 
-// ─── Leaflet HTML builder ─────────────────────────────────────────────────────
 
 function buildLeafletHTML(spots: PositionedSpot[]): string {
   const data = spots.map((s) => ({
@@ -519,7 +498,6 @@ function buildLeafletHTML(spots: PositionedSpot[]): string {
 </html>`;
 }
 
-// ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function MapScreen({ navigation }: { navigation: AppNavigation }) {
   const insets = useSafeAreaInsets();
@@ -559,8 +537,6 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
     }
   };
   const webViewRef = useRef<WebView>(null);
-  // react-native-webview has no web implementation, so the web build renders
-  // the same Leaflet page in an iframe (see the map layer below).
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
 
@@ -579,8 +555,6 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
     setMapWebViewReady(false);
   }, [leafletHTML]);
 
-  // Reloaded on focus (not just mount): the tab stays mounted, and favorites
-  // can change from the Favorites screen in between.
   useFocusEffect(
     useCallback(() => {
       if (!token) return;
@@ -607,9 +581,6 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
     [token]
   );
 
-  // Real establishments now come pre-filtered by category from the backend
-  // (see the useFocusEffect below); the demo spots are local-only data, so
-  // they still need their own client-side filter to stay in sync with them.
   const allSpots = useMemo(() => {
     const demoSpots =
       activeFilter === "All" ? SPOTS : SPOTS.filter((s) => s.type === activeFilter);
@@ -644,11 +615,9 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
   const selectedSpot =
     filtered.find((s) => s.id === selectedId) ?? filtered[0] ?? null;
 
-  // ── Helpers ────────────────────────────────────────────────────────────────
 
   const sendToMap = useCallback((data: MapMessage) => {
     if (Platform.OS === "web") {
-      // srcDoc iframes share our origin, so the map's handler is callable directly.
       const frame = iframeRef.current?.contentWindow as
         | (Window & { handleFromRN?: (msg: MapMessage) => void })
         | null
@@ -678,8 +647,6 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
     });
   }, [allSpots, mapWebViewReady, sendToMap]);
 
-  // Unused elsewhere in this screen (markers are flown-to only via
-  // handleFilterChange/handleLocateMe), kept as-is from the JS version.
   const animateToSpot = useCallback(
     (spot: PositionedSpot) => {
       sendToMap({
@@ -728,10 +695,6 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
     return () => window.removeEventListener("message", onMessage);
   }, [handleMapMessage]);
 
-  // Selecting a category just changes state — the useFocusEffect above
-  // re-fetches real establishments filtered by it, and the allSpots/
-  // useEffect pair above reactively pushes the updated markers to the map
-  // once that resolves (or immediately for the local demo spots).
   const handleFilterChange = useCallback((f: string) => {
     bottomSheetRef.current?.close();
     setActiveFilter(f);
@@ -789,12 +752,10 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
     []
   );
 
-  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <View style={styles.root}>
 
-      {/* ── Layer 1: Leaflet Map (WebView) ───────────────────────────────────── */}
       {Platform.OS === "web" ? (
         <iframe
           ref={iframeRef}
@@ -817,7 +778,6 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
         />
       )}
 
-      {/* ── Layer 2: Header ──────────────────────────────────────────────────── */}
       <View
         style={styles.headerWrap}
         onLayout={(e: LayoutChangeEvent) => setHeaderHeight(e.nativeEvent.layout.height)}
@@ -830,7 +790,6 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
         />
       </View>
 
-      {/* ── Layer 3: Category Chips (Redesigned) ─────────────────────────────── */}
       <View style={[styles.filterBar, { top: headerHeight + 12 }]}>
         <ScrollView
           horizontal
@@ -878,7 +837,6 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
         </TouchableOpacity>
       </View>
 
-      {/* ── Layer 4: Bottom info card (single selected spot - Glassmorphic) ────── */}
       {selectedSpot && sheetIndex === -1 && (
         <TouchableOpacity
           style={[styles.infoCard, { bottom: insets.bottom + 16 }]}
@@ -943,7 +901,6 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
         </TouchableOpacity>
       )}
 
-      {/* ── Layer 4.5: Floating circular Locate Me button ───────────────────── */}
       <TouchableOpacity
         style={[
           styles.locateMeBtn,
@@ -955,7 +912,6 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
         <AppIcon name="compass" size={20} color="#8BC34A" strokeWidth={2.5} />
       </TouchableOpacity>
 
-      {/* ── Layer 5: Bottom Sheet (Premium Restaurant Details) ───────────────── */}
       <BottomSheet
         ref={bottomSheetRef}
         index={-1}
@@ -973,7 +929,6 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.sheetScrollContent}
             >
-              {/* Section 1: Hero Image + Gradient Overlay */}
               <View style={styles.sheetHero}>
                 <Image
                   source={{ uri: selectedSpot.coverImageUrl || SPOT_IMAGES[selectedSpot.id] || SPOT_IMAGES["1"] }}
@@ -981,8 +936,6 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
                 />
                 <View style={styles.heroGradient}>
                   <View style={styles.heroBadgeRow}>
-                    {/* Same favorite toggle as the small info card, so any
-                        spot opened straight from its marker can be saved too. */}
                     <TouchableOpacity
                       style={styles.heroFavoriteBtn}
                       activeOpacity={0.7}
@@ -1029,7 +982,6 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
                 </View>
               </View>
 
-              {/* Section 2: About Card */}
               <View style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                   <AppIcon name="info" size={16} color="#8BC34A" strokeWidth={2.5} />
@@ -1042,7 +994,6 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
                 </Text>
               </View>
 
-              {/* Section 3: Available GF Products */}
               <View style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                   <AppIcon name="leaf" size={16} color="#8BC34A" strokeWidth={2.5} />
@@ -1065,7 +1016,6 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
                 </View>
               </View>
 
-              {/* Section 4: Safety & Facilities */}
               <View style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                   <AppIcon name="shield-check" size={16} color="#8BC34A" strokeWidth={2.5} />
@@ -1081,7 +1031,6 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
                 </View>
               </View>
 
-              {/* Section 5: Opening Hours */}
               <View style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                   <AppIcon name="clock" size={16} color="#8BC34A" strokeWidth={2.5} />
@@ -1101,7 +1050,6 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
                 )}
               </View>
 
-              {/* Section 7: Location */}
               <View style={styles.sectionCard}>
                 <View style={styles.sectionHeader}>
                   <AppIcon name="map-pin" size={16} color="#8BC34A" strokeWidth={2.5} />
@@ -1111,7 +1059,6 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
               </View>
             </BottomSheetScrollView>
 
-            {/* Section 8: Sticky double CTA buttons */}
             <View
               style={[
                 styles.ctaBar,
@@ -1143,7 +1090,6 @@ export default function MapScreen({ navigation }: { navigation: AppNavigation })
   );
 }
 
-// ─── Styles ──────────────────────────────────────────────────────────────────
 
 const getLayoutStyles = (colors: ThemeColors) =>
   StyleSheet.create({

@@ -23,18 +23,14 @@ const AlertContext = createContext<AlertContextValue>({
   showAlert: () => {},
 });
 
-// Store original Alert.alert implementation
 const originalAlert = Alert.alert;
 
-// Global trigger listener
 let globalAlertTrigger: ((config: AlertConfig) => void) | null = null;
 
-// Override React Native's Alert.alert globally
 Alert.alert = (title, message, buttons, options) => {
   if (globalAlertTrigger) {
     globalAlertTrigger({ title, message, buttons, options });
   } else {
-    // Fallback to original Alert.alert if provider is not mounted
     originalAlert(title, message, buttons, options);
   }
 };
@@ -43,7 +39,6 @@ export function AlertProvider({ children }: { children: ReactNode }) {
   const [alertConfig, setAlertConfig] = useState<AlertConfig | null>(null);
 
   useEffect(() => {
-    // Register global trigger callback
     globalAlertTrigger = (config) => {
       setAlertConfig(config);
     };

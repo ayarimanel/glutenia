@@ -75,13 +75,9 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
 
   const revenue = orders.reduce((sum, order) => sum + (Number(order.total) || 0), 0);
 
-  // Stock lives on Listing now, not on the catalog Product Administrator
-  // manages here - low-stock oversight belongs to each Professional's own
-  // SellerVisibilityScreen instead.
   const pendingCount = pendingRequests.length;
   const hasAlerts = pendingCount > 0;
 
-  // Recent 3 orders sorted by date
   const recentOrders = [...orders]
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
     .slice(0, 3);
@@ -112,7 +108,6 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Personalized Greeting Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <View style={styles.avatar}>
@@ -133,7 +128,6 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
           </Pressable>
         </View>
 
-        {/* Action Attention Banner Card */}
         {hasAlerts ? (
           <View style={styles.alertCard}>
             <View style={styles.alertHeader}>
@@ -194,9 +188,7 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
           </View>
         )}
 
-        {/* Stats Grid */}
         <View style={styles.statsContainer}>
-          {/* Revenue Hero Card */}
           <View style={styles.revenueHeroCard}>
             <View style={styles.revenueInfo}>
               <Text style={styles.revenueLabel}>{t("admin.dashboard.revenue", "Total Revenue")}</Text>
@@ -209,9 +201,7 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
             </View>
           </View>
 
-          {/* 2x2 Metric Cards Grid */}
           <View style={styles.kpiGrid}>
-            {/* Pending Requests KPI */}
             <Pressable
               style={({ pressed }) => [styles.kpiCard, pressed && styles.pressed]}
               onPress={() => navigation.navigate("AdminProfessionalRequests")}
@@ -244,7 +234,6 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
               </Text>
             </Pressable>
 
-            {/* Total Orders KPI */}
             <Pressable
               style={({ pressed }) => [styles.kpiCard, pressed && styles.pressed]}
               onPress={() => navigation.navigate("Orders")}
@@ -260,7 +249,6 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
               </Text>
             </Pressable>
 
-            {/* Total Products KPI */}
             <Pressable
               style={({ pressed }) => [styles.kpiCard, pressed && styles.pressed]}
               onPress={() => navigation.navigate("Products")}
@@ -278,7 +266,6 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
           </View>
         </View>
 
-        {/* Recent Orders Preview Section */}
         <View style={styles.recentOrdersSection}>
           <View style={styles.sectionHeaderRow}>
             <View style={styles.sectionTitleRow}>
@@ -351,9 +338,7 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
           )}
         </View>
 
-        {/* Action Menu Sections */}
         <View style={styles.menuContainer}>
-          {/* Customer features - the Administrator can use the whole customer app */}
           <View style={styles.menuSection}>
             <Text style={styles.sectionTitle}>{t("admin.dashboard.customerSection")}</Text>
             <View style={styles.sectionCards}>
@@ -369,7 +354,6 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
             </View>
           </View>
 
-          {/* Products Category */}
           <View style={styles.menuSection}>
             <Text style={styles.sectionTitle}>{t("admin.dashboard.products", "Products & Inventory")}</Text>
             <View style={styles.sectionCards}>
@@ -393,7 +377,6 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
             </View>
           </View>
 
-          {/* Events Category */}
           <View style={styles.menuSection}>
             <Text style={styles.sectionTitle}>{t("events.title", "Events")}</Text>
             <View style={styles.sectionCards}>
@@ -416,7 +399,6 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
             </View>
           </View>
 
-          {/* Operations Category */}
           <View style={styles.menuSection}>
             <Text style={styles.sectionTitle}>{t("admin.dashboard.orders", "Operations & Management")}</Text>
             <View style={styles.sectionCards}>
@@ -476,12 +458,6 @@ export default function AdminDashboardScreen({ navigation }: { navigation: AppNa
   );
 }
 
-// Split into several smaller StyleSheet.create() calls (merged below)
-// instead of one ~73-key object - TypeScript's inference for
-// StyleSheet.create's generic falls back to widening every property to
-// ViewStyle|TextStyle|ImageStyle on an object this large, breaking every
-// styles.* usage in the file below. Smaller calls infer correctly; the
-// style values themselves are unchanged.
 const getStyles = (colors: ThemeColors) => {
   const headerStyles = StyleSheet.create({
     screen: {
@@ -550,7 +526,6 @@ const getStyles = (colors: ThemeColors) => {
     },
   });
 
-  /* Urgent Alert Card */
   const alertStyles = StyleSheet.create({
     alertCard: {
       backgroundColor: colors.surface,
@@ -639,7 +614,6 @@ const getStyles = (colors: ThemeColors) => {
       fontWeight: "800",
     },
 
-    /* All Clear Card */
     normalStatusCard: {
       flexDirection: "row",
       alignItems: "center",
@@ -667,7 +641,6 @@ const getStyles = (colors: ThemeColors) => {
     },
   });
 
-  /* Stats Grid */
   const statsStyles = StyleSheet.create({
     statsContainer: {
       gap: Spacing.md,
@@ -761,7 +734,6 @@ const getStyles = (colors: ThemeColors) => {
     },
   });
 
-  /* Recent Orders Section */
   const ordersStyles = StyleSheet.create({
     recentOrdersSection: {
       gap: Spacing.sm,
@@ -866,7 +838,6 @@ const getStyles = (colors: ThemeColors) => {
     },
   });
 
-  /* Action Menu Sections */
   const menuStyles = StyleSheet.create({
     menuContainer: {
       gap: Spacing.lg,
@@ -939,12 +910,6 @@ const getStyles = (colors: ThemeColors) => {
   return { ...headerStyles, ...alertStyles, ...statsStyles, ...ordersStyles, ...menuStyles };
 };
 
-// Hand-typed rather than ReturnType<typeof getStyles> - referencing that
-// (regardless of declaration order) makes TS fall back to widening every
-// property of the 400+-line styles object to ViewStyle|TextStyle|ImageStyle
-// instead of inferring each key's specific shape, breaking every other
-// styles.* usage in this file. Naming just the handful ActionItem needs
-// avoids that.
 interface ActionItemStyles {
   actionCard: ViewStyle;
   actionCardPressed: ViewStyle;

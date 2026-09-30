@@ -15,9 +15,6 @@ const STATUS_NOTIFICATIONS = {
   delivered: "Your order has been delivered.",
 };
 
-// Every order sent to the app carries the actions the requesting user may
-// take on it, computed from the same transition map the backend enforces,
-// so the screens only ever offer buttons that will be accepted.
 const withActions = (order, user) => ({
   ...order.toObject(),
   allowedActions: orderStatus.allowedActions(order, user),
@@ -36,7 +33,6 @@ exports.getSellerOrders = async (req, res, next) => {
     const sellerOrders = orders.map((order) => {
       const plain = withActions(order, req.user);
       plain.items = plain.items.filter((item) => item.listing && ownedIds.has(item.listing.toString()));
-      // The professional's own part, which is what their screen shows.
       plain.sellerStatus = orderStatus.sellerPartOf(order, req.user.id)?.status ?? order.status;
       return plain;
     });
@@ -50,13 +46,6 @@ exports.getSellerOrders = async (req, res, next) => {
   }
 };
 
-// Atomically reserves stock for a single line item: the $gte guard means the
-// update only applies (and only then does stock actually decrement) if
-// enough stock is still available at the moment this runs, so concurrent
-// checkouts for the same product can never both succeed for more than what's
-// really in stock. Combined with the transaction in createOrder, a failure
-// on any one item rolls back every decrement already made for earlier items
-// in the same order — an order is all-or-nothing, never partially reserved.
 const reserveStock = async (item, session) => {
   const qty = item.qty;
   const updated = await Listing.findOneAndUpdate(
@@ -76,9 +65,6 @@ const reserveStock = async (item, session) => {
     };
   }
 
-  // The guarded update matched nothing — figure out whether that's because
-  // the listing doesn't exist at all, or it exists but doesn't have enough
-  // stock left, so the error message actually tells the user what happened.
   const listing = await Listing.findById(item.listingId).session(session).populate("product");
   if (!listing) {
     const error = new Error(`Listing not found: ${item.listingId}`);
@@ -112,7 +98,6 @@ exports.createOrder = async (req, res, next) => {
       );
       const total = subtotal + DELIVERY_FEE;
 
-      // Every seller in the order starts with their own pending part.
       const sellerStatuses = [];
       for (const item of orderItems) {
         if (!sellerStatuses.some((part) => String(part.professional) === String(item.professional))) {
@@ -144,9 +129,6 @@ exports.createOrder = async (req, res, next) => {
       );
     });
 
-    // Gamification is a side effect of a successfully committed order, not
-    // part of its correctness — it already swallows its own errors, so it
-    // runs after the transaction instead of inside it.
     const gamification = await gamificationService.recordAction(req.user.id, "order_placed", {
       sourceId: order._id.toString(),
     });
@@ -266,8 +248,6 @@ exports.updateOrderStatus = async (req, res, next) => {
       throw error;
     }
 
-    // The customer hears about changes to the order as a whole; one seller
-    // confirming their part of a multi-seller order doesn't change it yet.
     if (order.status !== previousStatus) {
       await notify(order.user, {
         type: "order_status",
@@ -297,13 +277,8 @@ exports.deleteOrder = async (req, res, next) => {
       });
     }
 
-    // Parts of the order that never left their seller still hold reserved
-    // stock - hand it back so deleting the order doesn't silently shrink
-    // inventory. Shipped/delivered goods are already gone.
     await orderStatus.normalizeOrders([order]);
     await Promise.all(
-      // An item without a listing (very old orders) has no stock to give
-      // back; an undefined _id would otherwise match an arbitrary listing.
       orderStatus
         .itemsStillInStock(order)
         .filter((item) => item.listing)

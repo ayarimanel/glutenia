@@ -1,10 +1,3 @@
-// One-off, safe-to-run-in-production script: adds 3 more patient resource
-// articles alongside the original 5 seeded by addPatientResources.js, so the
-// Patient Resources page has a fuller library. Upserts by title, so it never
-// touches or duplicates anything an admin has since edited, added, or
-// deleted — safe to re-run.
-//
-// Usage: node src/scripts/addMorePatientResources.js
 require("dotenv").config();
 const mongoose = require("mongoose");
 const connectDB = require("../config/db");

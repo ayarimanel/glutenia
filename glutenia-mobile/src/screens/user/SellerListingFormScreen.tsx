@@ -24,10 +24,6 @@ interface ListingFormErrors {
   stock?: string;
 }
 
-// A Professional can never create a brand-new product here - they pick an
-// existing admin-managed catalog entry (step 1) then attach their own
-// price/stock/availability to it (step 2). Editing an existing listing
-// skips straight to step 2, since the catalog product it points to is fixed.
 export default function SellerListingFormScreen({ navigation, route }: SellerListingFormScreenProps) {
   const { token } = useAuthenticated();
   const { t } = useTranslation();

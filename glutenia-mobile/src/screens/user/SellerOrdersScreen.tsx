@@ -48,8 +48,6 @@ export default function SellerOrdersScreen() {
     }, [token])
   );
 
-  // Moves the professional's own part of the order: pending -> confirmed,
-  // then confirmed -> shipped. Buttons come from the backend's allowedActions.
   const moveOrder = async (orderId: string, status: OrderStatus) => {
     try {
       setUpdatingId(orderId);

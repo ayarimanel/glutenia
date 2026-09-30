@@ -35,8 +35,6 @@ export default function ProfessionalPendingScreen({ navigation, route }: Profess
     try {
       setChecking(true);
       await login({ email, password });
-      // AuthContext now holds a valid session — RootNavigator will switch
-      // out of the auth stack automatically.
     } catch (err) {
       const isApiErr = isApiError(err);
       const pendingData = isApiErr

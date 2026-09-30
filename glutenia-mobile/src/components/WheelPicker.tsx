@@ -21,8 +21,6 @@ export default function WheelPicker({ items, selectedIndex, onChange, width = 72
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: selectedIndex * ITEM_HEIGHT, animated: false });
-    // Only run on mount so the wheel starts at the current value.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleMomentumEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {

@@ -13,9 +13,6 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
     <View style={[styles.wrapper, { paddingBottom: insets.bottom || 10 }]}>
       <View style={[styles.container, { backgroundColor: colors.surface }]}>
         {state.routes.map((route, index) => {
-          // Intentionally unused - icons are hardcoded via iconMap below
-          // instead of reading tabBarIcon/tabBarLabel off options. Leftover
-          // destructure; not a bug, no need to re-investigate.
           const { options } = descriptors[route.key];
           const isFocused = state.index === index;
           const isCenter = route.name === "Scan";
@@ -110,7 +107,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    // lifts the button above the bar
     marginTop: -28,
   },
   centerButton: {

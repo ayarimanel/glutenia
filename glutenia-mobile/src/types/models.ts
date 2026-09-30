@@ -1,9 +1,3 @@
-// Domain model types mirroring glutenia-backend's Mongoose schemas and the
-// exact shapes each controller actually sends. These are derived from
-// reading src/models/*.js and src/controllers/*.js in glutenia-backend, not
-// guessed — see the notes above fields whose shape depends on which
-// endpoint returned them (populate varies per-endpoint, not per-model).
-
 export type UserRole = "customer" | "admin" | "professional";
 export type ProfessionalStatus = "pending" | "approved" | "rejected";
 export type RoleType = "warrior" | "supporter";
@@ -29,9 +23,6 @@ export type BadgeTrack = "warrior" | "supporter" | "both";
 export type ScanType = "barcode" | "label";
 export type ScanVerdict = "safe" | "caution" | "unsafe" | "error";
 
-// The User document as it comes back from the API. The backend's toJSON
-// transform always strips `password` before serializing, so it's never part
-// of this type.
 export interface User {
   _id: string;
   name: string;
@@ -57,8 +48,6 @@ export interface User {
   createdAt: string;
 }
 
-// Catalog entry only — canonical product data owned by Administrator.
-// No price/stock here: those are per-seller and live on Listing below.
 export interface Product {
   _id: string;
   name: string;
@@ -68,16 +57,9 @@ export interface Product {
   isGlutenFree: boolean;
   createdBy: string | null;
   createdAt: string;
-  // Sparse/unique on the backend — absent entirely on docs that never set it,
-  // not just an empty string.
   barcode?: string;
 }
 
-// A Professional's sellable offer against an existing catalog Product.
-// The backend's listing.controller.js flattens the populated catalog
-// product's display fields onto the listing itself (name/description/
-// category/imageUrl/isGlutenFree/barcode), so this is the one shape used
-// everywhere a "sellable item" is rendered (Shop, ProductDetail, cart, scan).
 export interface Listing {
   _id: string;
   product: string;
@@ -110,9 +92,6 @@ export interface CommunityProduct {
   updatedAt: string;
 }
 
-// The admin list populates who submitted and who flagged each report
-// (submittedBy is null, and a flagger is left out, if that account has
-// since been deleted).
 export interface CommunityProductUser {
   _id: string;
   name: string;
@@ -124,8 +103,6 @@ export interface AdminCommunityProduct extends Omit<CommunityProduct, "submitted
   flaggedBy: CommunityProductUser[];
 }
 
-// A barcode users scanned that is neither in the catalog nor reported by
-// the community (admin only).
 export interface MissingBarcode {
   _id: string;
   barcode: string;
@@ -139,14 +116,11 @@ export interface EstablishmentOwnerSummary {
   _id: string;
   name: string;
   email: string;
-  // Only populated by the admin-only GET /establishments/pending.
   phone?: string;
 }
 
 export interface Establishment {
   _id: string;
-  // Populated to a summary object on getEstablishments/getEstablishmentById;
-  // a raw id string everywhere else (getMyEstablishment, upsert, image upload).
   owner: string | EstablishmentOwnerSummary;
   name: string;
   category: EstablishmentCategory;
@@ -160,10 +134,6 @@ export interface Establishment {
   createdAt: string;
 }
 
-// The raw Event schema has an `attendees` field, but every controller
-// response runs through a `serialize()` helper that explicitly deletes it
-// (replaced with `attendeeCount`/`isGoing`) before the JSON ever reaches the
-// client — so `attendees` is intentionally absent from this type.
 export interface Event {
   _id: string;
   title: string;
@@ -184,9 +154,6 @@ export interface Event {
 export interface Notification {
   _id: string;
   user: string;
-  // Free-form on the backend (no schema enum) — observed values include
-  // "order_status", "event_join", "event_leave", "event_new",
-  // "professional_approved", "professional_rejected".
   type: string;
   title: string;
   body: string;
@@ -210,7 +177,6 @@ export interface OrderAddress {
   phone: string;
 }
 
-// One professional's part of an order (orders can mix several sellers).
 export interface OrderSellerStatus {
   professional: string | null;
   status: OrderStatus;
@@ -220,39 +186,26 @@ export interface OrderStatusChange {
   status: OrderStatus;
   changedBy: string | null;
   role: "customer" | "professional" | "admin";
-  // Set when a professional moved only their own part of the order.
   seller: string | null;
   date: string;
 }
 
 export interface Order {
   _id: string;
-  // A raw id string on createOrder/getMyOrders/updateOrderStatus - see
-  // OrderWithBuyer below for the populated variant (getSellerOrders/
-  // getAllOrders).
   user: string;
   items: OrderItem[];
   total: number;
   deliveryFee: number;
   address: OrderAddress;
-  // Overall status: the least advanced of sellerStatuses.
   status: OrderStatus;
   sellerStatuses: OrderSellerStatus[];
   statusHistory: OrderStatusChange[];
-  // Statuses the current user may move this order to, as decided by the
-  // backend's transition rules. Screens show exactly these as buttons.
   allowedActions: OrderStatus[];
   createdAt: string;
 }
 
-// getSellerOrders/getAllOrders populate `user` to a summary object instead
-// of leaving it as a raw id - a distinct type rather than a union on Order
-// itself, since call sites always know which shape they have based on
-// which endpoint they called.
 export type OrderWithBuyer = Omit<Order, "user"> & { user: EstablishmentOwnerSummary };
 
-// GET /orders/seller: only the professional's own items, plus the status of
-// their own part of the order.
 export type SellerOrder = OrderWithBuyer & { sellerStatus: OrderStatus };
 
 export interface Badge {
@@ -275,8 +228,6 @@ export interface Badge {
 export interface UserBadge {
   _id: string;
   userId: string;
-  // Always populated to a full Badge doc on the one endpoint that returns
-  // UserBadge records (getProfileGamification).
   badgeId: Badge;
   earnedAt: string;
   isPinned: boolean;
@@ -306,8 +257,6 @@ export interface ProfileGamificationSummary {
   productContributionCount: number;
   createdAt: string;
   updatedAt: string;
-  // These five are computed fresh on every response and overwrite/augment
-  // whatever's stored on the raw UserGamification doc above.
   currentLevel: number;
   currentLevelMinXp: number;
   nextLevelXp: number;
@@ -342,13 +291,6 @@ export interface BadgeSummary {
   xpReward: number;
 }
 
-// Embedded in the response of every action that can award XP (order
-// creation, event RSVP-join, community product submission, barcode/label
-// scan). The whole object can be `null` (the backend's own try/catch
-// swallows gamification-service errors), and in at least one endpoint
-// (submitCommunityProduct) individual fields can be `undefined` rather than
-// the object itself being null — so every field here is optional, not just
-// the object as a whole.
 export interface GamificationDelta {
   xpGained?: number;
   leveledUp?: boolean;
@@ -364,9 +306,6 @@ export interface ScanHistoryEntry {
   scanType: ScanType;
   verdict: string | null;
   summary: string;
-  // Populated to a name/image summary when the scan resolved to a real
-  // Product; null for label scans and for barcode scans that only matched a
-  // CommunityProduct entry.
   product: { _id: string; name: string; imageUrl: string } | null;
   createdAt: string;
 }
@@ -379,14 +318,10 @@ export interface LabelScanResult {
   confidence: "high" | "medium" | "low";
   confidence_note: string | null;
   error: string | null;
-  // The saved scan record; required to add an unknown product from this
-  // analysis (the backend reads the verdict from it, not from the app).
   scanId: string | null;
   gamification: GamificationDelta | null;
 }
 
-// GET /users/:id (admin) - the user plus a small read-only summary of their
-// activity, so the admin user-detail screen needs only one request.
 export interface AdminUserDetail {
   user: User;
   gamification: {

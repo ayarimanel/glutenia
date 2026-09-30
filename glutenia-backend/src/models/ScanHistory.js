@@ -26,8 +26,6 @@ const scanHistorySchema = new mongoose.Schema({
     ref: "Product",
     default: null,
   },
-  // Set once a label scan has been used to submit a community product, so
-  // one analysis can't vouch for several products.
   usedForSubmission: {
     type: Boolean,
     default: false,

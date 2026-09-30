@@ -10,9 +10,6 @@ import type { GamificationEvent } from "../context/GamificationContext";
 
 const PARTICLE_COUNT = 8;
 
-// A short, once-off burst of small dots flying outward from the badge on
-// unlock — the "big moment" celebration. Level-ups reuse the same burst so
-// both payoffs feel equally satisfying; routine XP stays a small toast.
 function ParticleBurst({ color, active }: { color: string; active: boolean }) {
   const particles = useMemo(
     () =>
@@ -71,8 +68,6 @@ function ParticleBurst({ color, active }: { color: string; active: boolean }) {
   );
 }
 
-// Shows one queued gamification "moment" (a badge unlock or a level-up) at a
-// time. `event` is either { type: "badge", badge } or { type: "levelup", newLevel }.
 interface GamificationUnlockModalProps {
   event: GamificationEvent | null;
   onDismiss: () => void;

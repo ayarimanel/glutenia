@@ -6,10 +6,6 @@ const verifyToken = require("../middleware/verifyToken");
 
 const router = express.Router();
 
-// Only lowercase/trim the address — the default normalizeEmail() rules also
-// strip Gmail dots and "+tag" subaddressing, which silently collapses
-// visually distinct addresses onto the same account and caused false
-// "email already taken" conflicts.
 const NORMALIZE_EMAIL_OPTIONS = {
   gmail_remove_dots: false,
   gmail_remove_subaddress: false,

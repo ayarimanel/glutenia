@@ -2,19 +2,10 @@ const CommunityProduct = require("../models/CommunityProduct");
 const ScanHistory = require("../models/ScanHistory");
 const gamificationService = require("../services/gamificationService");
 
-// Blunts bulk-submission fraud/spam without blocking genuine occasional
-// contributors. Not a defense on its own — pairs with checksum validation
-// and the mandatory-photo requirement enforced at the route level.
 const MAX_SUBMISSIONS_PER_DAY = 20;
 
-// None of the above (checksum/photo/rate-limit) catches a genuine, real
-// barcode honestly or dishonestly mislabeled as gluten-free — that's a claim
-// problem, not a spoofing problem. This is the corroboration mechanism for
-// that specific gap: enough independent flags marks an entry disputed.
 const DISPUTE_FLAG_THRESHOLD = 3;
 
-// A product can only be added from a clear label analysis (safe/unsafe) by
-// the same user, recently, and each analysis can back one product only.
 const LABEL_SCAN_MAX_AGE_MS = 30 * 60 * 1000;
 const usableLabelScanFilter = (labelScanId, userId) => ({
   _id: labelScanId,
@@ -56,8 +47,6 @@ exports.submitCommunityProduct = async (req, res, next) => {
       });
     }
 
-    // Claim the scan atomically, so two simultaneous submissions can't both
-    // use it.
     const claimed = await ScanHistory.findOneAndUpdate(
       usableLabelScanFilter(labelScanId, req.user.id),
       { $set: { usedForSubmission: true } }
@@ -93,11 +82,6 @@ exports.submitCommunityProduct = async (req, res, next) => {
   }
 };
 
-// Lets any user dispute a community entry's gluten-free claim — the only
-// mitigation for a real, unspoofed barcode being honestly or dishonestly
-// mislabeled (checksum/photo/rate-limit can't catch that, since nothing
-// about the submission itself is fake). Once enough independent users flag
-// it, it's marked disputed so it stops reading as confidently verified.
 exports.flagCommunityProduct = async (req, res, next) => {
   try {
     const entry = await CommunityProduct.findById(req.params.id);
@@ -123,8 +107,6 @@ exports.flagCommunityProduct = async (req, res, next) => {
   }
 };
 
-// Admin: every community-reported barcode, disputed and most-flagged first,
-// so the entries that need a decision are at the top.
 exports.getCommunityProducts = async (req, res, next) => {
   try {
     const entries = await CommunityProduct.find()
@@ -138,8 +120,6 @@ exports.getCommunityProducts = async (req, res, next) => {
   }
 };
 
-// Admin review of one entry: optionally correct its gluten status, and in
-// every case clear its flags, since an administrator has now checked it.
 exports.reviewCommunityProduct = async (req, res, next) => {
   try {
     const entry = await CommunityProduct.findById(req.params.id);

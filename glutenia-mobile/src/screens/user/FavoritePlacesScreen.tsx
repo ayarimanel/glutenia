@@ -34,10 +34,6 @@ export default function FavoritePlacesScreen({ navigation }: { navigation: AppNa
     try {
       const saved = (await api.getFavoriteSpots(token)) || [];
 
-      // Favorites are stored as snapshots taken when the heart was tapped.
-      // Real establishments get refreshed from the live list so renames,
-      // new photos, etc. show up, and ones that were deleted (or are no
-      // longer verified) are dropped. Built-in demo spots never change.
       let live: Awaited<ReturnType<typeof api.establishments>>;
       try {
         live = await api.establishments({});
@@ -54,11 +50,9 @@ export default function FavoritePlacesScreen({ navigation }: { navigation: AppNa
       setFavorites(refreshed);
 
       if (refreshed.length !== saved.length) {
-        // Persist the cleanup so the map's hearts stay in sync too.
         api.updateFavoriteSpots(token, refreshed).catch(() => {});
       }
     } catch (_) {
-      // Non-critical — leave whatever was already loaded.
     } finally {
       setLoading(false);
     }

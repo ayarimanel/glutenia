@@ -94,10 +94,6 @@ function UserTabs() {
   );
 }
 
-// Every customer-facing screen pushed on top of the tabs. Registered in
-// both UserStack and AdminStack: an Administrator can use every customer
-// feature (shop, cart, orders, scan, map, events) in addition to the admin
-// panel. "Settings" is left out because each role has its own version.
 function customerScreens() {
   return (
     <>
@@ -169,9 +165,6 @@ function AdminStack({ bg }: { bg: string }) {
       <Stack.Screen name="AdminUserDetail" component={AdminUserDetailScreen} />
       <Stack.Screen name="CreateEvent" component={CreateEventScreen} />
       <Stack.Screen name="Settings" component={AdminSettingsScreen} />
-      {/* The customer app ("Customer space" on the dashboard) and every
-          screen it can open. "MyOrders" is the admin's own purchases -
-          "Orders" inside AdminTabs is already the all-orders tab. */}
       <Stack.Screen name="UserTabs" component={UserTabs} />
       <Stack.Screen name="MyOrders" component={UserOrdersScreen} />
       {customerScreens()}
@@ -204,8 +197,6 @@ export default function RootNavigator() {
   const { isDark, colors, setTheme } = useTheme();
   const [splashVisible, setSplashVisible] = useState(true);
 
-  // Follow the account's saved theme/language preference (if any) whenever a
-  // user session becomes active, so preferences travel across devices/reinstalls.
   useEffect(() => {
     if (!user) return;
     if (user.theme_preference && (user.theme_preference === "dark") !== isDark) {

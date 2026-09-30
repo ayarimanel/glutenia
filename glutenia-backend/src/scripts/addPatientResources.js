@@ -1,10 +1,3 @@
-// One-off, safe-to-run-in-production script: adds the 5 patient resources
-// that used to be hardcoded in PatientResourcesScreen.js (the mobile app's
-// static content) as real, admin-editable PatientResource documents. Upserts
-// by title, so it never touches or duplicates anything an admin has since
-// edited, added, or deleted — safe to re-run.
-//
-// Usage: node src/scripts/addPatientResources.js
 require("dotenv").config();
 const mongoose = require("mongoose");
 const connectDB = require("../config/db");

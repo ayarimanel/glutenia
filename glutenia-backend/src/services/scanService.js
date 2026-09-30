@@ -6,9 +6,6 @@ const ACTION_BY_SCAN_TYPE = {
   label: "label_scan",
 };
 
-// Single writer for both the ScanHistory row and the gamification counter,
-// so the two can never drift apart the way they could when each controller
-// wrote to ScanHistory independently.
 async function recordScanEvent(userId, scanType, metadata = {}) {
   const { verdict = null, summary = "", product = null } = metadata;
 
@@ -27,8 +24,6 @@ async function recordScanEvent(userId, scanType, metadata = {}) {
 
     return { historyEntry, gamification };
   } catch (err) {
-    // A scan/label lookup has already succeeded by the time this runs —
-    // never let a history/gamification write fail the underlying request.
     console.error("[scanService] recordScanEvent error:", err);
     return { historyEntry: null, gamification: null };
   }

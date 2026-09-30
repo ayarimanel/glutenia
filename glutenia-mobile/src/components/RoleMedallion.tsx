@@ -13,12 +13,6 @@ interface RoleMedallionProps {
   locked?: boolean;
 }
 
-// The "My Role" medallion: same layered-gradient-ring + glossy-highlight
-// language as the badge catalog (BadgeIcon), always rendered at the catalog's
-// most prestigious tier — a role is a chosen identity, not a grind, so it
-// always gets the full "earned" treatment. The one exception is `locked`
-// (no role chosen yet), which borrows BadgeIcon's own locked/greyed-out
-// styling instead of inventing a second "unearned" look.
 export default function RoleMedallion({ iconName, color, size = 80, locked = false }: RoleMedallionProps) {
   const { colors, isDark } = useTheme();
   const scale = useRef(new Animated.Value(0.5)).current;

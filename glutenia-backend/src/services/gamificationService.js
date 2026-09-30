@@ -17,8 +17,6 @@ function calculateLevel(totalXp) {
   return level;
 }
 
-// Everything the client needs to render a level/XP bar, so it never has to
-// keep its own copy of LEVEL_THRESHOLDS.
 function getLevelInfo(totalXp) {
   const currentLevel = calculateLevel(totalXp);
   const currentLevelMinXp =
@@ -43,24 +41,17 @@ const ENGAGEMENT_TITLE_BRACKETS = [
   { max: Infinity, title: "Legend" },
 ];
 
-// Purely activity-based title for the XP/Level card — deliberately distinct
-// vocabulary from account.stageTitles.* (the role+experience-based title
-// shown in the profile pill and Journey tracker), so the two "what stage am
-// I at" surfaces on the profile actually mean different things instead of
-// both showing the same string.
 function getEngagementTitle(currentLevel) {
   const bracket = ENGAGEMENT_TITLE_BRACKETS.find((b) => currentLevel <= b.max);
   return bracket.title;
 }
 
-// Returns the number of whole days between two dates (ignoring time)
 function daysBetween(a, b) {
   const t1 = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
   const t2 = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
   return Math.round((t1 - t2) / 86400000);
 }
 
-// actionType -> which UserGamification counter it advances and the flat XP it awards
 const ACTION_CONFIG = {
   barcode_scan: { counterField: "scanCount", metric: "scanCount", xp: 5 },
   label_scan: { counterField: "ingredientCheckCount", metric: "ingredientCheckCount", xp: 10 },
@@ -114,8 +105,6 @@ async function updateStreak(userId) {
       const diff = daysBetween(today, gamification.lastActivityDate);
 
       if (diff === 0) {
-        // Already recorded today — no-op. recordAction can call this multiple
-        // times per day (once per real action), so this guard matters.
       } else if (diff === 1) {
         gamification.currentStreak += 1;
         gamification.lastActivityDate = today;
@@ -148,12 +137,6 @@ async function updateStreak(userId) {
   }
 }
 
-// Shared by every badge-checking path: given a candidate list already known
-// to be eligible, filters out ones already earned, inserts the rest, and
-// awards their XP. Only awards XP for records that actually inserted — with
-// {ordered:false}, a concurrent caller can race for the same badge (the
-// unique {userId,badgeId} index on UserBadge rejects the loser), and that
-// partial failure must not block XP for the ones that did land.
 async function _awardEligibleBadges(userId, eligibleBadges) {
   if (eligibleBadges.length === 0) return [];
 
@@ -203,9 +186,6 @@ async function _awardEligibleBadges(userId, eligibleBadges) {
 async function checkAndAwardBadges(userId, metric, currentValue) {
   try {
     const user = await User.findById(userId).select("role_type");
-    // Badges tagged for one role only are excluded for the other; "both"
-    // (the schema default) and unset role_type both fall through to the
-    // "both"-only badges so onboarding-incomplete accounts aren't blocked.
     const trackFilter = user?.role_type
       ? { $in: [user.role_type, "both"] }
       : "both";
@@ -223,12 +203,6 @@ async function checkAndAwardBadges(userId, metric, currentValue) {
   }
 }
 
-// Badges tied to a fact the user told us during onboarding (self-reported
-// experience, confidence, goal) rather than an activity counter — a
-// one-time eligibility check against a declared value, not a threshold
-// crossed by repeated action, so — like checkLazyJourneyBadges — it's
-// checked lazily (on profile view, and right after an onboarding save)
-// instead of through recordAction.
 async function checkProfileFactBadges(userId) {
   try {
     const user = await User.findById(userId).select(
@@ -251,18 +225,12 @@ async function checkProfileFactBadges(userId) {
   }
 }
 
-// A couple of optional badges are keyed off account age rather than an
-// action counter, so they can't go through recordAction's per-action path —
-// check them lazily whenever gamification data is fetched instead.
 async function checkLazyJourneyBadges(userId, userCreatedAt) {
   if (!userCreatedAt) return [];
   const accountAgeDays = Math.floor((Date.now() - new Date(userCreatedAt)) / 86400000);
   return checkAndAwardBadges(userId, "accountAgeDays", accountAgeDays);
 }
 
-// Single entry point for every real user action that should earn XP. Wraps
-// its own try/catch so a gamification bug never breaks the underlying
-// scan/RSVP/order request that triggered it.
 async function recordAction(userId, actionType, metadata = {}) {
   try {
     const config = ACTION_CONFIG[actionType];
@@ -293,8 +261,6 @@ async function recordAction(userId, actionType, metadata = {}) {
   }
 }
 
-// Lightweight payload for surfaces that load on every app open (Home strip)
-// and can't afford the full profile query.
 async function getHomeGamificationData(userId) {
   try {
     const gamification = await UserGamification.findOne({ userId });
@@ -367,10 +333,8 @@ async function getProfileGamificationData(userId) {
       };
     });
 
-    // Top 3 nearest to completion, for compact previews (e.g. AccountScreen).
     const inProgressBadges = [...lockedBadgeProgress].sort((a, b) => b.ratio - a.ratio).slice(0, 3);
 
-    // Every locked badge with its progress, catalog-ordered, for the full badge grid.
     const lockedBadges = lockedBadgeProgress;
 
     return { gamification: gamificationWithLevel, earnedBadges, pinnedBadges, inProgressBadges, lockedBadges };

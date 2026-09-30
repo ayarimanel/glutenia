@@ -1,9 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Animated, Easing, StyleSheet } from "react-native";
 
-// A soft diagonal light sweep across a medallion, once, on mount/active.
-// Shared by the badge unlock celebration and the profile Role medallion so
-// every "you earned this" moment sweeps the same way.
 interface ShineSweepProps {
   active: boolean;
   size?: number;

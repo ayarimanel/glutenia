@@ -33,7 +33,6 @@ function formatTimeAgo(dateString?: string | null): string | null {
   return `${years} year${years !== 1 ? "s" : ""}`;
 }
 
-// "How long have you been gluten-free?" onboarding answer → Your Journey step.
 const EXPERIENCE_TO_STEP: Record<ExperienceLevel, number> = {
   just_started: 0,
   "1_to_6_months": 1,
@@ -98,10 +97,6 @@ export default function AccountScreen({
   const { user, token, logout } = useAuthenticated();
   const isAdmin = user?.role === "admin";
 
-  // Title (the pill near the avatar) and the "Your Journey" tracker below it
-  // both describe the same underlying progression — role_type + experience_level
-  // — so they're derived from one shared, translated word list instead of two
-  // separate ones that could drift out of sync with each other.
   const titleTrack = user?.role_type === "supporter" ? "supporter" : "warrior";
   const JOURNEY_STEPS = EXPERIENCE_LEVEL_KEYS.map((key) => ({
     key,
@@ -144,10 +139,6 @@ export default function AccountScreen({
     };
   }, [token]);
 
-  // An Administrator reaches this screen from two places: the admin
-  // panel's "Account" tab, or the "Profile" tab of the customer space
-  // (every customer feature is available to the Administrator too). Each
-  // one offers a way over to the other.
   const inAdminPanel = route.name === "Account";
 
   const handleLogout = () => {
@@ -198,23 +189,10 @@ export default function AccountScreen({
       : ROLE_META[roleType ?? ""] || ROLE_META.unset;
   const accentColor = isAdmin || isProfessional ? colors.secondary : colors.primary;
   const accentPale = isAdmin || isProfessional ? colors.secondaryPale : colors.primaryPale;
-  // Nothing "earned" yet if the user never chose a role during onboarding —
-  // the medallion should read as a placeholder, not a trophy.
   const roleLocked = !isAdmin && !isProfessional && !roleType;
-  // Derived client-side from the same fields the "Your Journey" tracker
-  // uses below, instead of the server-stored gamification.currentTitle —
-  // that field only updated on save (via onboarding/Edit Journey) and was
-  // never translated, so it silently showed raw English text regardless of
-  // app language. This is always in sync and always in the right language.
   const currentTitle = roleType
     ? t(`account.stageTitles.${titleTrack}.${user?.experience_level || "just_started"}`)
     : t("account.newcomer");
-  // Deliberately a different value from currentTitle above: this is purely
-  // activity/level-based (server-computed from currentLevel, see
-  // gamificationService.getEngagementTitle), while currentTitle is
-  // self-reported (role + experience). Keeping them visually distinct is
-  // what makes account.progressHint's "Level vs. Title & Journey" claim
-  // actually true instead of both showing the same string.
   const engagementTitle = gamification?.engagementTitle
     ? t(`account.engagementTitles.${gamification.engagementTitle.toLowerCase()}`)
     : currentTitle;
@@ -236,7 +214,6 @@ export default function AccountScreen({
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── A. Avatar ──────────────────────────────────────────────────── */}
         <View style={styles.avatarSection}>
           <Pressable
             style={styles.avatarWrap}
@@ -267,7 +244,6 @@ export default function AccountScreen({
           ) : null}
         </View>
 
-        {/* ── B. XP / Level card (not applicable to professional/seller accounts) ── */}
         {!isProfessional && (
           <View style={styles.xpCard}>
             <View style={styles.xpRow}>
@@ -294,7 +270,6 @@ export default function AccountScreen({
           </View>
         )}
 
-        {/* ── C. Stats row (not applicable to professional/seller accounts) ── */}
         {!isProfessional && (
           <View style={styles.statsCard}>
             <View style={styles.statItem}>
@@ -314,7 +289,6 @@ export default function AccountScreen({
           </View>
         )}
 
-        {/* ── D. Role card ───────────────────────────────────────────────── */}
         <Text style={styles.sectionLabel}>{t("account.yourRole")}</Text>
         <Pressable
           style={({ pressed }) => [
@@ -341,7 +315,6 @@ export default function AccountScreen({
           <Text style={styles.roleDesc}>{roleMeta.desc}</Text>
         </Pressable>
 
-        {/* ── E. Journey (not applicable to professional/seller or admin accounts) ──── */}
         {!isProfessional && !isAdmin && (
           <>
             <Text style={[styles.sectionLabel, styles.mt]}>{t("account.yourJourney")}</Text>
@@ -382,7 +355,6 @@ export default function AccountScreen({
           </>
         )}
 
-        {/* ── E.2 Seller activity (professionals only) ─────────────────────── */}
         {isProfessional && (
           <>
             <Text style={[styles.sectionLabel, styles.mt]}>{t("account.activity")}</Text>
@@ -448,7 +420,6 @@ export default function AccountScreen({
           </>
         )}
 
-        {/* ── F. Badges ──────────────────────────────────────────────────── */}
         {badgesToShow.length > 0 && (
           <>
             <View style={[styles.badgeSectionRow, styles.mt]}>
@@ -480,7 +451,6 @@ export default function AccountScreen({
           </>
         )}
 
-        {/* ── G. Badges in progress ────────────────────────────────────────── */}
         {inProgressBadges.length > 0 && (
           <>
             <Text style={[styles.sectionLabel, styles.mt]}>{t("account.inProgress")}</Text>
@@ -517,7 +487,6 @@ export default function AccountScreen({
           </>
         )}
 
-        {/* ── H. Ecosystem card (not applicable to admin accounts) ─────────── */}
         {!isAdmin && (
           <View style={styles.ecoCard}>
             <Image source={mascot} style={styles.mascot} resizeMode="contain" />
@@ -527,7 +496,6 @@ export default function AccountScreen({
           </View>
         )}
 
-        {/* ── I. Events attending ────────────────────────────────────────── */}
         {attendingEvents.length > 0 && (
           <>
             <Text style={[styles.sectionLabel, styles.mt]}>{t("account.eventsAttending")}</Text>
@@ -557,7 +525,6 @@ export default function AccountScreen({
           </>
         )}
 
-        {/* ── J. Orders + Settings ───────────────────────────────────────── */}
         <View style={styles.settingsList}>
           {isAdmin && (
             <>
@@ -581,8 +548,6 @@ export default function AccountScreen({
           )}
           <Pressable
             style={styles.settingsRow}
-            // Inside the admin panel "Orders" is the all-orders tab, so
-            // the Administrator's own purchases live under "MyOrders".
             onPress={() => navigation.navigate(isAdmin ? "MyOrders" : "Orders")}
           >
             <View style={styles.settingsLeft}>
@@ -657,7 +622,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
   scroll: { paddingBottom: 48 },
   mt: { marginTop: Spacing.lg },
 
-  // ── A. Avatar ────────────────────────────────────────────────────────────
   avatarSection: { alignItems: "center", paddingTop: 32, paddingBottom: 8 },
   avatarWrap: { position: "relative", width: 90, height: 90, marginBottom: 14 },
   avatar: {
@@ -703,7 +667,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
   titlePillText: { color: colors.surface, fontSize: 12, fontWeight: "700" },
   timeText: { fontSize: 13, color: colors.textMuted, marginTop: 4, textAlign: "center" },
 
-  // ── B. XP card ───────────────────────────────────────────────────────────
   xpCard: {
     backgroundColor: colors.surface,
     borderRadius: Radius.lg,
@@ -744,7 +707,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     fontStyle: "italic",
   },
 
-  // ── C. Stats ─────────────────────────────────────────────────────────────
   statsCard: {
     flexDirection: "row",
     backgroundColor: colors.surface,
@@ -759,7 +721,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
   statLabel: { fontSize: 11, color: colors.textMuted, fontWeight: "600" },
   statDivider: { width: 1, backgroundColor: colors.divider, marginVertical: 4 },
 
-  // ── Section label ─────────────────────────────────────────────────────────
   sectionLabel: {
     fontSize: 12,
     color: colors.textMuted,
@@ -771,11 +732,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     marginTop: Spacing.lg,
   },
 
-  // ── D. Role card ──────────────────────────────────────────────────────────
-  // An "achievement seal" layout (medallion + title + description, all
-  // centered) instead of the old icon-left/text-right row — it borrows the
-  // same centered composition as the badge unlock celebration and detail
-  // modal, so the role reads as something earned, not a settings line.
   roleCard: {
     alignItems: "center",
     borderRadius: Radius.xl,
@@ -823,7 +779,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     maxWidth: "88%",
   },
 
-  // ── E.2 Seller activity ──────────────────────────────────────────────────
   activityCard: {
     backgroundColor: colors.surface,
     borderRadius: Radius.lg,
@@ -832,7 +787,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     ...Shadow,
   },
 
-  // ── E. Journey ────────────────────────────────────────────────────────────
   journeyCard: {
     backgroundColor: colors.surface,
     borderRadius: Radius.lg,
@@ -851,7 +805,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
   stepLbl: { flex: 1, fontSize: 10, color: colors.textMuted, textAlign: "center" },
   stepLblActive: { color: colors.primary, fontWeight: "700" },
 
-  // ── F. Badges ─────────────────────────────────────────────────────────────
   badgeSectionRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -878,7 +831,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     textAlign: "center",
   },
 
-  // ── G. Badges in progress ────────────────────────────────────────────────
   achCard: {
     backgroundColor: colors.surface,
     borderRadius: Radius.lg,
@@ -900,7 +852,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
   achFill: { height: "100%", backgroundColor: colors.primary, borderRadius: 3 },
   achCount: { fontSize: 11, color: colors.textMuted, textAlign: "right" },
 
-  // ── H. Eco card ───────────────────────────────────────────────────────────
   ecoCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -914,7 +865,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
   mascot: { width: 56, height: 56 },
   ecoText: { flex: 1, fontSize: 14, fontWeight: "500", color: colors.textDark, lineHeight: 20 },
 
-  // ── I. Events ─────────────────────────────────────────────────────────────
   eventsCard: {
     backgroundColor: colors.surface,
     borderRadius: Radius.lg,
@@ -944,7 +894,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
   eventDate: { fontSize: 12, color: colors.textMuted },
   eventPrice: { fontSize: 13, fontWeight: "800", color: colors.primary },
 
-  // ── J. Settings ───────────────────────────────────────────────────────────
   settingsList: { marginTop: 28, marginHorizontal: Spacing.md },
   settingsRow: {
     flexDirection: "row",

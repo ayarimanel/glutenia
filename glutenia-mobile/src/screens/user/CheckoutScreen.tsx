@@ -64,11 +64,6 @@ export default function CheckoutScreen({ navigation }: { navigation: AppNavigati
       navigation.replace("OrderSuccess", { order });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      // 409 here specifically means the backend rejected the order because
-      // stock changed since the item was added to the cart (someone else
-      // bought it, or it sold out) — send the user back to Cart so they can
-      // actually fix it, instead of leaving them stuck on a delivery form
-      // that has no way to change quantities.
       if (isApiError(err) && err.status === 409) {
         Alert.alert(t("checkout.failed"), message, [
           { text: t("checkout.reviewCart"), onPress: () => navigation.navigate("CartPage") },

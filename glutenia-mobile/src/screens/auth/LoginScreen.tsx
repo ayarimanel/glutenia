@@ -77,11 +77,9 @@ export default function LoginScreen({ navigation }: { navigation: AppNavigation 
       setLoading(false);
     }
   };
-  // ──────────────────────────────────────────────────────────────────────────
 
   return (
     <Screen style={styles.screen}>
-      {/* ── Green wave layers (positioned absolute behind everything) ───────── */}
       <View style={styles.waveOuter} />
       <View style={styles.waveInner} />
 
@@ -89,7 +87,6 @@ export default function LoginScreen({ navigation }: { navigation: AppNavigation 
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.container}
       >
-        {/* ── Hero: mascot + brand copy ─────────────────────────────────────── */}
         <View style={styles.heroBlock}>
           <View style={styles.mascotRing}>
             <Image source={MASCOT} style={styles.mascotImage} />
@@ -141,18 +138,15 @@ export default function LoginScreen({ navigation }: { navigation: AppNavigation 
   );
 }
 
-// ─── Styles ────────────────────────────────────────────────────────────────────
-const WAVE_GREEN_DEEP  = "#6ea832";             // deeper shade — inner wave accent
+const WAVE_GREEN_DEEP  = "#6ea832";
 
 const getStyles = (colors: ThemeColors) => {
-const WAVE_GREEN = colors.primary;        // #8BC34A  — outer wave
+const WAVE_GREEN = colors.primary;
 return StyleSheet.create({
-  // Root background matches the wave so there's no colour seam on tall devices
   screen: {
     backgroundColor: colors.primaryPale,
   },
 
-  // ── Wave ──────────────────────────────────────────────────────────────────
   waveOuter: {
     position: "absolute",
     bottom: 0,
@@ -175,16 +169,14 @@ return StyleSheet.create({
     opacity: 0.35,
   },
 
-  // ── Layout ────────────────────────────────────────────────────────────────
   container: {
     flex: 1,
     justifyContent: "space-between",
     paddingHorizontal: Spacing.md,
-    paddingTop: Spacing.xl + Spacing.lg,   // generous top breathing room
+    paddingTop: Spacing.xl + Spacing.lg,
     paddingBottom: Spacing.xl,
   },
 
-  // ── Hero ──────────────────────────────────────────────────────────────────
   heroBlock: {
     alignItems: "center",
     gap: Spacing.sm,
@@ -219,13 +211,11 @@ return StyleSheet.create({
     maxWidth: 230,
   },
 
-  // ── Card ──────────────────────────────────────────────────────────────────
   card: {
     backgroundColor: colors.surface,
-    borderRadius: Radius.xl,          // 24 — matches your existing Radius token
+    borderRadius: Radius.xl,
     padding: Spacing.lg,
     gap: Spacing.md,
-    // Lifted shadow using primary green tint (same as your Shadow token logic)
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: -6 },
     shadowOpacity: 0.10,

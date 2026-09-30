@@ -23,8 +23,6 @@ import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import type { AppNavigation } from "../../navigation/types";
 import type { User } from "../../types/models";
 
-// Admin "Manage Users": lists every account; tapping one opens
-// AdminUserDetailScreen, where the admin can view, update, or delete it.
 export default function AdminUsersScreen({ navigation }: { navigation: AppNavigation }) {
   const { token, logout, user: me } = useAuthenticated();
   const { t } = useTranslation();

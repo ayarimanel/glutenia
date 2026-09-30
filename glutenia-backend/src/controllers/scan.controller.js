@@ -66,10 +66,6 @@ exports.scanLabel = async (req, res, next) => {
       ],
       max_tokens: 1024,
       temperature: 0.1,
-      // qwen3.8-27b defaults to "thinking mode", which emits <think>...</think>
-      // reasoning text inside message.content and would break the JSON.parse
-      // below. This is a straightforward extraction/classification task, not
-      // one needing multi-step reasoning, so thinking mode is disabled.
       reasoning_effort: "none",
     });
 
@@ -113,8 +109,6 @@ exports.scanLabel = async (req, res, next) => {
       summary: safe.flagged[0]?.ingredient || "",
     });
 
-    // scanId lets the app submit an unknown product backed by this exact
-    // analysis; the community-product endpoint re-reads the verdict from it.
     return res.json({
       success: true,
       data: { ...safe, scanId: historyEntry?._id ?? null, gamification },

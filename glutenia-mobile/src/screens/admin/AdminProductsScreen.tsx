@@ -22,12 +22,6 @@ const TAB_LABEL_KEYS: Record<Tab, string> = {
   missing: "admin.missing.tab",
 };
 
-// Admin-only: manages the master product catalog (canonical name/category/
-// image/gluten-free flag/barcode). A Professional's own sellable offers are
-// a separate concept (Listing) managed on SellerListingsScreen instead.
-// The second tab reviews community reports: barcodes users added after a
-// label scan. They are never part of the shop, only shown after a scan.
-// The third lists barcodes users scanned that Glutenia had no answer for.
 export default function AdminProductsScreen({ navigation }: { navigation: AppNavigation }) {
   const { token, logout } = useAuth();
   const { t } = useTranslation();
@@ -39,10 +33,6 @@ export default function AdminProductsScreen({ navigation }: { navigation: AppNav
   const [missing, setMissing] = useState<MissingBarcode[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
-  // Distinct from `loading` (which also drives pull-to-refresh): tracks
-  // whether we've completed the very first fetch yet, so the empty state
-  // doesn't flash "no products" while the initial request is still in
-  // flight.
   const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   const loadProducts = async () => {

@@ -14,10 +14,6 @@ import { useTheme, type ThemeColors } from "../../context/ThemeContext";
 import type { AppNavigation } from "../../navigation/types";
 import type { Listing } from "../../types/models";
 
-// A Professional's own sellable offers against the admin-managed catalog.
-// Unlike AdminProductsScreen (catalog, admin-only), this can never create a
-// brand-new product - see SellerListingFormScreen, which only lets you pick
-// an existing catalog product and set your own price/stock/availability.
 export default function SellerListingsScreen({ navigation }: { navigation: AppNavigation }) {
   const { token, logout } = useAuthenticated();
   const { t } = useTranslation();

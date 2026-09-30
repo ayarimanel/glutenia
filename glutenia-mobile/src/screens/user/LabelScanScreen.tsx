@@ -36,7 +36,6 @@ interface LabelScanScreenProps {
 }
 
 export default function LabelScanScreen({ navigation, route }: LabelScanScreenProps) {
-  // Only set when the user got here from a barcode that isn't in the database.
   const barcode = route.params?.barcode;
   const { t } = useTranslation();
   const { user, token } = useAuthenticated();
@@ -100,7 +99,6 @@ export default function LabelScanScreen({ navigation, route }: LabelScanScreenPr
     error: "close-circle",
   };
 
-  // ── LOADING ──────────────────────────────────────────────────────────────
   if (screenState === LOADING) {
     return (
       <View style={styles.root}>
@@ -114,7 +112,6 @@ export default function LabelScanScreen({ navigation, route }: LabelScanScreenPr
     );
   }
 
-  // ── RESULT ───────────────────────────────────────────────────────────────
   if (screenState === RESULT && result) {
     const color = VERDICT_COLOR[result.verdict] ?? colors.textMuted;
     const icon = VERDICT_ICON[result.verdict] ?? "info";
@@ -143,7 +140,6 @@ export default function LabelScanScreen({ navigation, route }: LabelScanScreenPr
           contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad }]}
           showsVerticalScrollIndicator={false}
         >
-          {/* Verdict card */}
           <View style={[styles.verdictCard, { borderColor: color }]}>
             <AppIcon name={icon} size={52} color={color} />
             <Text style={[styles.verdictTitle, { color }]}>{t(titleKey)}</Text>
@@ -160,7 +156,6 @@ export default function LabelScanScreen({ navigation, route }: LabelScanScreenPr
             )}
           </View>
 
-          {/* Flagged ingredients */}
           {result.flagged?.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>{t("labelScan.flaggedTitle")}</Text>
@@ -176,7 +171,6 @@ export default function LabelScanScreen({ navigation, route }: LabelScanScreenPr
             </View>
           )}
 
-          {/* Safe highlights */}
           {result.verdict === "safe" && result.safe_highlights?.length > 0 && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>{t("labelScan.safeHighlightsTitle")}</Text>
@@ -191,7 +185,6 @@ export default function LabelScanScreen({ navigation, route }: LabelScanScreenPr
             </View>
           )}
 
-          {/* Extracted text */}
           {!!result.raw_text && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>{t("labelScan.rawTextTitle")}</Text>
@@ -201,11 +194,8 @@ export default function LabelScanScreen({ navigation, route }: LabelScanScreenPr
             </View>
           )}
 
-          {/* Disclaimer */}
           <Text style={styles.disclaimer}>{t("labelScan.disclaimer")}</Text>
 
-          {/* Unknown barcode: the product can only be added from a clear
-              verdict, and its gluten-free status comes from that verdict. */}
           {barcode && result.scanId && (result.verdict === "safe" || result.verdict === "unsafe") ? (
             <Pressable
               style={styles.primaryBtn}
@@ -237,7 +227,6 @@ export default function LabelScanScreen({ navigation, route }: LabelScanScreenPr
     );
   }
 
-  // ── IDLE ─────────────────────────────────────────────────────────────────
   return (
     <View style={styles.root}>
       <AppHeader back userName={user?.name ?? ""} avatarUri={user?.avatar ?? undefined} safeTop />

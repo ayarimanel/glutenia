@@ -37,9 +37,6 @@ export default function ProductDetailScreen({ navigation, route }: ProductDetail
         if ("listingId" in params) {
           setProduct(await api.listing(params.listingId));
         } else {
-          // Legacy entry point (a scan-history rail) that only ever knew the
-          // catalog product's id, not a specific listing — resolve to the
-          // cheapest available listing, same rule the barcode scan uses.
           const listings = await api.listings({ product: params.productId });
           const cheapest = listings
             .filter((listing) => listing.isAvailable && listing.stock > 0)

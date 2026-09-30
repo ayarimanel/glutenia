@@ -30,9 +30,6 @@ interface AdminUserDetailScreenProps {
   route: RouteProp<RootParamList, "AdminUserDetail">;
 }
 
-// Admin view of one account: the same identity/progress information the
-// user sees on their own profile, with editable name/email/phone and a
-// delete action.
 export default function AdminUserDetailScreen({ navigation, route }: AdminUserDetailScreenProps) {
   const { userId } = route.params;
   const { token, user: me } = useAuthenticated();
@@ -152,8 +149,6 @@ export default function AdminUserDetailScreen({ navigation, route }: AdminUserDe
         ? t("admin.users.roleProfessional")
         : t("admin.users.roleCustomer");
 
-  // Same enum → label mapping AdminAnalyticsScreen uses, so onboarding
-  // answers read identically across the admin area.
   const roleTypeLabels: Record<string, string> = {
     warrior: t("profileOnboarding.role.warrior"),
     supporter: t("profileOnboarding.role.supporter"),

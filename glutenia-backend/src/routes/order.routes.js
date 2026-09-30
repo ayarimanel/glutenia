@@ -37,8 +37,6 @@ const createOrderValidators = [
 
 const idValidator = [param("id").isMongoId().withMessage("Invalid order id")];
 
-// Only the target status is validated here; who may apply it, and from
-// which status, is decided by services/orderStatusService.js.
 const statusValidators = [
   body("status")
     .isIn(["confirmed", "shipped", "delivered"])

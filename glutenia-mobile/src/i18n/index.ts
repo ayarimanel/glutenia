@@ -22,12 +22,10 @@ i18n.use(initReactI18next).init({
   react: { useSuspense: false },
 });
 
-// Load saved language on startup
 AsyncStorage.getItem(LANG_KEY).then((saved) => {
   if (saved && supported.includes(saved)) i18n.changeLanguage(saved);
 });
 
-// Save language whenever it changes
 i18n.on("languageChanged", (lng) => AsyncStorage.setItem(LANG_KEY, lng));
 
 export default i18n;

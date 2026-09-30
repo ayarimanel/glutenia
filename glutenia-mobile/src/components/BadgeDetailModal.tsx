@@ -11,9 +11,6 @@ import type { AppNavigation } from "../navigation/types";
 
 type BadgeDetailNavigation = AppNavigation;
 
-// Category -> where the badge's underlying action lives in the app. Only
-// categories with one obvious, single action get a CTA (streak/journey are
-// time-based, not a single tappable action, so they intentionally get none).
 const CTA_ROUTES: Record<string, { labelKey: string; nav: (navigation: BadgeDetailNavigation) => void }> = {
   scanner: { labelKey: "badges.detail.ctaScan", nav: (navigation) => navigation.navigate("UserTabs", { screen: "Scan" }) },
   safety: { labelKey: "badges.detail.ctaLabelScan", nav: (navigation) => navigation.navigate("LabelScan") },

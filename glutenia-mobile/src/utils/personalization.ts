@@ -1,19 +1,9 @@
-// Shared personalization layer: every screen that wants to react to what
-// onboarding learned about the user (role_type, experience_level,
-// primary_goal, eating_out_frequency, confidence_identifying_gf) reads from
-// here instead of hand-rolling its own lookup. Every export is a pure
-// function of plain data — no React/Expo/RN imports — so behavior can be
-// checked with a plain `node` script.
-
 import type { PrimaryGoal, User } from "../types/models";
 
 export type { PrimaryGoal };
 
 export type QuickAccessId = "products" | "events" | "favorites" | "map";
 
-// Derived directly from User (not hand-duplicated) so it stays structurally
-// identical to what AuthContext/useAuth actually provide - including the
-// `| null` (not `| undefined`) convention every one of these fields uses.
 export type PersonalizationUser = Pick<
   User,
   "confidence_identifying_gf" | "experience_level" | "eating_out_frequency" | "primary_goal"
@@ -21,10 +11,6 @@ export type PersonalizationUser = Pick<
 
 const QUICK_ACCESS_DEFAULT_ORDER: QuickAccessId[] = ["products", "events", "favorites", "map"];
 
-// Surfaces the most relevant Quick Access card first based on why the user
-// said they're here. Exhaustive over every primary_goal enum value —
-// "exploring" is an explicit choice (products first, a low-commitment
-// way to browse without any goal-specific detour).
 const QUICK_ACCESS_ORDER_BY_GOAL: Record<PrimaryGoal, QuickAccessId[]> = {
   manage_celiac: ["favorites", "products", "map", "events"],
   manage_intolerance: ["favorites", "products", "map", "events"],
@@ -38,11 +24,6 @@ export function getHomeQuickAccessOrder(primaryGoal?: PrimaryGoal): QuickAccessI
   return (primaryGoal && QUICK_ACCESS_ORDER_BY_GOAL[primaryGoal]) || QUICK_ACCESS_DEFAULT_ORDER;
 }
 
-// Reorders (never hides) ShopScreen's category chips. "All" always stays
-// first. Product has no field beyond category/price/stock to personalize
-// against, so this stays a light nudge — categories most relevant to the
-// user's stated goal move earlier — not a "recommended for you" claim the
-// data can't back up.
 const CATEGORY_PRIORITY_BY_GOAL: Partial<Record<PrimaryGoal, string[]>> = {
   manage_celiac: ["Bread", "Flour"],
   manage_intolerance: ["Bread", "Flour"],

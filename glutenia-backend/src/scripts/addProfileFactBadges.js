@@ -1,12 +1,3 @@
-// One-off, safe-to-run-in-production script: adds 3 new "profile fact"
-// badges (gated by a declared onboarding answer, not an activity counter —
-// see Badge.targetField/targetEquals and gamificationService.
-// checkProfileFactBadges) without touching any existing Badge or UserBadge
-// document. Never run src/seed/seed.js against production instead — its
-// Badge handling is upsert-safe, but it also unconditionally wipes every
-// User and Product document as part of a full local/dev reseed.
-//
-// Usage: node src/scripts/addProfileFactBadges.js
 require("dotenv").config();
 const mongoose = require("mongoose");
 const connectDB = require("../config/db");

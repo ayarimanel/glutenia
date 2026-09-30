@@ -18,12 +18,8 @@ interface ToastState {
   key: number;
 }
 
-// Module-level trigger so screens can fire feedback without needing the hook
-// wired into every component tree (mirrors AlertContext's Alert.alert override).
 let globalTrigger: ((delta: GamificationDelta | null | undefined) => void) | null = null;
 
-// Call this with the `gamification` delta object returned alongside a scan,
-// RSVP, or order API response. Safe to call with null/undefined.
 export const notifyGamification = (delta: GamificationDelta | null | undefined): void => {
   if (globalTrigger) globalTrigger(delta);
 };

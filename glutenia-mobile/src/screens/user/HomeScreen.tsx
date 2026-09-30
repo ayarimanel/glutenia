@@ -21,8 +21,6 @@ import { getHomeQuickAccessOrder, type QuickAccessId } from "../../utils/persona
 import type { AppNavigation } from "../../navigation/types";
 import type { Event, HomeGamificationSummary, Listing, ScanHistoryEntry } from "../../types/models";
 
-// Quick Access card catalog, keyed so the display order can be reordered
-// per-user without duplicating the card markup itself.
 const QUICK_ACCESS_ITEMS: Record<QuickAccessId, { icon: IconName; labelKey: string; nav: "ShopScreen" | "Events" | "FavoritePlaces" | "Map" }> = {
   products: { icon: "utensils", labelKey: "home.products", nav: "ShopScreen" },
   events: { icon: "people", labelKey: "events.title", nav: "Events" },
@@ -47,9 +45,6 @@ export default function HomeScreen({ navigation }: { navigation: AppNavigation }
 
   useEffect(() => {
     setProductsError(false);
-    // Listings come newest first. A product offered by several sellers has a
-    // listing each, so keep only its newest one: Home shows what's new, not
-    // the same product twice.
     api.listings({})
       .then((data) => {
         const seen = new Set<string>();
@@ -64,7 +59,6 @@ export default function HomeScreen({ navigation }: { navigation: AppNavigation }
   }, []);
 
   useEffect(() => {
-    // Newest first from the API; the first is featured, the next two listed.
     api.events(token)
       .then((data) => setEvents(data.slice(0, 3)))
       .catch(() => {});
@@ -101,7 +95,6 @@ export default function HomeScreen({ navigation }: { navigation: AppNavigation }
       />
       <ScrollView showsVerticalScrollIndicator={false}>
 
-        {/* ── Gamification strip ── */}
         {homeGamification && (
           <Pressable
             style={styles.gamStrip}
@@ -124,7 +117,6 @@ export default function HomeScreen({ navigation }: { navigation: AppNavigation }
           </Pressable>
         )}
 
-        {/* ── QR Scanner hero ── */}
         <Pressable
           style={styles.hero}
           onPress={() => navigation.navigate("Scan")}
@@ -138,7 +130,6 @@ export default function HomeScreen({ navigation }: { navigation: AppNavigation }
           </View>
         </Pressable>
 
-        {/* ── Eating-out nudge (frequent restaurant-goers only) ── */}
         {(user?.eating_out_frequency === "weekly" || user?.eating_out_frequency === "multiple_week") && (
           <Pressable style={styles.eatingOutCard} onPress={() => navigation.navigate("Map")}>
             <View style={styles.eatingOutIconWrap}>
@@ -152,7 +143,6 @@ export default function HomeScreen({ navigation }: { navigation: AppNavigation }
           </Pressable>
         )}
 
-        {/* ── Recently Scanned ── */}
         {scanHistory.length > 0 && (
           <>
             <Text style={styles.sectionLabel}>{t("home.recentlyScanned")}</Text>
@@ -191,7 +181,6 @@ export default function HomeScreen({ navigation }: { navigation: AppNavigation }
           </>
         )}
 
-        {/* ── Quick Access ── */}
         <Text style={styles.sectionLabel}>{t("home.quickAccess")}</Text>
         <View style={styles.quickGrid}>
           {quickAccessOrder.map((key) => {
@@ -211,7 +200,6 @@ export default function HomeScreen({ navigation }: { navigation: AppNavigation }
           })}
         </View>
 
-        {/* ── Latest events: newest featured, the next two as rows ── */}
         {featuredEvent && (
           <>
             <View style={styles.sectionRow}>
@@ -290,7 +278,6 @@ export default function HomeScreen({ navigation }: { navigation: AppNavigation }
           </>
         )}
 
-        {/* ── New in the shop: the four newest products, each once ── */}
         <View style={styles.sectionRow}>
           <Text style={styles.sectionLabel}>{t("home.newInShop")}</Text>
           <Pressable
@@ -329,7 +316,6 @@ export default function HomeScreen({ navigation }: { navigation: AppNavigation }
 }
 
 const getStyles = (colors: ThemeColors) => StyleSheet.create({
-  // ── Gamification strip ──
   gamStrip: {
     flexDirection: "row",
     alignItems: "center",
@@ -368,7 +354,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.textDark,
   },
 
-  // ── Hero ──
   hero: {
     marginHorizontal: Spacing.md,
     marginTop: Spacing.md,
@@ -425,7 +410,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
   eatingOutTitle: { fontSize: 14, fontWeight: "800", color: colors.textDark, marginBottom: 2 },
   eatingOutBody: { fontSize: 12, color: colors.textMuted, lineHeight: 17 },
 
-  // ── Section labels & rows ──
   sectionLabel: {
     fontSize: 20,
     fontWeight: "900",
@@ -457,7 +441,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.secondary,
   },
 
-  // ── Quick Access ──
   quickGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -490,14 +473,12 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     textAlign: "center",
   },
 
-  // ── Horizontal lists ──
   hList: {
     paddingHorizontal: Spacing.md,
     paddingBottom: Spacing.lg,
     gap: 12,
   },
 
-  // ── New in the shop (2×2 grid) ──
   productGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -524,7 +505,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     letterSpacing: 0.6,
   },
 
-  // ── Recently scanned ──
   scanCard: {
     width: 130,
     backgroundColor: colors.surface,
@@ -547,7 +527,6 @@ const getStyles = (colors: ThemeColors) => StyleSheet.create({
     lineHeight: 16,
   },
 
-  // ── Latest events ──
   eventsBlock: {
     paddingHorizontal: Spacing.md,
     marginBottom: Spacing.lg,

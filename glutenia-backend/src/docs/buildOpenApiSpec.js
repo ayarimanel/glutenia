@@ -1,7 +1,6 @@
 const path = require("path");
 const { parseRouteFile } = require("./parseRoutes");
 
-// Mirrors the `app.use(prefix, xRoutes)` mounting table in src/app.js.
 const ROUTE_FILES = [
   { file: "auth.routes.js", prefix: "/api/auth", tag: "Auth" },
   { file: "communityProduct.routes.js", prefix: "/api/community-products", tag: "Community Products" },
@@ -54,7 +53,7 @@ function buildParameters(route) {
     parameters.push({
       name: p.field,
       in: "path",
-      required: true, // Express requires all declared path segments regardless of validator presence
+      required: true,
       schema: p.schema,
       description: p.schema.description,
     });

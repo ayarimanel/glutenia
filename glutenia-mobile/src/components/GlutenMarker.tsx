@@ -1,6 +1,5 @@
 import { Image } from "react-native";
 
-// PNG dims: all 72×72 (square). Display sizes below are exact (no aspect correction needed).
 const MARKER_SIZE_INACTIVE = { width: 36, height: 36 };
 const MARKER_SIZE_ACTIVE   = { width: 48, height: 48 };
 
@@ -10,9 +9,6 @@ const MARKER_IMAGES = {
   active: require("../../assets/markers/marker-store.png"),
 };
 
-// Keyed loosely by string, not EstablishmentCategory - map markers cover
-// both real establishments and static demo spots whose "type" values (e.g.
-// "Café") don't all match the backend's Establishment category enum.
 const TYPE_TO_COLOR: Record<string, keyof typeof MARKER_IMAGES> = {
   Supermarket:    "green",
   "Health Store": "green",

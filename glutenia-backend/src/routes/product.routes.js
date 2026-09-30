@@ -56,12 +56,8 @@ const idValidator = [
   param("id").isMongoId().withMessage("Invalid product id"),
 ];
 
-// Catalog is admin-only to manage: Professionals attach their own listing
-// (price/stock/availability) to an existing catalog product instead — see
-// listing.routes.js.
 router.get("/", productController.getProducts);
 router.get("/barcode/:code", verifyToken, productController.getProductByBarcode);
-// Declared before "/:id" so "missing-barcodes" isn't read as a product id.
 router.get("/missing-barcodes", verifyToken, requireRole("admin"), productController.getMissingBarcodes);
 router.delete(
   "/missing-barcodes/:id",

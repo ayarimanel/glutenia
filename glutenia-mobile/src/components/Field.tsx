@@ -6,8 +6,6 @@ interface FieldProps extends Omit<TextInputProps, "style"> {
   label: string;
   error?: string;
   hint?: string;
-  // Applies to the wrapping View, not the TextInput itself - hence the
-  // Omit above rather than reusing TextInputProps' own (TextStyle-typed) style.
   style?: StyleProp<ViewStyle>;
   inputStyle?: StyleProp<TextStyle>;
 }

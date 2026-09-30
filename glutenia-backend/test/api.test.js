@@ -61,7 +61,6 @@ test.after(async () => {
   await mongoose.disconnect();
 });
 
-// Shared state, populated as the suites below run in order.
 const ctx = {};
 
 const registerCustomer = async ({ name, email, password, role }) => {
@@ -73,9 +72,6 @@ const registerCustomer = async ({ name, email, password, role }) => {
   return registerResponse.body.data;
 };
 
-// Directly inserts an approved professional (bypassing the pending-approval
-// flow, which is covered elsewhere) and logs in, for suites that just need a
-// seller account to attach listings to.
 const createApprovedProfessional = async ({ name, email, password }) => {
   const hashed = await bcrypt.hash(password, 12);
   const user = await User.create({
@@ -177,8 +173,6 @@ describe("Authentication", () => {
 
     ctx.adminToken = adminLogin.body.data.token;
 
-    // A seller account used throughout the Products/Listings/Orders suites
-    // below to attach listings to the admin's catalog.
     const professional = await createApprovedProfessional({
       name: "Professional One",
       email: "professional@glutenia.test",
@@ -273,8 +267,6 @@ describe("Products & Listings", () => {
       .expect(200);
     assert.equal(productDetail.body.data.name, "Pain sans gluten");
 
-    // A Professional can never create a catalog product from scratch -
-    // only pick an existing one and attach a listing to it.
     await request(app)
       .post("/api/products")
       .set("Authorization", `Bearer ${ctx.professionalToken}`)
@@ -294,7 +286,6 @@ describe("Products & Listings", () => {
 
     ctx.listingId = createdListing.body.data._id;
 
-    // The same professional can't list the same catalog product twice.
     await request(app)
       .post("/api/listings")
       .set("Authorization", `Bearer ${ctx.professionalToken}`)
@@ -369,14 +360,12 @@ describe("Establishments", () => {
     assert.equal(upserted.body.data.verified, false);
     ctx.establishmentId = upserted.body.data._id;
 
-    // Unverified establishments are hidden from the public map/shop browse.
     const publicListBefore = await request(app).get("/api/establishments").expect(200);
     assert.equal(
       publicListBefore.body.data.some((e) => e._id === ctx.establishmentId),
       false
     );
 
-    // Non-admin can't see the moderation queue or verify/delete.
     await request(app)
       .get("/api/establishments/pending")
       .set("Authorization", `Bearer ${ctx.professionalToken}`)
@@ -583,9 +572,6 @@ describe("Barcode", () => {
       .set("Authorization", `Bearer ${ctx.customerToken}`)
       .expect(200);
 
-    // Resolves to the cheapest in-stock listing for that catalog product,
-    // not the bare catalog record - see product.controller.js's
-    // getProductByBarcode/cheapestAvailableListing.
     assert.equal(found.body.data._id, ctx.listingId);
     assert.equal(found.body.data.product, ctx.productId);
     assert.equal(found.body.data.name, "Pain sans gluten");
@@ -639,7 +625,6 @@ describe("Orders", () => {
       .expect(201);
 
     assert.equal(order.body.success, true);
-    // subtotal (2 x 4.5) + the $7 delivery fee (order.controller.js DELIVERY_FEE)
     assert.equal(order.body.data.total, 16);
     assert.equal(order.body.data.items[0].name, "Pain sans gluten");
     assert.equal(order.body.data.items[0].price, 4.5);
@@ -726,9 +711,6 @@ describe("Orders", () => {
 });
 
 describe("Orders - stock integrity", () => {
-  // Creates a catalog product (admin) plus one listing for it (the shared
-  // test professional) with the given stock, and returns the listing id -
-  // that's what createOrder/reserveStock actually reserve against now.
   const createStockedListing = async (stock, name = `Stock Test ${Date.now()}-${Math.random()}`) => {
     const product = await request(app)
       .post("/api/products")
@@ -1101,8 +1083,6 @@ describe("Self-service account deletion", () => {
 });
 
 describe("Community product submission", () => {
-  // The AI can't be called from tests, so label scans are created directly,
-  // exactly as recordScanEvent stores them.
   const labelScan = (userId, verdict, extra = {}) =>
     ScanHistory.create({ userId, scanType: "label", verdict, ...extra });
 
@@ -1129,7 +1109,6 @@ describe("Community product submission", () => {
     }).expect(201);
     assert.equal(flagged.body.data.entry.isGlutenFree, false);
 
-    // One analysis can back one product only.
     await submit(ctx.customerToken, {
       barcode: "4007817327098",
       labelScanId: safeScan._id.toString(),
@@ -1215,7 +1194,6 @@ describe("Community product admin review", () => {
     assert.equal(reviewed.body.data.flagCount, 0);
     assert.equal(reviewed.body.data.disputed, false);
 
-    // Confirming without a status keeps it and still clears the flags.
     const confirmed = await asAdmin(request(app).patch(`/api/community-products/${entry._id}`))
       .send({})
       .expect(200);
@@ -1250,7 +1228,6 @@ describe("Missing barcodes", () => {
     await scan(ctx.customerToken, "8712345678906");
     await scan(ctx.professionalToken, "8712345678906");
     await scan(ctx.customerToken, "96385074");
-    // A misread (bad check digit) isn't recorded.
     await scan(ctx.customerToken, "1234567890123");
 
     const list = await listMissing().expect(200);
@@ -1287,7 +1264,6 @@ describe("Missing barcodes", () => {
 describe("Order status transitions", () => {
   const address = { fullName: "C", addressLine: "1 St", city: "Tunis", phone: "20123456" };
 
-  // Two sellers with one listing each, so one order can contain both.
   const setup = async () => {
     const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
     const sellerA = await createApprovedProfessional({
@@ -1327,7 +1303,6 @@ describe("Order status transitions", () => {
     const order = await placeOrder([listingA]);
     assert.deepEqual(order.allowedActions, []);
 
-    // Can't skip a step or act as the customer.
     await setStatus(sellerA.token, order._id, "shipped").expect(400);
     await setStatus(sellerA.token, order._id, "delivered").expect(403);
     await setStatus(ctx.customerToken, order._id, "confirmed").expect(403);
@@ -1336,7 +1311,6 @@ describe("Order status transitions", () => {
     assert.equal(confirmed.body.data.status, "confirmed");
     assert.deepEqual(confirmed.body.data.allowedActions, ["shipped"]);
 
-    // No going back or repeating.
     await setStatus(sellerA.token, order._id, "confirmed").expect(400);
     await setStatus(ctx.customerToken, order._id, "delivered").expect(400);
 
@@ -1359,7 +1333,6 @@ describe("Order status transitions", () => {
       ["pending:customer", "confirmed:professional", "shipped:professional", "delivered:customer"]
     );
 
-    // Nothing moves after delivered, and "pending" is never a target.
     await setStatus(ctx.adminToken, order._id, "delivered").expect(400);
     await setStatus(ctx.adminToken, order._id, "pending").expect(400);
   });
@@ -1370,10 +1343,8 @@ describe("Order status transitions", () => {
     assert.equal(order.sellerStatuses.length, 2);
 
     const afterA = await setStatus(sellerA.token, order._id, "confirmed").expect(200);
-    // B is still pending, so the order as a whole is still pending.
     assert.equal(afterA.body.data.status, "pending");
 
-    // A can't confirm B's part by confirming again.
     await setStatus(sellerA.token, order._id, "confirmed").expect(400);
 
     const sellerView = await request(app)
@@ -1388,7 +1359,6 @@ describe("Order status transitions", () => {
     const afterB = await setStatus(sellerB.token, order._id, "confirmed").expect(200);
     assert.equal(afterB.body.data.status, "confirmed");
 
-    // Only once every part has shipped can the customer mark it received.
     await setStatus(sellerA.token, order._id, "shipped").expect(200);
     await setStatus(ctx.customerToken, order._id, "delivered").expect(400);
     await setStatus(sellerB.token, order._id, "shipped").expect(200);
@@ -1432,14 +1402,12 @@ describe("Order status transitions", () => {
       .set("Authorization", `Bearer ${ctx.adminToken}`)
       .expect(200);
 
-    // A's goods already left the seller; B's reservation is handed back.
     assert.equal((await Listing.findById(listingA._id)).stock, 8);
     assert.equal((await Listing.findById(listingB._id)).stock, 10);
   });
 
   test("orders placed before per-seller statuses still work", async () => {
     const { sellerA, listingA } = await setup();
-    // An old-style order: no seller on items, no sellerStatuses, no history.
     const legacy = await Order.collection.insertOne({
       user: new mongoose.Types.ObjectId(ctx.customerId),
       items: [
@@ -1472,7 +1440,6 @@ describe("Order status transitions", () => {
     const { listingA } = await setup();
     const totalStock = async () => (await Listing.find()).reduce((sum, l) => sum + l.stock, 0);
     const stockBefore = await totalStock();
-    // From before products and listings were split: items carry a product only.
     const ancient = await Order.collection.insertOne({
       user: new mongoose.Types.ObjectId(ctx.customerId),
       items: [{ product: listingA.product, name: "Ancient bread", qty: 2, price: 5 }],

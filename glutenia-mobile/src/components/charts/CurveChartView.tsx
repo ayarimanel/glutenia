@@ -88,7 +88,6 @@ export default function CurveChartView({ data, color, labelEvery = 2 }: CurveCha
               </LinearGradient>
             </Defs>
 
-            {/* Background Grid Lines */}
             {gridRatios.map((ratio, idx) => {
               const y = TOP_PADDING + (CHART_HEIGHT - TOP_PADDING) * ratio;
               return (
@@ -106,7 +105,6 @@ export default function CurveChartView({ data, color, labelEvery = 2 }: CurveCha
               );
             })}
 
-            {/* Baseline */}
             <SvgLine
               x1={H_PADDING}
               y1={CHART_HEIGHT}
@@ -116,20 +114,15 @@ export default function CurveChartView({ data, color, labelEvery = 2 }: CurveCha
               strokeWidth={1.2}
             />
 
-            {/* Gradient Fill under Curve */}
             {points.length > 0 && (
               <Path d={fillPath} fill={`url(#curveGrad-${color})`} />
             )}
 
-            {/* Curve Line */}
             <Path d={linePath} stroke={lineColor} strokeWidth={3} fill="none" strokeLinecap="round" />
 
-            {/* Premium Interactive-style Dots */}
             {points.map((point) => (
               <G key={point.label}>
-                {/* Glow ring */}
                 <Circle cx={point.x} cy={point.y} r={6.5} fill={lineColor} opacity={0.16} />
-                {/* Core dot */}
                 <Circle
                   cx={point.x}
                   cy={point.y}

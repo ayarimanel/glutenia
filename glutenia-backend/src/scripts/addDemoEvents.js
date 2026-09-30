@@ -1,10 +1,3 @@
-// One-off, safe-to-run-in-production script: adds a set of demo events with
-// real cover photos so the Events screen doesn't look empty. Upserts by
-// title, so it never touches or duplicates anything an admin has since
-// edited, added, or deleted — safe to re-run. Attributed to the first admin
-// account found (or left unowned if none exists yet).
-//
-// Usage: node src/scripts/addDemoEvents.js
 require("dotenv").config();
 const mongoose = require("mongoose");
 const connectDB = require("../config/db");

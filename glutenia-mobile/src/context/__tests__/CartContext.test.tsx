@@ -5,7 +5,6 @@ import { useAuth } from "../AuthContext";
 import type { User } from "../../types/models";
 
 jest.mock("@react-native-async-storage/async-storage", () =>
-  // eslint-disable-next-line @typescript-eslint/no-require-imports -- jest.mock factories run before imports are wired, so this must be require()
   require("@react-native-async-storage/async-storage/jest/async-storage-mock")
 );
 
@@ -15,15 +14,6 @@ jest.mock("../AuthContext", () => ({
 
 const mockUseAuth = useAuth as jest.Mock;
 
-// The real backend User document has no `id` field, only `_id` (verified
-// against User.js and every controller that serializes it - Mongoose's `id`
-// virtual is not included in JSON output anywhere in this app). A test user
-// shaped exactly like the real API response, deliberately without `id`, so
-// this test fails the same way production silently failed before the
-// TS migration: if CartContext's storage key or effect guards ever go back
-// to reading `user.id` instead of `user._id`, `user.id` here is `undefined`,
-// the `if (!user?.id) return` guard fires, and the cart is never persisted -
-// the assertion below on the stored content would then fail.
 const testUser = { _id: "user-123" } as User;
 
 const product = {

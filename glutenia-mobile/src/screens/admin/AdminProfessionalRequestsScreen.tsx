@@ -31,8 +31,6 @@ export default function AdminProfessionalRequestsScreen() {
   const [actioningId, setActioningId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  // The approval code is what a professional sees on their "pending" screen,
-  // so the admin can look a request up by it (name/email match too).
   const query = search.trim().toLowerCase();
   const visibleRequests = query
     ? requests.filter(

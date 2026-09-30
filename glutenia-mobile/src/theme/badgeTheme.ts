@@ -1,9 +1,3 @@
-// Design tokens for the badge/achievement visual system. Colors are derived
-// from the app's existing brand palette (theme/colors.js) — this file adds
-// tier and category tokens on top of it, it doesn't invent a new palette.
-
-// ---- Color math (no color lib in the project — small local helpers) ----
-
 interface Rgb {
   r: number;
   g: number;
@@ -22,7 +16,6 @@ function rgbToHex({ r, g, b }: Rgb): string {
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
-// amount: -1 (black) .. 0 (unchanged) .. 1 (white)
 export function shade(hex: string, amount: number): string {
   const { r, g, b } = hexToRgb(hex);
   const target = amount >= 0 ? { r: 255, g: 255, b: 255 } : { r: 0, g: 0, b: 0 };
@@ -51,12 +44,9 @@ export function withAlpha(hex: string, alpha: number): string {
   return `${hex}${a}`;
 }
 
-// ---- Category colors ----
-// Matches the category coloring already shipped on the badge list screen,
-// kept identical so earned-badge colors don't shift under existing users.
 export const CATEGORY_COLORS: Record<string, string> = {
-  journey: "#8BC34A", // primary green
-  scanner: "#7B4626", // secondary brown
+  journey: "#8BC34A",
+  scanner: "#7B4626",
   community: "#9C27B0",
   safety: "#FF9800",
   shopper: "#2196F3",
@@ -66,9 +56,6 @@ export const CATEGORY_COLORS: Record<string, string> = {
 const GOLD_ACCENT = "#FFC94A";
 const PLATINUM_ACCENT = "#E6ECF5";
 
-// ---- Rarity tiers ----
-// Each tier controls how "precious" a badge medallion looks: how bright its
-// gradient runs, whether it gets an outer glow ring, and ring thickness.
 export const TIERS = ["bronze", "silver", "gold", "platinum"] as const;
 export type Tier = (typeof TIERS)[number];
 
@@ -114,10 +101,6 @@ export const TIER_TOKENS: Record<Tier, TierTokens> = {
   },
 };
 
-// Builds the gradient stops + ring/glow colors for a given base color+tier —
-// the shared math behind every medallion in the app (badge catalog icons and
-// the profile Role medallion alike), so "how prestigious does tier X look"
-// only has one implementation to keep consistent.
 export interface BadgeVisualTokens {
   gradient: string[];
   ringColor: string;
@@ -151,14 +134,10 @@ export function getTierTokensForColor(base: string, tier: Tier): BadgeVisualToke
   };
 }
 
-// Builds the gradient stops + ring/glow colors for a given category+tier pair.
 export function getBadgeVisualTokens(category: string, tier: Tier): BadgeVisualTokens {
   return getTierTokensForColor(CATEGORY_COLORS[category] || "#6C757D", tier);
 }
 
-// ---- Badge slug -> rarity tier ----
-// Rarity follows how much effort the threshold represents relative to other
-// badges in the same track (first action vs. sustained/high-volume use).
 export const BADGE_TIER_MAP: Record<string, Tier> = {
   first_scan: "bronze",
   ten_scans: "silver",

@@ -47,8 +47,6 @@ export default function NotificationsScreen({ navigation }: { navigation: AppNav
     setRefreshing(false);
   };
 
-  // Takes the user to whatever the notification is actually about, instead
-  // of just marking it read and leaving them to go find it themselves.
   const handlePress = async (item: Notification) => {
     if (!item.read) markRead(item._id);
 
@@ -57,7 +55,6 @@ export default function NotificationsScreen({ navigation }: { navigation: AppNav
         const event = await api.event(item.referenceId, token);
         navigation.navigate("EventDetail", { event });
       } catch (_) {
-        // Event may no longer exist — nothing to open.
       }
     } else if (item.type === "order_status") {
       navigation.navigate("Orders");

@@ -24,9 +24,6 @@ import { useTheme } from "../context/ThemeContext";
 import { getBadgeVisualTokens, getBadgeTier } from "../theme/badgeTheme";
 import type { Badge } from "../types/models";
 
-// Single source of visual truth for every badge/achievement: the grid, the
-// detail modal, the unlock celebration, and any inline mention all render
-// through this component so locked/unlocked/tier treatment never drifts.
 
 const BADGE_ICONS: Record<string, LucideIcon> = {
   first_scan: ScanLine,

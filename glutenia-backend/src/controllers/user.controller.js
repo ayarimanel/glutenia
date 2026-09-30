@@ -225,10 +225,6 @@ exports.deleteUser = async (req, res, next) => {
 
     const userId = user._id;
 
-    // Same cleanup as self-service account deletion (auth.controller
-    // deleteAccount), plus the professional-owned establishment/listings so
-    // they don't stay visible on the map/shop with no owner. Order records
-    // are intentionally kept for accounting/history purposes.
     await Promise.all([
       Cart.deleteOne({ user: userId }),
       Notification.deleteMany({ user: userId }),

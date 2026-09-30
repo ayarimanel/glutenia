@@ -39,9 +39,6 @@ const readUriAsDataUrl = async (uri: string, mimeType: string): Promise<string> 
   });
 };
 
-// Admin-only: creates/edits a master catalog entry (canonical name/
-// description/category/image/gluten-free flag/barcode). No price/stock here
-// - those are per-seller and set on a Listing instead (SellerListingFormScreen).
 interface AdminProductFormScreenProps {
   navigation: AppNavigation;
   route: RouteProp<RootParamList, "AdminProductForm">;

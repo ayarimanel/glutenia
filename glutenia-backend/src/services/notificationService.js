@@ -2,9 +2,6 @@ const Notification = require("../models/Notification");
 const User = require("../models/User");
 const { sendExpoPush } = require("./pushService");
 
-// Which per-category preference on the User model gates push delivery for
-// each notification type. Types not listed here are always sent (subject
-// only to the master pushNotificationsEnabled toggle).
 const CATEGORY_FIELD_BY_TYPE = {
   order_status: "notifyOrders",
   event_join: "notifyEvents",
@@ -29,12 +26,10 @@ const notify = async (userId, { type, title, body = "", referenceId = null }) =>
 
     return record;
   } catch (error) {
-    // Never let a notification failure break the action that triggered it (RSVP, order update, ...).
     return null;
   }
 };
 
-// Fan-out variant for broadcasts (e.g. a new event posted to every customer).
 const notifyBroadcast = async (userIds, { type, title, body = "", referenceId = null }) => {
   if (!userIds?.length) return;
 
@@ -44,7 +39,6 @@ const notifyBroadcast = async (userIds, { type, title, body = "", referenceId = 
       { ordered: false }
     );
   } catch (error) {
-    // ignore partial insert failures
   }
 
   try {
@@ -64,7 +58,6 @@ const notifyBroadcast = async (userIds, { type, title, body = "", referenceId = 
       sendExpoPush(tokens, { title, body, data: { type } });
     }
   } catch (error) {
-    // ignore
   }
 };
 

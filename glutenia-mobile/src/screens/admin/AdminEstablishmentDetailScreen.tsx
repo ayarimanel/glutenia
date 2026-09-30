@@ -26,10 +26,6 @@ interface AdminEstablishmentDetailScreenProps {
   route: RouteProp<RootParamList, "AdminEstablishmentDetail">;
 }
 
-// Everything a Professional submitted for their establishment, so the admin
-// can review it before verifying. The establishment comes straight from the
-// pending list (GET /establishments/pending), which already carries every
-// field plus the owner's contact details.
 export default function AdminEstablishmentDetailScreen({
   navigation,
   route,

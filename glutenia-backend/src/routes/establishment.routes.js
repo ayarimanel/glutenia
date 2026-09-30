@@ -67,8 +67,6 @@ router.put(
   upload.single("image"),
   establishmentController.uploadEstablishmentImage
 );
-// Admin oversight (moderation) - declared before the generic "/:id" GET
-// below so it isn't swallowed by that route's id param matching.
 router.get(
   "/pending",
   verifyToken,

@@ -1,10 +1,3 @@
-// One-time migration for the gamification rewrite. Unlike src/seed/seed.js,
-// this script does NOT touch Users, Products, or Orders — it only replaces
-// the badge catalog and cleans up data that referenced the deleted
-// Achievement/UserAchievement system or the retired badge slugs.
-//
-// NOT run automatically — review and run manually with:
-//   node src/scripts/migrateGamification.js
 require("dotenv").config();
 
 const mongoose = require("mongoose");
@@ -36,18 +29,14 @@ const migrate = async () => {
     await connectDB();
     const db = mongoose.connection.db;
 
-    // 1. Replace the badge catalog.
     await Badge.deleteMany({});
     const inserted = await Badge.insertMany(NEW_BADGES);
     console.log(`Inserted ${inserted.length} badges.`);
 
-    // 2. Prune UserBadge docs earned under the old catalog — their badgeId
-    // no longer resolves to anything, so they'd render as broken entries.
     const validBadgeIds = inserted.map((b) => b._id);
     const pruneResult = await UserBadge.deleteMany({ badgeId: { $nin: validBadgeIds } });
     console.log(`Removed ${pruneResult.deletedCount} orphaned UserBadge records.`);
 
-    // 3. Drop the now-unused Achievement/UserAchievement collections, if present.
     const collections = await db.listCollections().toArray();
     const names = new Set(collections.map((c) => c.name));
     for (const name of ["achievements", "userachievements"]) {
@@ -57,8 +46,6 @@ const migrate = async () => {
       }
     }
 
-    // 4. Strip the retired counters and backfill orderCount on existing
-    // UserGamification documents.
     const unsetResult = await UserGamification.updateMany(
       {},
       {

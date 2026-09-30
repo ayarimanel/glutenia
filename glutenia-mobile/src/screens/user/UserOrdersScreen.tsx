@@ -35,8 +35,6 @@ export default function UserOrdersScreen() {
     loadOrders();
   }, []);
 
-  // The only status change a customer makes: confirming a shipped order
-  // arrived. Offered only when the backend lists it in allowedActions.
   const markReceived = (order: Order) => {
     const id = `#${order._id.slice(-6).toUpperCase()}`;
     Alert.alert(t("orderStatus.receivedTitle"), t("orderStatus.receivedMsg", { id }), [

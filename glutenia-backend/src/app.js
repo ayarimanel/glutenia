@@ -72,8 +72,6 @@ app.use("/api/recipes", recipeRoutes);
 app.use("/api/scan", scanRoutes);
 app.use("/api/users", userRoutes);
 
-// Auto-generated from route/validator source (src/docs/) — not exposed in
-// production by default since it lists every endpoint, param, and auth rule.
 if (process.env.NODE_ENV !== "production") {
   const { spec } = buildOpenApiSpec();
   app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(spec));

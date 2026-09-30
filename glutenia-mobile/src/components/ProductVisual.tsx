@@ -17,9 +17,6 @@ const iconByCategory: Record<string, IconName> = {
 
 const unsplash = (id: string) => `https://images.unsplash.com/photo-${id}?w=800&q=75&auto=format&fit=crop`;
 
-// Shown when a product has no photo of its own (or it fails to load), so the
-// shop shows real food instead of an icon. Several per category, picked by
-// product name, so neighbouring products rarely share a photo.
 const stockPhotosByCategory: Record<string, string[]> = {
   Bread: [unsplash("1549931319-a545dcf3bc73"), unsplash("1608198093002-ad4e005484ec")],
   Pasta: [
@@ -37,8 +34,6 @@ const stockPhotosByCategory: Record<string, string[]> = {
   Other: [unsplash("1614961233913-a5113a4a34ed")],
 };
 
-// Corn flour (farine de maïs) is common in gluten-free baking and reads
-// better as corn than as plain white flour.
 const CORN_FLOUR_PHOTO = unsplash("1651667343153-6dc318e27e41");
 const CORN_NAME = /ma[iï]s|corn/i;
 
@@ -53,8 +48,6 @@ const stockPhotoFor = (category?: string | null, name?: string) => {
 interface ProductVisualProps {
   product?: (Pick<Product, "imageUrl" | "category"> & { name?: string }) | null;
   size?: "card" | "large";
-  // Off where a stock photo would be mistaken for the product's own image
-  // (the admin product form's preview).
   stockFallback?: boolean;
 }
 
@@ -67,7 +60,6 @@ export default function ProductVisual({ product, size = "card", stockFallback = 
   const sources = [ownImage, stockFallback ? stockPhotoFor(product?.category, product?.name) : undefined].filter(
     (uri): uri is string => Boolean(uri)
   );
-  // Index into `sources`; each load error moves on to the next, then the icon.
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {

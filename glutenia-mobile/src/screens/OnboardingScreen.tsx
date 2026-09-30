@@ -49,10 +49,6 @@ export default function OnboardingScreen() {
 
   const isLast = activeIndex === SLIDES.length - 1;
 
-  // The arrows set the index themselves and scroll to an exact offset,
-  // instead of waiting for FlatList's viewability callback: on web that
-  // callback often doesn't fire after a programmatic scroll, which left
-  // activeIndex stuck at 0 and the arrows jumping to the wrong slide.
   const goTo = (index: number) => {
     setActiveIndex(index);
     flatListRef.current?.scrollToOffset({ offset: index * width, animated: true });
@@ -72,7 +68,6 @@ export default function OnboardingScreen() {
     }
   };
 
-  // Keeps the dots in sync when the user swipes instead of using the arrows.
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(event.nativeEvent.contentOffset.x / width);
     if (index !== activeIndex && index >= 0 && index < SLIDES.length) {

@@ -178,7 +178,6 @@ export default function CreateEventScreen({ navigation, route }: Props) {
           contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
         >
-          {/* Header */}
           <View style={styles.header}>
             <Pressable style={styles.backBtn} onPress={() => navigation.goBack()}>
               <AppIcon name="arrow-back" size={20} color={colors.textDark} />
@@ -229,7 +228,6 @@ export default function CreateEventScreen({ navigation, route }: Props) {
             keyboardType="decimal-pad"
           />
 
-          {/* Category picker */}
           <View style={styles.fieldWrap}>
             <Text style={styles.fieldLabel}>{t("createEvent.category")}</Text>
             <View style={styles.row}>
@@ -248,7 +246,6 @@ export default function CreateEventScreen({ navigation, route }: Props) {
             {errors.category ? <Text style={styles.errorText}>{errors.category}</Text> : null}
           </View>
 
-          {/* Cover image */}
           <View style={styles.fieldWrap}>
             <Text style={styles.fieldLabel}>{t("createEvent.coverImage")}</Text>
             {imageUrl ? (
@@ -263,7 +260,6 @@ export default function CreateEventScreen({ navigation, route }: Props) {
             />
           </View>
 
-          {/* Emoji picker */}
           <View style={styles.fieldWrap}>
             <Text style={styles.fieldLabel}>{t("createEvent.emoji")}</Text>
             <Text style={styles.fieldHint}>{t("createEvent.emojiHint")}</Text>
@@ -280,7 +276,6 @@ export default function CreateEventScreen({ navigation, route }: Props) {
             </View>
           </View>
 
-          {/* Color picker */}
           <View style={styles.fieldWrap}>
             <Text style={styles.fieldLabel}>{t("createEvent.color")}</Text>
             <View style={styles.row}>
@@ -298,7 +293,6 @@ export default function CreateEventScreen({ navigation, route }: Props) {
             </View>
           </View>
 
-          {/* Submit */}
           <Pressable
             style={[styles.submitBtn, loading && styles.submitDisabled]}
             onPress={handleSubmit}

@@ -79,12 +79,6 @@ export interface ApiError extends Error {
   data?: unknown;
 }
 
-// A plain `as ApiError` cast on a caught value trusts that whatever was
-// thrown came from `request()` below - true for network/HTTP failures, but
-// not for a TypeError from a bug elsewhere in the same try block, or a
-// SyntaxError from a JSON.parse call. This actually checks for the shape
-// `request()` guarantees (an Error with a numeric `.status`) before letting
-// a call site read `.status`/`.data` off it.
 export function isApiError(error: unknown): error is ApiError {
   return error instanceof Error && typeof (error as ApiError).status === "number";
 }
@@ -194,8 +188,6 @@ export interface ChangePasswordBody {
   newPassword: string;
 }
 
-// Catalog fields only (admin-only endpoints) — price/stock/availability are
-// listing-specific, see ListingInput below.
 export type ProductInput = Partial<{
   name: string;
   description: string;
@@ -222,26 +214,15 @@ export interface SubmitCommunityProductBody {
   barcode: string;
   name: string;
   imageUrl: string;
-  // Gluten status is derived server-side from this label scan's verdict.
   labelScanId: string;
   brand?: string;
   category?: ProductCategory;
 }
 
-// A barcode scan now resolves to a Listing (the cheapest in-stock offer for
-// that catalog product, auto-picked server-side), not a bare catalog Product
-// — there's no price/stock on Product to show otherwise.
 export type ProductScanResult =
   | (Listing & { isCommunityReport?: false; gamification: GamificationDelta | null })
   | (CommunityProduct & { isCommunityReport: true; gamification: GamificationDelta | null });
 
-// The request body's field names don't match the Order schema's stored
-// shape: the backend reads `item.listingId` (not `product`) and re-fetches
-// the real name/price from the database itself rather than trusting the
-// client's copies; it also computes `total`/`deliveryFee` server-side, so
-// the client never sends them at all. Verified directly against
-// order.controller.js's createOrder/reserveStock, not assumed from the
-// Order model.
 export interface CreateOrderBody {
   items: { listingId: string; name: string; qty: number; price: number }[];
   address: { fullName: string; addressLine: string; city: string; phone: string };
@@ -313,8 +294,6 @@ export const api = {
     request<{ message: string }>("/auth/change-password", { method: "PUT", token, body }),
   deleteAccount: (token: string, password: string) =>
     request<{ message: string }>("/auth/me", { method: "DELETE", token, body: { password } }),
-  // Catalog (admin-only to mutate) — used to browse/pick a catalog product
-  // when creating a listing, and by the admin catalog screens.
   products: (params: ListParams = {}) => request<Product[]>(`/products${toQueryString(params)}`),
   product: (id: string) => request<Product>(`/products/${id}`),
   createProduct: (token: string, body: ProductInput) =>
@@ -337,9 +316,6 @@ export const api = {
     });
   },
   deleteProduct: (token: string, id: string) => request<Product>(`/products/${id}`, { method: "DELETE", token }),
-  // Listings — sellable offers (price/stock/availability) a Professional
-  // attaches to an existing catalog Product. This is what Shop/Home/
-  // ProductDetail/Scan actually browse and add to cart from.
   listings: (params: ListParams = {}) => request<Listing[]>(`/listings${toQueryString(params)}`),
   listing: (id: string) => request<Listing>(`/listings/${id}`),
   myListings: (token: string) => request<Listing[]>("/listings/mine", { token }),
@@ -359,8 +335,6 @@ export const api = {
     }),
   flagCommunityProduct: (token: string, id: string) =>
     request<CommunityProduct>(`/community-products/${id}/flag`, { method: "POST", token }),
-  // Admin review of community reports. A review always clears the flags;
-  // pass isGlutenFree only to change the status.
   communityProducts: (token: string) => request<AdminCommunityProduct[]>("/community-products", { token }),
   reviewCommunityProduct: (token: string, id: string, body: { isGlutenFree?: boolean } = {}) =>
     request<AdminCommunityProduct>(`/community-products/${id}`, { method: "PATCH", token, body }),
