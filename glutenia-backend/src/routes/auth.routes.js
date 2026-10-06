@@ -1,6 +1,7 @@
 const express = require("express");
 const { body } = require("express-validator");
 const authController = require("../controllers/auth.controller");
+const loginRateLimit = require("../middleware/loginRateLimit");
 const validateRequest = require("../middleware/validateRequest");
 const verifyToken = require("../middleware/verifyToken");
 
@@ -52,6 +53,7 @@ router.post(
     body("password").notEmpty().withMessage("Password is required"),
   ],
   validateRequest,
+  loginRateLimit,
   authController.login
 );
 

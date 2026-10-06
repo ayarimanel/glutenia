@@ -1466,3 +1466,39 @@ describe("Order status transitions", () => {
     assert.equal(await totalStock(), stockBefore);
   });
 });
+
+describe("Login rate limiting", () => {
+  const loginRateLimit = require("../src/middleware/loginRateLimit");
+
+  test("locks an email after 5 failed logins and a success resets the count", async () => {
+    loginRateLimit.reset();
+    const email = "ratelimit@glutenia.test";
+    await User.create({
+      name: "Rate Limit",
+      email,
+      password: await bcrypt.hash("right123", 12),
+      role: "customer",
+    });
+
+    for (let i = 0; i < 4; i += 1) {
+      await request(app).post("/api/auth/login").send({ email, password: "wrong" }).expect(401);
+    }
+    await request(app).post("/api/auth/login").send({ email, password: "right123" }).expect(200);
+
+    for (let i = 0; i < 5; i += 1) {
+      await request(app).post("/api/auth/login").send({ email, password: "wrong" }).expect(401);
+    }
+    const blocked = await request(app)
+      .post("/api/auth/login")
+      .send({ email, password: "right123" })
+      .expect(429);
+    assert.ok(blocked.headers["retry-after"]);
+
+    await request(app)
+      .post("/api/auth/login")
+      .send({ email: "someone-else@glutenia.test", password: "wrong" })
+      .expect(401);
+
+    loginRateLimit.reset();
+  });
+});
